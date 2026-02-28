@@ -136,7 +136,7 @@ BERT_MODEL_NAME = "emilyalsentzer/Bio_ClinicalBERT"
 TRAIN_BATCH_SIZE  = 8     # effective batch = 8 × GRAD_ACCUM_STEPS
 VAL_BATCH_SIZE    = 16
 INFER_BATCH_SIZE  = 32    # inference only (no gradients kept)
-NUM_WORKERS       = 4     # multiprocessing-safe on macOS
+NUM_WORKERS       = 0     # MPS requires 0 — spawn start method re-imports the script in workers
 PREFETCH_FACTOR   = 2     # only applied when NUM_WORKERS > 0
 
 # ── Optimiser ──────────────────────────────────────────────────────────────────
