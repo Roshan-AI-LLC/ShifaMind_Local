@@ -1,0 +1,41 @@
+# ShifaMind Local — Python dependencies
+#
+# Tested on Apple M4 Max (MPS backend) with Python 3.11.
+# Install with:   pip install -r requirements.txt
+#
+# PyTorch must be installed separately to pick the right platform backend:
+#   macOS (MPS):  pip install torch torchvision torchaudio
+#   Linux (CUDA): pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+
+# ── Core ML ──────────────────────────────────────────────────────────────────
+torch>=2.2.0
+torchvision>=0.17.0
+
+# ── Transformers / NLP ───────────────────────────────────────────────────────
+transformers>=4.38.0
+sentence-transformers>=2.7.0
+tokenizers>=0.15.0
+
+# ── Graph Neural Network ─────────────────────────────────────────────────────
+# Install torch-geometric AFTER torch — wheel depends on torch version:
+#   pip install torch-geometric
+#   pip install torch-scatter torch-sparse -f https://data.pyg.org/whl/torch-2.2.0+cpu.html
+torch-geometric>=2.5.0
+
+# ── FAISS (CPU — GPU FAISS is not supported on MPS) ──────────────────────────
+faiss-cpu>=1.8.0
+
+# ── Data science ─────────────────────────────────────────────────────────────
+numpy>=1.26.0
+pandas>=2.2.0
+scikit-learn>=1.4.0
+scipy>=1.12.0
+
+# ── Graph utilities ───────────────────────────────────────────────────────────
+networkx>=3.2.0
+
+# ── Training utilities ────────────────────────────────────────────────────────
+tqdm>=4.66.0
+
+# ── Optional but recommended ──────────────────────────────────────────────────
+accelerate>=0.27.0    # HuggingFace training utilities (optional)
