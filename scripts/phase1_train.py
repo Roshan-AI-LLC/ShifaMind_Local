@@ -178,10 +178,12 @@ log.info(f"Loaders — train {len(train_loader)} batches  val {len(val_loader)} 
 
 criterion = MultiObjectiveLoss(config.LAMBDA_DX, config.LAMBDA_ALIGN, config.LAMBDA_CONCEPT)
 optimizer = torch.optim.AdamW(model.parameters(), lr=config.LEARNING_RATE, weight_decay=config.WEIGHT_DECAY)
+
+num_optimizer_steps = (len(train_loader) // config.GRAD_ACCUM_STEPS) * config.NUM_EPOCHS_P1
 scheduler = get_linear_schedule_with_warmup(
     optimizer,
-    num_warmup_steps=len(train_loader) // 2,
-    num_training_steps=len(train_loader) * config.NUM_EPOCHS_P1,
+    num_warmup_steps=num_optimizer_steps // 10,
+    num_training_steps=num_optimizer_steps,
 )
 
 # ============================================================================
@@ -199,20 +201,23 @@ for epoch in range(config.NUM_EPOCHS_P1):
     model.train()
     epoch_losses = defaultdict(list)
 
+    optimizer.zero_grad()
     pbar = tqdm(train_loader, desc=f"Epoch {epoch+1}/{config.NUM_EPOCHS_P1}")
-    for batch in pbar:
+    for step, batch in enumerate(pbar):
         input_ids      = batch["input_ids"].to(device)
         attention_mask = batch["attention_mask"].to(device)
         dx_labels      = batch["labels"].to(device)
         concept_labels = batch["concept_labels"].to(device)
 
-        optimizer.zero_grad()
         outputs = model(input_ids, attention_mask)
         loss, comp = criterion(outputs, dx_labels, concept_labels)
-        loss.backward()
-        torch.nn.utils.clip_grad_norm_(model.parameters(), config.MAX_GRAD_NORM)
-        optimizer.step()
-        scheduler.step()
+        (loss / config.GRAD_ACCUM_STEPS).backward()
+
+        if (step + 1) % config.GRAD_ACCUM_STEPS == 0 or (step + 1) == len(train_loader):
+            torch.nn.utils.clip_grad_norm_(model.parameters(), config.MAX_GRAD_NORM)
+            optimizer.step()
+            scheduler.step()
+            optimizer.zero_grad()
 
         for k, v in comp.items():
             epoch_losses[k].append(v)
