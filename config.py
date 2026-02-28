@@ -4,7 +4,32 @@ config.py — Single source of truth for ALL paths and hyperparameters.
 Every path in the project is defined here and only here.
 No other file should contain hardcoded paths.
 """
+import os
 from pathlib import Path
+
+# ============================================================================
+# HUGGING FACE TOKEN  (optional — removes rate-limit warning on public models)
+# Set HF_TOKEN in your shell or in a .env file next to this file.
+# ============================================================================
+def _load_hf_token() -> None:
+    """Read HF_TOKEN from .env if present, then log in to the Hub."""
+    token = os.environ.get("HF_TOKEN")
+    if not token:
+        env_file = Path(__file__).resolve().parent / ".env"
+        if env_file.exists():
+            for line in env_file.read_text().splitlines():
+                line = line.strip()
+                if line.startswith("HF_TOKEN=") and not line.startswith("#"):
+                    token = line.split("=", 1)[1].strip().strip('"').strip("'")
+                    break
+    if token:
+        try:
+            from huggingface_hub import login
+            login(token=token, add_to_git_credential=False)
+        except Exception:
+            pass  # hub login is optional; don't crash if offline
+
+_load_hf_token()
 
 # ============================================================================
 # SOURCE DATA  (Google Drive — read-only, never modified by this project)
@@ -136,7 +161,7 @@ BERT_MODEL_NAME = "emilyalsentzer/Bio_ClinicalBERT"
 TRAIN_BATCH_SIZE  = 8     # effective batch = 8 × GRAD_ACCUM_STEPS
 VAL_BATCH_SIZE    = 16
 INFER_BATCH_SIZE  = 32    # inference only (no gradients kept)
-NUM_WORKERS       = 4     # multiprocessing-safe on macOS
+NUM_WORKERS       = 0     # MPS requires 0 — spawn start method re-imports the script in workers
 PREFETCH_FACTOR   = 2     # only applied when NUM_WORKERS > 0
 
 # ── Optimiser ──────────────────────────────────────────────────────────────────
