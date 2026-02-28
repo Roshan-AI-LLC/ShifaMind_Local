@@ -251,7 +251,7 @@ comparison_df = pd.DataFrame({
     "val_f1_tuned"      : val_f1_per_label.tolist(),
     "test_f1_default"   : default_metrics["per_class_f1"],
     "test_f1_tuned"     : tuned_metrics["per_class_f1"],
-    "train_count"       : [top50_info["top_50_counts"].get(c, 0) for c in TOP_50_CODES],
+    "train_count"       : [top50_info.get("top_50_counts", {}).get(c, 0) for c in TOP_50_CODES],
 }).sort_values("test_f1_tuned", ascending=False)
 comparison_df.to_csv(config.P2_THRESH_CSV, index=False)
 

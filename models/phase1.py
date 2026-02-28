@@ -156,11 +156,13 @@ class ShifaMind2Phase1(nn.Module):
                     attention_maps[f"layer_{layer_idx}"] = attn
 
         cls_hidden       = self.dropout(current_hidden[:, 0, :])
-        concept_scores   = torch.sigmoid(self.concept_head(cls_hidden))
+        concept_logits   = self.concept_head(cls_hidden)
+        concept_scores   = torch.sigmoid(concept_logits)
         diagnosis_logits = self.diagnosis_head(cls_hidden)
 
         result = {
             "logits"         : diagnosis_logits,
+            "concept_logits" : concept_logits,
             "concept_scores" : concept_scores,
             "hidden_states"  : current_hidden,
             "cls_hidden"     : cls_hidden,

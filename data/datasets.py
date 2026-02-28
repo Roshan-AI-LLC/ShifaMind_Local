@@ -52,17 +52,20 @@ class RAGDataset(Dataset):
     """
     Phase 3 dataset.
 
-    Same as ConceptDataset but also returns the raw text string so the
-    RAG retriever can look up relevant passages at training/inference time.
+    Same signature as ConceptDataset but also returns the raw text string
+    so the RAG retriever can look up relevant passages at training/inference time.
 
-    Expects *df* to have ICD-10 code columns (e.g. 'I50', 'J18', …) that
-    are listed in *top50_codes*.
+    Args:
+        texts          : list of raw clinical note strings
+        labels         : list of per-sample label lists  [N, num_dx]
+        concept_labels : np.ndarray [N, num_concepts]
+        tokenizer      : HuggingFace tokenizer
     """
 
-    def __init__(self, df, tokenizer, concept_labels, top50_codes, max_length: int = None):
-        self.texts          = df["text"].tolist()
-        self.labels         = df[top50_codes].values.astype(np.float32)  # [N, 50]
-        self.concept_labels = concept_labels                              # [N, 111]
+    def __init__(self, texts, labels, concept_labels, tokenizer, max_length: int = None):
+        self.texts          = texts
+        self.labels         = labels
+        self.concept_labels = concept_labels
         self.tokenizer      = tokenizer
         self.max_length     = max_length or config.MAX_LENGTH
 

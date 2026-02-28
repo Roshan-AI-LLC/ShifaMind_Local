@@ -391,7 +391,7 @@ with open(config.P2_RESULTS_JSON, "w") as f:
 per_label_df = pd.DataFrame({
     "icd_code"   : TOP_50_CODES,
     "f1_score"   : per_class_f1,
-    "train_count": [top50_info["top_50_counts"].get(c, 0) for c in TOP_50_CODES],
+    "train_count": [top50_info.get("top_50_counts", {}).get(c, 0) for c in TOP_50_CODES],
 }).sort_values("f1_score", ascending=False)
 per_label_df.to_csv(config.P2_PER_LABEL_CSV, index=False)
 

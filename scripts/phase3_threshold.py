@@ -301,7 +301,7 @@ for code in TOP_50_CODES:
         "support"          : dm["support"],
         "auc_roc"          : dm.get("auc_roc", float("nan")),
         "avg_precision"    : dm.get("avg_precision", float("nan")),
-        "train_count"      : top50_info["top_50_counts"].get(code, 0),
+        "train_count"      : top50_info.get("top_50_counts", {}).get(code, 0),
     })
 per_dx_df = pd.DataFrame(per_dx_rows).sort_values("f1", ascending=False)
 
