@@ -4,7 +4,32 @@ config.py — Single source of truth for ALL paths and hyperparameters.
 Every path in the project is defined here and only here.
 No other file should contain hardcoded paths.
 """
+import os
 from pathlib import Path
+
+# ============================================================================
+# HUGGING FACE TOKEN  (optional — removes rate-limit warning on public models)
+# Set HF_TOKEN in your shell or in a .env file next to this file.
+# ============================================================================
+def _load_hf_token() -> None:
+    """Read HF_TOKEN from .env if present, then log in to the Hub."""
+    token = os.environ.get("HF_TOKEN")
+    if not token:
+        env_file = Path(__file__).resolve().parent / ".env"
+        if env_file.exists():
+            for line in env_file.read_text().splitlines():
+                line = line.strip()
+                if line.startswith("HF_TOKEN=") and not line.startswith("#"):
+                    token = line.split("=", 1)[1].strip().strip('"').strip("'")
+                    break
+    if token:
+        try:
+            from huggingface_hub import login
+            login(token=token, add_to_git_credential=False)
+        except Exception:
+            pass  # hub login is optional; don't crash if offline
+
+_load_hf_token()
 
 # ============================================================================
 # SOURCE DATA  (Google Drive — read-only, never modified by this project)
