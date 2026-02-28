@@ -38,7 +38,7 @@ UMLS_MRREL      = UMLS_DIR / "MRREL.RRF"
 # LOCAL OUTPUT ROOT  (all generated files live here)
 # ============================================================================
 
-LOCAL = Path("./shifamind_local")
+LOCAL = Path(__file__).resolve().parent / "shifamind_local"
 
 # ── Shared data (produced by Phase 1, consumed by all later phases) ────────────
 SHARED_DATA            = LOCAL / "shared_data"
