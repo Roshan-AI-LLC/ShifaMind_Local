@@ -59,7 +59,7 @@ from training import MultiObjectiveLoss
 from training.evaluate import evaluate_phase2
 from utils import (
     get_logger, load_checkpoint, log_memory_usage, log_metrics,
-    save_best_checkpoint, save_epoch_checkpoint,
+    save_best_checkpoint,
 )
 
 # ============================================================================
@@ -215,6 +215,12 @@ scheduler = get_linear_schedule_with_warmup(
 # TRAINING LOOP
 # ============================================================================
 
+# Wipe any checkpoints from a previous run so an old phase2_best.pt can
+# never contaminate this run's test evaluation.
+for _old in config.CKPT_P2.glob("*.pt"):
+    _old.unlink()
+log.info(f"Cleaned stale checkpoints in {config.CKPT_P2}")
+
 best_f1 = 0.0
 history = {"train_loss": [], "val_dx_f1": [], "val_concept_f1": []}
 
@@ -292,8 +298,6 @@ for epoch in range(config.NUM_EPOCHS_P2):
             "top_50_codes"     : TOP_50_CODES,
         },
     }
-
-    save_epoch_checkpoint(ckpt_state, config.CKPT_P2, "phase2", epoch)
 
     if val_metrics["dx_f1"] > best_f1:
         best_f1 = val_metrics["dx_f1"]

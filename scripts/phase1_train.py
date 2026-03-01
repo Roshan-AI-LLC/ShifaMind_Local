@@ -49,7 +49,7 @@ from data import ConceptDataset, make_loader
 from models import ShifaMind2Phase1
 from training import MultiObjectiveLoss
 from training.evaluate import evaluate_phase1
-from utils import get_logger, log_metrics, save_best_checkpoint, save_epoch_checkpoint, log_memory_usage
+from utils import get_logger, log_metrics, save_best_checkpoint, log_memory_usage
 
 # ============================================================================
 # DEVICE
@@ -193,6 +193,12 @@ scheduler = get_linear_schedule_with_warmup(
 # TRAINING LOOP
 # ============================================================================
 
+# Wipe any checkpoints from a previous run so an old phase1_best.pt can
+# never contaminate this run's test evaluation.
+for _old in config.CKPT_P1.glob("*.pt"):
+    _old.unlink()
+log.info(f"Cleaned stale checkpoints in {config.CKPT_P1}")
+
 best_f1 = 0.0
 history = {"train_loss": [], "val_dx_f1": [], "val_concept_f1": []}
 
@@ -267,9 +273,6 @@ for epoch in range(config.NUM_EPOCHS_P1):
             "max_length"    : config.MAX_LENGTH,
         },
     }
-
-    # Always save per-epoch snapshot
-    save_epoch_checkpoint(ckpt_state, config.CKPT_P1, "phase1", epoch)
 
     # Save best
     if val_metrics["dx_f1"] > best_f1:
