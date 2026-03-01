@@ -171,18 +171,22 @@ GRAD_ACCUM_STEPS  = 4     # effective batch = 8 × 4 = 32
 MAX_GRAD_NORM     = 1.0
 
 # ── Sequence length ────────────────────────────────────────────────────────────
-MAX_LENGTH        = 384
+MAX_LENGTH        = 512   # increased from 384 — captures more of long clinical notes
 
 # ── Epochs ─────────────────────────────────────────────────────────────────────
-NUM_EPOCHS_P1     = 7
+NUM_EPOCHS_P1     = 12    # increased from 7 — val dx_f1 was still rising at epoch 7
 NUM_EPOCHS_P2     = 7
 NUM_EPOCHS_P3     = 5
 
-# ── Loss weights (identical to original) ──────────────────────────────────────
+# ── Loss weights ───────────────────────────────────────────────────────────────
 LAMBDA_DX         = 1.0
-LAMBDA_ALIGN      = 0.5
-LAMBDA_CONCEPT    = 0.3
+LAMBDA_ALIGN      = 0.1   # reduced from 0.5 — 50×111 all-pair alignment adds noise
+LAMBDA_CONCEPT    = 0.05  # reduced from 0.3 — keyword concept F1 (~0.09) is too noisy
 LAMBDA_DX_P3      = 2.0   # Phase 3 emphasises diagnosis loss
+
+# ── Focal loss (diagnosis head) ────────────────────────────────────────────────
+FOCAL_GAMMA       = 2.0   # focusing exponent; 0 = weighted BCE, 2 = standard focal
+FOCAL_ALPHA       = 0.75  # positive-class weight; addresses severe label imbalance
 
 # ── Graph (Phase 2) ────────────────────────────────────────────────────────────
 GRAPH_HIDDEN_DIM  = 256
