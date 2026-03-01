@@ -176,7 +176,10 @@ log.info(f"Loaders — train {len(train_loader)} batches  val {len(val_loader)} 
 # TRAINING SETUP
 # ============================================================================
 
-criterion = MultiObjectiveLoss(config.LAMBDA_DX, config.LAMBDA_ALIGN, config.LAMBDA_CONCEPT)
+criterion = MultiObjectiveLoss(
+    config.LAMBDA_DX, config.LAMBDA_ALIGN, config.LAMBDA_CONCEPT,
+    focal_gamma=config.FOCAL_GAMMA, focal_alpha=config.FOCAL_ALPHA,
+)
 optimizer = torch.optim.AdamW(model.parameters(), lr=config.LEARNING_RATE, weight_decay=config.WEIGHT_DECAY)
 
 num_optimizer_steps = (len(train_loader) // config.GRAD_ACCUM_STEPS) * config.NUM_EPOCHS_P1
@@ -195,6 +198,9 @@ history = {"train_loss": [], "val_dx_f1": [], "val_concept_f1": []}
 
 log.info("=" * 60)
 log.info(f"Starting Phase 1 training ({config.NUM_EPOCHS_P1} epochs) …")
+log.info(f"  Loss   : FocalLoss(γ={config.FOCAL_GAMMA}, α={config.FOCAL_ALPHA})")
+log.info(f"  λ_dx={config.LAMBDA_DX}  λ_align={config.LAMBDA_ALIGN}  λ_concept={config.LAMBDA_CONCEPT}")
+log.info(f"  MAX_LENGTH={config.MAX_LENGTH}  GRAD_ACCUM={config.GRAD_ACCUM_STEPS}")
 log.info("=" * 60)
 
 for epoch in range(config.NUM_EPOCHS_P1):
@@ -249,13 +255,16 @@ for epoch in range(config.NUM_EPOCHS_P1):
         # Phase 1 concept embeddings — saved explicitly for Phase 2 transfer
         "concept_embeddings"  : model.concept_embeddings.data.cpu(),
         "config": {
-            "num_concepts" : NUM_CONCEPTS,
-            "num_classes"  : NUM_LABELS,
-            "fusion_layers": [9, 11],
-            "top_50_codes" : TOP_50_CODES,
-            "lambda_dx"    : config.LAMBDA_DX,
-            "lambda_align" : config.LAMBDA_ALIGN,
+            "num_concepts"  : NUM_CONCEPTS,
+            "num_classes"   : NUM_LABELS,
+            "fusion_layers" : [9, 11],
+            "top_50_codes"  : TOP_50_CODES,
+            "lambda_dx"     : config.LAMBDA_DX,
+            "lambda_align"  : config.LAMBDA_ALIGN,
             "lambda_concept": config.LAMBDA_CONCEPT,
+            "focal_gamma"   : config.FOCAL_GAMMA,
+            "focal_alpha"   : config.FOCAL_ALPHA,
+            "max_length"    : config.MAX_LENGTH,
         },
     }
 
