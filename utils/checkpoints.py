@@ -2,9 +2,8 @@
 utils/checkpoints.py
 
 Checkpoint helpers:
-  • save_best_checkpoint   — overwrite best.pt when metric improves
-  • save_epoch_checkpoint  — write phase_epoch_N.pt after every epoch
-  • load_checkpoint        — torch.load with map_location + weights_only=False
+  • save_best_checkpoint  — overwrite best.pt when metric improves
+  • load_checkpoint       — torch.load with map_location + weights_only=False
 """
 from pathlib import Path
 from typing import Any, Dict
@@ -22,25 +21,37 @@ def save_best_checkpoint(state: Dict[str, Any], path: Path) -> None:
     log.info(f"Best checkpoint saved  → {path.name}")
 
 
-def save_epoch_checkpoint(
-    state: Dict[str, Any],
-    ckpt_dir: Path,
-    stem: str,
-    epoch: int,
-) -> None:
-    """
-    Save a per-epoch snapshot alongside the best checkpoint.
 
-    Naming convention:  <stem>_epoch_<N>.pt   (1-indexed)
-
-    Example:
-        save_epoch_checkpoint(state, CKPT_P1, "phase1", epoch=2)
-        # writes  checkpoints/phase1/phase1_epoch_3.pt
+def find_latest_checkpoint(ckpt_dir: Path, filename: str) -> Path:
     """
-    suffix = ".pth" if stem.startswith("phase3") else ".pt"
-    ep_path = ckpt_dir / f"{stem}_epoch_{epoch + 1}{suffix}"
-    torch.save(state, ep_path)
-    log.info(f"Epoch checkpoint saved → {ep_path.name}")
+    Return the path to *filename* inside the most recent timestamped run
+    subdirectory under *ckpt_dir*.
+
+    Directory layout expected:
+        ckpt_dir/
+            20260301_143022/phase2_best.pt   ← latest (returned)
+            20260228_091500/phase2_best.pt   ← older
+
+    Subdirectory names must be sortable by time (YYYYMMDD_HHMMSS works).
+    Falls back to ``ckpt_dir/filename`` for backward compatibility with
+    runs created before this scheme was introduced.
+
+    Raises:
+        FileNotFoundError — if no checkpoint is found anywhere.
+    """
+    candidates = sorted(ckpt_dir.glob(f"*/{filename}"))
+    if candidates:
+        found = candidates[-1]  # lexicographic order = chronological order
+        log.info(f"Found checkpoint ← {found.relative_to(ckpt_dir.parent)}")
+        return found
+    fallback = ckpt_dir / filename
+    if fallback.exists():
+        log.warning(f"No run subdirs found; using legacy path {fallback.name}")
+        return fallback
+    raise FileNotFoundError(
+        f"No '{filename}' found under {ckpt_dir}. "
+        "Run the previous phase first."
+    )
 
 
 def load_checkpoint(path: Path, device: torch.device) -> Dict[str, Any]:

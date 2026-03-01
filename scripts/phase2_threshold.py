@@ -41,7 +41,7 @@ from transformers import AutoModel, AutoTokenizer
 import config
 from data import ConceptDataset, make_loader
 from models import GATEncoder, ShifaMindPhase2GAT
-from utils import get_logger, load_checkpoint
+from utils import find_latest_checkpoint, get_logger, load_checkpoint
 
 # ============================================================================
 # DEVICE
@@ -70,7 +70,7 @@ log.info(f"Device : {device}")
 log.info("Loading splits …")
 assert config.VAL_SPLIT.exists(),     "val_split.pkl not found — run phase2_train.py first"
 assert config.TEST_SPLIT.exists(),    "test_split.pkl not found — run phase2_train.py first"
-assert config.P2_BEST_CKPT.exists(),  f"Phase 2 checkpoint not found: {config.P2_BEST_CKPT}"
+p2_best_path = find_latest_checkpoint(config.CKPT_P2, "phase2_best.pt")
 assert config.P2_CONCEPT_EMBS.exists(), f"Phase 2 concept embeddings not found: {config.P2_CONCEPT_EMBS}"
 assert config.GRAPH_DATA_PT.exists(),   f"Graph data not found: {config.GRAPH_DATA_PT}"
 
@@ -117,7 +117,7 @@ model = ShifaMindPhase2GAT(
     concepts_list    = config.GLOBAL_CONCEPTS,
 ).to(device)
 
-best_ckpt = load_checkpoint(config.P2_BEST_CKPT, device)
+best_ckpt = load_checkpoint(p2_best_path, device)
 model.load_state_dict(best_ckpt["model_state_dict"])
 model.eval()
 log.info(f"Phase 2 best model loaded (epoch {best_ckpt.get('epoch', '?') + 1})")

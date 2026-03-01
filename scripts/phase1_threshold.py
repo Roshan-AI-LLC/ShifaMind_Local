@@ -40,7 +40,7 @@ from transformers import AutoModel, AutoTokenizer
 import config
 from data import ConceptDataset, make_loader
 from models import ShifaMind2Phase1
-from utils import get_logger, load_checkpoint
+from utils import find_latest_checkpoint, get_logger, load_checkpoint
 
 # ============================================================================
 # DEVICE
@@ -69,7 +69,7 @@ log.info(f"Device : {device}")
 log.info("Loading splits and concept labels …")
 assert config.VAL_SPLIT.exists(),  f"val_split.pkl not found — run phase1_train.py first"
 assert config.TEST_SPLIT.exists(), f"test_split.pkl not found — run phase1_train.py first"
-assert config.P1_BEST_CKPT.exists(), f"Phase 1 checkpoint not found: {config.P1_BEST_CKPT}"
+p1_best_path = find_latest_checkpoint(config.CKPT_P1, "phase1_best.pt")
 
 with open(config.VAL_SPLIT,  "rb") as f: df_val  = pickle.load(f)
 with open(config.TEST_SPLIT, "rb") as f: df_test = pickle.load(f)
@@ -98,7 +98,7 @@ model = ShifaMind2Phase1(
     base_model, num_concepts=NUM_CONCEPTS, num_classes=NUM_LABELS, fusion_layers=[9, 11]
 ).to(device)
 
-ckpt = load_checkpoint(config.P1_BEST_CKPT, device)
+ckpt = load_checkpoint(p1_best_path, device)
 model.load_state_dict(ckpt["model_state_dict"])
 model.eval()
 log.info(f"Phase 1 best model loaded (epoch {ckpt.get('epoch', '?') + 1})")

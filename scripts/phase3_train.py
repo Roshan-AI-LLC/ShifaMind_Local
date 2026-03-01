@@ -42,6 +42,7 @@ import json
 import pickle
 import sys
 from collections import defaultdict
+from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -60,8 +61,8 @@ from rag.retriever import SimpleRAG, build_evidence_corpus
 from training import MultiObjectiveLoss
 from training.evaluate import evaluate_phase3
 from utils import (
-    get_logger, load_checkpoint, log_memory_usage, log_metrics,
-    save_best_checkpoint, save_epoch_checkpoint,
+    find_latest_checkpoint, get_logger, load_checkpoint,
+    log_memory_usage, log_metrics, save_best_checkpoint,
 )
 
 # ============================================================================
@@ -92,11 +93,12 @@ log.info(f"Device : {device}")
 # ============================================================================
 
 log.info("Loading splits and concept labels from Phase 2 …")
+# Resolve the latest phase 2 checkpoint across any previous runs
+p2_best_path = find_latest_checkpoint(config.CKPT_P2, "phase2_best.pt")
 for path, name in [
     (config.TRAIN_SPLIT,       "train_split.pkl"),
     (config.VAL_SPLIT,         "val_split.pkl"),
     (config.TEST_SPLIT,        "test_split.pkl"),
-    (config.P2_BEST_CKPT,      "phase2_best.pt"),
     (config.P2_CONCEPT_EMBS,   "phase2_concept_embeddings.pt"),
     (config.GRAPH_DATA_PT,     "graph_data.pt"),
 ]:
@@ -152,7 +154,7 @@ phase2_model = ShifaMindPhase2GAT(
     concepts_list    = config.GLOBAL_CONCEPTS,
 ).to(device)
 
-p2_ckpt = load_checkpoint(config.P2_BEST_CKPT, device)
+p2_ckpt = load_checkpoint(p2_best_path, device)
 phase2_model.load_state_dict(p2_ckpt["model_state_dict"])
 log.info(f"Phase 2 weights loaded (epoch {p2_ckpt.get('epoch', '?') + 1})")
 
@@ -244,6 +246,12 @@ scheduler = get_linear_schedule_with_warmup(
 # TRAINING LOOP
 # ============================================================================
 
+RUN_ID       = datetime.now().strftime("%Y%m%d_%H%M%S")
+run_ckpt_dir = config.CKPT_P3 / RUN_ID
+run_ckpt_dir.mkdir(parents=True, exist_ok=True)
+_BEST_CKPT   = run_ckpt_dir / "phase3_best.pth"
+log.info(f"Run ID {RUN_ID} — checkpoints → {run_ckpt_dir}")
+
 best_f1 = 0.0
 history = {"train_loss": [], "val_macro_f1": [], "val_micro_f1": []}
 
@@ -324,11 +332,9 @@ for epoch in range(config.NUM_EPOCHS_P3):
         },
     }
 
-    save_epoch_checkpoint(ckpt_state, config.CKPT_P3, "phase3", epoch)
-
     if val_metrics["macro_f1"] > best_f1:
         best_f1 = val_metrics["macro_f1"]
-        save_best_checkpoint(ckpt_state, config.P3_BEST_CKPT)
+        save_best_checkpoint(ckpt_state, _BEST_CKPT)
         log.info(f"  New best val macro_f1 = {best_f1:.4f}")
 
 log.info(f"Training done. Best val macro_f1 = {best_f1:.4f}")
@@ -338,7 +344,7 @@ log.info(f"Training done. Best val macro_f1 = {best_f1:.4f}")
 # ============================================================================
 
 log.info("Loading best Phase 3 model for test evaluation …")
-best_ckpt = load_checkpoint(config.P3_BEST_CKPT, device)
+best_ckpt = load_checkpoint(_BEST_CKPT, device)
 model.load_state_dict(best_ckpt["model_state_dict"])
 concept_embs_best = best_ckpt["concept_embeddings_bert"].to(device)
 model.eval()
