@@ -83,8 +83,7 @@ P2_CONCEPT_EMBS        = CONCEPT_STORE / "phase2_concept_embeddings.pt"
 
 # ── Phase 1 ────────────────────────────────────────────────────────────────────
 CKPT_P1                = LOCAL / "checkpoints" / "phase1"
-P1_BEST_CKPT           = CKPT_P1 / "phase1_best.pt"
-# per-epoch: phase1_epoch_{N}.pt  (written by utils/checkpoints.py)
+# Best checkpoint → CKPT_P1/<run_id>/phase1_best.pt  (run_id = YYYYMMDD_HHMMSS)
 
 RESULTS_P1             = LOCAL / "results" / "phase1"
 P1_RESULTS_JSON        = RESULTS_P1 / "results.json"
@@ -99,7 +98,7 @@ UMLS_GRAPH_GPICKLE     = GRAPH_P2 / "umls_knowledge_graph.gpickle"
 GRAPH_DATA_PT          = GRAPH_P2 / "graph_data.pt"
 
 CKPT_P2                = LOCAL / "checkpoints" / "phase2"
-P2_BEST_CKPT           = CKPT_P2 / "phase2_best.pt"
+# Best checkpoint → CKPT_P2/<run_id>/phase2_best.pt
 
 RESULTS_P2             = LOCAL / "results" / "phase2"
 P2_TRAIN_HISTORY_JSON  = RESULTS_P2 / "training_history.json"
@@ -115,7 +114,7 @@ EVIDENCE_CORPUS_JSON   = EVIDENCE_P3 / "evidence_corpus.json"
 FAISS_INDEX            = EVIDENCE_P3 / "faiss.index"
 
 CKPT_P3                = LOCAL / "checkpoints" / "phase3"
-P3_BEST_CKPT           = CKPT_P3 / "phase3_best.pth"
+# Best checkpoint → CKPT_P3/<run_id>/phase3_best.pth
 
 RESULTS_P3             = LOCAL / "results" / "phase3"
 P3_RESULTS_JSON        = RESULTS_P3 / "results.json"

@@ -30,6 +30,7 @@ import pickle
 import shutil
 import sys
 from collections import defaultdict
+from datetime import datetime
 from pathlib import Path
 
 # --- project root on sys.path -----------------------------------------------
@@ -193,11 +194,11 @@ scheduler = get_linear_schedule_with_warmup(
 # TRAINING LOOP
 # ============================================================================
 
-# Wipe any checkpoints from a previous run so an old phase1_best.pt can
-# never contaminate this run's test evaluation.
-for _old in config.CKPT_P1.glob("*.pt"):
-    _old.unlink()
-log.info(f"Cleaned stale checkpoints in {config.CKPT_P1}")
+RUN_ID       = datetime.now().strftime("%Y%m%d_%H%M%S")
+run_ckpt_dir = config.CKPT_P1 / RUN_ID
+run_ckpt_dir.mkdir(parents=True, exist_ok=True)
+_BEST_CKPT   = run_ckpt_dir / "phase1_best.pt"
+log.info(f"Run ID {RUN_ID} — checkpoints → {run_ckpt_dir}")
 
 best_f1 = 0.0
 history = {"train_loss": [], "val_dx_f1": [], "val_concept_f1": []}
@@ -277,7 +278,7 @@ for epoch in range(config.NUM_EPOCHS_P1):
     # Save best
     if val_metrics["dx_f1"] > best_f1:
         best_f1 = val_metrics["dx_f1"]
-        save_best_checkpoint(ckpt_state, config.P1_BEST_CKPT)
+        save_best_checkpoint(ckpt_state, _BEST_CKPT)
         log.info(f"  New best val dx_f1 = {best_f1:.4f}")
 
 log.info(f"Training done. Best val dx_f1 = {best_f1:.4f}")
@@ -299,7 +300,7 @@ log.info(f"Phase 1 concept embeddings → {config.P1_CONCEPT_EMBS.name}")
 # ============================================================================
 
 log.info("Loading best model for test evaluation …")
-ckpt = torch.load(config.P1_BEST_CKPT, map_location=device, weights_only=False)
+ckpt = torch.load(_BEST_CKPT, map_location=device, weights_only=False)
 model.load_state_dict(ckpt["model_state_dict"])
 model.eval()
 

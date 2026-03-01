@@ -39,6 +39,7 @@ import json
 import pickle
 import sys
 from collections import defaultdict
+from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -215,11 +216,11 @@ scheduler = get_linear_schedule_with_warmup(
 # TRAINING LOOP
 # ============================================================================
 
-# Wipe any checkpoints from a previous run so an old phase2_best.pt can
-# never contaminate this run's test evaluation.
-for _old in config.CKPT_P2.glob("*.pt"):
-    _old.unlink()
-log.info(f"Cleaned stale checkpoints in {config.CKPT_P2}")
+RUN_ID       = datetime.now().strftime("%Y%m%d_%H%M%S")
+run_ckpt_dir = config.CKPT_P2 / RUN_ID
+run_ckpt_dir.mkdir(parents=True, exist_ok=True)
+_BEST_CKPT   = run_ckpt_dir / "phase2_best.pt"
+log.info(f"Run ID {RUN_ID} — checkpoints → {run_ckpt_dir}")
 
 best_f1 = 0.0
 history = {"train_loss": [], "val_dx_f1": [], "val_concept_f1": []}
@@ -301,7 +302,7 @@ for epoch in range(config.NUM_EPOCHS_P2):
 
     if val_metrics["dx_f1"] > best_f1:
         best_f1 = val_metrics["dx_f1"]
-        save_best_checkpoint(ckpt_state, config.P2_BEST_CKPT)
+        save_best_checkpoint(ckpt_state, _BEST_CKPT)
         log.info(f"  New best val dx_f1 = {best_f1:.4f}")
 
 log.info(f"Training done. Best val dx_f1 = {best_f1:.4f}")
@@ -333,7 +334,7 @@ log.info(f"Training history → {config.P2_TRAIN_HISTORY_JSON.name}")
 # ============================================================================
 
 log.info("Loading best model for test evaluation …")
-best_ckpt = load_checkpoint(config.P2_BEST_CKPT, device)
+best_ckpt = load_checkpoint(_BEST_CKPT, device)
 model.load_state_dict(best_ckpt["model_state_dict"])
 concept_embs_best = best_ckpt["concept_embeddings_bert"].to(device)
 model.eval()

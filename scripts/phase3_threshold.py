@@ -50,7 +50,7 @@ import config
 from data import RAGDataset, make_loader
 from models import GATEncoder, ShifaMindPhase2GAT, ShifaMindPhase3RAG
 from rag.retriever import SimpleRAG
-from utils import get_logger, load_checkpoint
+from utils import find_latest_checkpoint, get_logger, load_checkpoint
 
 # ============================================================================
 # DEVICE
@@ -77,10 +77,10 @@ log.info(f"Device : {device}")
 # ============================================================================
 
 log.info("Loading splits …")
+p3_best_path = find_latest_checkpoint(config.CKPT_P3, "phase3_best.pth")
 for path, name in [
     (config.VAL_SPLIT,       "val_split.pkl"),
     (config.TEST_SPLIT,      "test_split.pkl"),
-    (config.P3_BEST_CKPT,    "phase3_best.pth"),
     (config.P2_CONCEPT_EMBS, "phase2_concept_embeddings.pt"),
     (config.GRAPH_DATA_PT,   "graph_data.pt"),
 ]:
@@ -149,7 +149,7 @@ model = ShifaMindPhase3RAG(
 ).to(device)
 
 # Load Phase 3 best checkpoint
-best_ckpt = load_checkpoint(config.P3_BEST_CKPT, device)
+best_ckpt = load_checkpoint(p3_best_path, device)
 model.load_state_dict(best_ckpt["model_state_dict"])
 model.eval()
 log.info(f"Phase 3 best model loaded (epoch {best_ckpt.get('epoch', '?') + 1})")

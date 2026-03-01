@@ -22,6 +22,38 @@ def save_best_checkpoint(state: Dict[str, Any], path: Path) -> None:
 
 
 
+def find_latest_checkpoint(ckpt_dir: Path, filename: str) -> Path:
+    """
+    Return the path to *filename* inside the most recent timestamped run
+    subdirectory under *ckpt_dir*.
+
+    Directory layout expected:
+        ckpt_dir/
+            20260301_143022/phase2_best.pt   ← latest (returned)
+            20260228_091500/phase2_best.pt   ← older
+
+    Subdirectory names must be sortable by time (YYYYMMDD_HHMMSS works).
+    Falls back to ``ckpt_dir/filename`` for backward compatibility with
+    runs created before this scheme was introduced.
+
+    Raises:
+        FileNotFoundError — if no checkpoint is found anywhere.
+    """
+    candidates = sorted(ckpt_dir.glob(f"*/{filename}"))
+    if candidates:
+        found = candidates[-1]  # lexicographic order = chronological order
+        log.info(f"Found checkpoint ← {found.relative_to(ckpt_dir.parent)}")
+        return found
+    fallback = ckpt_dir / filename
+    if fallback.exists():
+        log.warning(f"No run subdirs found; using legacy path {fallback.name}")
+        return fallback
+    raise FileNotFoundError(
+        f"No '{filename}' found under {ckpt_dir}. "
+        "Run the previous phase first."
+    )
+
+
 def load_checkpoint(path: Path, device: torch.device) -> Dict[str, Any]:
     """
     Load a checkpoint, always using weights_only=False for custom objects
