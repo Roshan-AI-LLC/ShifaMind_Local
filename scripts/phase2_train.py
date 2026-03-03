@@ -125,6 +125,31 @@ assert config.P1_CONCEPT_EMBS.exists(), (
     "Run phase1_train.py first."
 )
 
+# ── Warm-start BERT from Phase 1 fine-tuned weights ──────────────────────────
+# Phase 1 checkpoint stores BERT under the "base_model.*" prefix.
+# We strip that prefix and load directly into base_model.
+if config.P1_BEST_CKPT.exists():
+    log.info(f"Warm-starting BERT from Phase 1 checkpoint: {config.P1_BEST_CKPT.name}")
+    p1_ckpt = torch.load(config.P1_BEST_CKPT, map_location=device, weights_only=False)
+    bert_weights = {
+        k[len("base_model."):]: v
+        for k, v in p1_ckpt["model_state_dict"].items()
+        if k.startswith("base_model.")
+    }
+    missing, unexpected = base_model.load_state_dict(bert_weights, strict=False)
+    if missing:
+        log.warning(f"  BERT warm-start: {len(missing)} missing keys (expected 0)")
+    log.info(
+        f"  Phase 1 BERT weights loaded — "
+        f"macro_f1 at transfer: {p1_ckpt.get('macro_f1', 'n/a')}"
+    )
+else:
+    log.warning(
+        f"Phase 1 best checkpoint not found at {config.P1_BEST_CKPT} — "
+        "using pre-trained BioClinicalBERT. Re-run phase1_train.py to fix this."
+    )
+
+# ── Warm-start concept embeddings from Phase 1 ───────────────────────────────
 log.info("Loading Phase 1 concept embeddings as warm-start …")
 p1_embs_ckpt = torch.load(config.P1_CONCEPT_EMBS, map_location=device, weights_only=False)
 p1_embs      = p1_embs_ckpt["concept_embeddings"].to(device)
