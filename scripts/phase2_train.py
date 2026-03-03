@@ -137,13 +137,16 @@ log.info(f"Phase 1 concept embeddings loaded: shape {tuple(p1_embs.shape)}")
 # BUILD / LOAD UMLS KNOWLEDGE GRAPH
 # ============================================================================
 
-log.info("Building UMLS knowledge graph (or loading from cache) …")
+log.info("Building multi-source knowledge graph (or loading from cache) …")
+train_dx_labels = np.array(df_train["labels"].tolist(), dtype=np.float32)  # [N_train, 50]
 build_and_save_graph(
     tokenizer=tokenizer,
     bert_model=base_model,
     device=device,
     concepts=config.GLOBAL_CONCEPTS,
     icd_codes=TOP_50_CODES,
+    train_concept_labels=train_cl,          # [N_train, 111]  from Phase 1
+    train_dx_labels=train_dx_labels,        # [N_train,  50]
 )
 
 log.info(f"Loading graph from {config.GRAPH_DATA_PT.name} …")

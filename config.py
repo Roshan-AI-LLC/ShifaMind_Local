@@ -187,11 +187,29 @@ LAMBDA_DX_P3      = 2.0   # Phase 3 emphasises diagnosis loss
 FOCAL_GAMMA       = 2.0   # focusing exponent; 0 = weighted BCE, 2 = standard focal
 FOCAL_ALPHA       = 0.75  # positive-class weight; addresses severe label imbalance
 
-# ── Graph (Phase 2) ────────────────────────────────────────────────────────────
+# ── Graph (Phase 2) — GNN architecture ────────────────────────────────────────
 GRAPH_HIDDEN_DIM  = 256
 GAT_HEADS         = 4
 GAT_LAYERS        = 2
 GAT_DROPOUT       = 0.3
+
+# ── Multi-Source KG edge thresholds ───────────────────────────────────────────
+# Co-coding edges (concept→code): add edge when training-data NPMI exceeds this
+GRAPH_COCODING_NPMI_MIN    = 0.05
+
+# Competitive edges (code↔code): exclusivity score threshold and minimum
+# frequency — both codes must appear at least this many times in training data
+GRAPH_COMPETITIVE_MIN      = 0.60
+GRAPH_COMPETITIVE_MIN_FREQ = 50
+
+# PubMed co-mention edges (concept↔concept)
+GRAPH_PUBMED_NPMI_MIN      = 0.10
+
+# ── PubMed (Phase 2 KG enrichment) ────────────────────────────────────────────
+# Set to False to skip PubMed fetching (graph still uses UMLS + data-driven edges)
+USE_PUBMED_EDGES           = True
+PUBMED_ABSTRACTS_PER_CODE  = 200       # abstracts fetched per ICD-10 condition
+PUBMED_CACHE_JSON          = GRAPH_P2 / "pubmed_abstracts_cache.json"
 
 # ── RAG (Phase 3) ──────────────────────────────────────────────────────────────
 RAG_MODEL_NAME        = "sentence-transformers/all-MiniLM-L6-v2"
