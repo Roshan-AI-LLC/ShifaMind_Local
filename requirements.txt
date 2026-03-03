@@ -37,5 +37,8 @@ networkx>=3.2.0
 # ── Training utilities ────────────────────────────────────────────────────────
 tqdm>=4.66.0
 
+# ── PubMed / NCBI (Phase 2 KG enrichment) ────────────────────────────────────
+biopython>=1.81       # Entrez API for PubMed abstract fetching
+
 # ── Optional but recommended ──────────────────────────────────────────────────
 accelerate>=0.27.0    # HuggingFace training utilities (optional)
