@@ -279,6 +279,9 @@ for epoch in range(config.NUM_EPOCHS_P1):
     if val_metrics["dx_f1"] > best_f1:
         best_f1 = val_metrics["dx_f1"]
         save_best_checkpoint(ckpt_state, _BEST_CKPT)
+        # Also write to the fixed-path location so Phase 2 can always find it
+        # without knowing the run_id.
+        save_best_checkpoint(ckpt_state, config.P1_BEST_CKPT)
         log.info(f"  New best val dx_f1 = {best_f1:.4f}")
 
 log.info(f"Training done. Best val dx_f1 = {best_f1:.4f}")

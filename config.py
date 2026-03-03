@@ -84,6 +84,8 @@ P2_CONCEPT_EMBS        = CONCEPT_STORE / "phase2_concept_embeddings.pt"
 # ── Phase 1 ────────────────────────────────────────────────────────────────────
 CKPT_P1                = LOCAL / "checkpoints" / "phase1"
 # Best checkpoint → CKPT_P1/<run_id>/phase1_best.pt  (run_id = YYYYMMDD_HHMMSS)
+# Fixed-path copy of the most recent best — read by Phase 2 for BERT warm-start
+P1_BEST_CKPT           = CKPT_P1 / "phase1_best.pt"
 
 RESULTS_P1             = LOCAL / "results" / "phase1"
 P1_RESULTS_JSON        = RESULTS_P1 / "results.json"
