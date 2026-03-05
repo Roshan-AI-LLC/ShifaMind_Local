@@ -158,7 +158,11 @@ class MultiSourceKGBuilder:
         """
         mrconso = config.UMLS_MRCONSO
         if not mrconso.exists():
-            log.error(f"MRCONSO.RRF not found at {mrconso}")
+            log.error(
+                f"MRCONSO.RRF not found at:\n  {mrconso}\n"
+                "Google Drive may not be mounted or the file is cloud-only.\n"
+                "Make the file available offline, then delete graph_data.pt to rebuild."
+            )
             return
 
         concept_set = {c.lower() for c in self.concepts}
@@ -215,9 +219,16 @@ class MultiSourceKGBuilder:
 
     def _add_umls_edges(self) -> None:
         """Parse MRREL.RRF and add weighted ontological edges."""
+        # Reset counter — used later by to_pyg() and cache-invalidation logic
+        self.umls_edge_count: int = 0
+
         mrrel = config.UMLS_MRREL
         if not mrrel.exists():
-            log.error(f"MRREL.RRF not found at {mrrel}")
+            log.error(
+                f"MRREL.RRF not found at:\n  {mrrel}\n"
+                "Google Drive may not be mounted or the file is cloud-only.\n"
+                "Make the file available offline, then delete graph_data.pt to rebuild."
+            )
             return
 
         keep_rels = {"CHD", "PAR", "isa", "RB", "RN", "SY"}
@@ -259,6 +270,7 @@ class MultiSourceKGBuilder:
                         self.G.add_edge(n1, n2, edge_type=f"umls_{rel}", weight=w)
                         umls_edges += 1
 
+        self.umls_edge_count = umls_edges
         log.info(f"UMLS edges added: {umls_edges:,}")
 
     # ------------------------------------------------------------------
@@ -631,10 +643,11 @@ class MultiSourceKGBuilder:
         )
 
         data = Data(x=x, edge_index=edge_index, edge_attr=edge_attr)
-        data.node_type_mask = node_type_mask
-        data.node_to_idx    = node_to_idx
-        data.idx_to_node    = {i: n for n, i in node_to_idx.items()}
-        data.graph_version  = _GRAPH_VERSION
+        data.node_type_mask  = node_type_mask
+        data.node_to_idx     = node_to_idx
+        data.idx_to_node     = {i: n for n, i in node_to_idx.items()}
+        data.graph_version   = _GRAPH_VERSION
+        data.umls_edge_count = getattr(self, "umls_edge_count", 0)
 
         log.info(
             f"PyG Data: {data.x.shape[0]} nodes × {data.x.shape[1]}-dim, "
@@ -687,18 +700,32 @@ def build_and_save_graph(
             "for the multi-source KG.  Pass them from phase2_train.py."
         )
 
-    # Cache-hit check: skip only if saved graph has the current version tag
+    # Cache-hit check: skip only if saved graph is current AND complete
     if config.GRAPH_DATA_PT.exists():
         try:
             existing = torch.load(
                 config.GRAPH_DATA_PT, map_location="cpu", weights_only=False
             )
             if getattr(existing, "graph_version", "v1") == _GRAPH_VERSION:
-                log.info(
-                    f"Multi-source graph (v2) already cached at "
-                    f"{config.GRAPH_DATA_PT.name} — skipping build."
-                )
-                return
+                umls_was_missing   = getattr(existing, "umls_edge_count", 0) == 0
+                umls_now_available = config.UMLS_MRCONSO.exists()
+                if umls_was_missing and umls_now_available:
+                    log.info(
+                        "Cached graph was built WITHOUT UMLS (Google Drive was offline). "
+                        "UMLS is now available — rebuilding to include ontological edges."
+                    )
+                    # fall through to rebuild
+                else:
+                    if umls_was_missing:
+                        log.warning(
+                            "Using cached graph built WITHOUT UMLS edges. "
+                            "Make MRCONSO.RRF available offline and delete "
+                            f"{config.GRAPH_DATA_PT.name} to trigger a rebuild."
+                        )
+                    log.info(
+                        f"Graph cached ({config.GRAPH_DATA_PT.name}) — skipping build."
+                    )
+                    return
             else:
                 log.info("Stale v1 graph detected — rebuilding with multi-source pipeline.")
         except Exception:

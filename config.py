@@ -176,12 +176,14 @@ MAX_LENGTH        = 512   # increased from 384 — captures more of long clinica
 
 # ── Epochs ─────────────────────────────────────────────────────────────────────
 NUM_EPOCHS_P1     = 12    # increased from 7 — val dx_f1 was still rising at epoch 7
-NUM_EPOCHS_P2     = 7
+NUM_EPOCHS_P2     = 10   # was 7 — val dx_f1 was still rising at epoch 5 (~+0.023/epoch)
 NUM_EPOCHS_P3     = 5
 
 # ── Loss weights ───────────────────────────────────────────────────────────────
 LAMBDA_DX         = 1.0
-LAMBDA_ALIGN      = 0.1   # reduced from 0.5 — 50×111 all-pair alignment adds noise
+LAMBDA_ALIGN      = 0.03  # was 0.1 — align loss was drifting UP during P2 training,
+                          # indicating BERT and concept embeddings were diverging;
+                          # lower weight lets dx loss dominate
 LAMBDA_CONCEPT    = 0.05  # reduced from 0.3 — keyword concept F1 (~0.09) is too noisy
 LAMBDA_DX_P3      = 2.0   # Phase 3 emphasises diagnosis loss
 
