@@ -176,8 +176,16 @@ MAX_LENGTH        = 512   # increased from 384 — captures more of long clinica
 
 # ── Epochs ─────────────────────────────────────────────────────────────────────
 NUM_EPOCHS_P1     = 12    # increased from 7 — val dx_f1 was still rising at epoch 7
-NUM_EPOCHS_P2     = 10   # was 7 — val dx_f1 was still rising at epoch 5 (~+0.023/epoch)
+NUM_EPOCHS_P2     = 12    # 3 frozen (GAT warm-up) + 9 unfrozen (joint fine-tune)
 NUM_EPOCHS_P3     = 5
+
+# ── Phase 2 staged training ─────────────────────────────────────────────────
+# Epochs 1-FREEZE_BERT_EPOCHS: BERT frozen, GAT + heads trained at LR_GAT_P2.
+# Epoch FREEZE_BERT_EPOCHS+1 onward: differential LR — tiny for BERT (preserves
+# Phase 1 quality), moderate for GAT / heads (continues learning graph signal).
+FREEZE_BERT_EPOCHS = 3     # warm-up epochs with BERT frozen
+LR_BERT_P2         = 5e-6  # BERT fine-tune LR after unfreeze (10× smaller than P1)
+LR_GAT_P2          = 2e-4  # GAT / heads / concept-embs LR (fast convergence from scratch)
 
 # ── Loss weights ───────────────────────────────────────────────────────────────
 LAMBDA_DX         = 1.0

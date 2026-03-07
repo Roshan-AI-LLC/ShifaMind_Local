@@ -222,22 +222,53 @@ test_loader  = make_loader(test_ds,  config.VAL_BATCH_SIZE)
 log.info(f"Loaders — train {len(train_loader)} batches  val {len(val_loader)}  test {len(test_loader)}")
 
 # ============================================================================
-# TRAINING SETUP
+# TRAINING SETUP  — staged freeze / unfreeze
 # ============================================================================
 
 criterion = MultiObjectiveLoss(config.LAMBDA_DX, config.LAMBDA_ALIGN, config.LAMBDA_CONCEPT)
 
-# concept_embs_p2 is trained alongside the model
-optimizer = torch.optim.AdamW(
-    list(model.parameters()) + [concept_embs_p2],
-    lr=config.LEARNING_RATE,
-    weight_decay=config.WEIGHT_DECAY,
+# Helpers ──────────────────────────────────────────────────────────────────────
+
+def _non_bert_params(m):
+    """All model parameters whose name does NOT start with 'bert.'"""
+    return [p for n, p in m.named_parameters() if not n.startswith("bert.")]
+
+def _bert_params(m):
+    return [p for n, p in m.named_parameters() if n.startswith("bert.")]
+
+def _make_frozen_optimizer():
+    """High-LR optimizer for GAT / heads only (BERT still frozen)."""
+    return torch.optim.AdamW(
+        _non_bert_params(model) + [concept_embs_p2],
+        lr=config.LR_GAT_P2,
+        weight_decay=config.WEIGHT_DECAY,
+    )
+
+def _make_unfrozen_optimizer():
+    """Differential-LR optimizer: tiny for BERT, moderate for GAT / heads."""
+    return torch.optim.AdamW(
+        [
+            {"params": _bert_params(model),     "lr": config.LR_BERT_P2},
+            {"params": _non_bert_params(model), "lr": config.LR_GAT_P2},
+            {"params": [concept_embs_p2],       "lr": config.LR_GAT_P2},
+        ],
+        weight_decay=config.WEIGHT_DECAY,
+    )
+
+# Phase 2a — freeze BERT, train GAT + heads at high LR ────────────────────────
+for p in base_model.parameters():
+    p.requires_grad_(False)
+log.info(
+    f"BERT FROZEN for first {config.FREEZE_BERT_EPOCHS} epochs "
+    f"(GAT warm-up, lr={config.LR_GAT_P2})"
 )
-num_optimizer_steps = (len(train_loader) // config.GRAD_ACCUM_STEPS) * config.NUM_EPOCHS_P2
+
+optimizer = _make_frozen_optimizer()
+frozen_steps = (len(train_loader) // config.GRAD_ACCUM_STEPS) * config.FREEZE_BERT_EPOCHS
 scheduler = get_linear_schedule_with_warmup(
     optimizer,
-    num_warmup_steps=num_optimizer_steps // 10,
-    num_training_steps=num_optimizer_steps,
+    num_warmup_steps=max(1, frozen_steps // 5),
+    num_training_steps=frozen_steps,
 )
 
 # ============================================================================
@@ -255,9 +286,32 @@ history = {"train_loss": [], "val_dx_f1": [], "val_concept_f1": []}
 
 log.info("=" * 60)
 log.info(f"Starting Phase 2 training ({config.NUM_EPOCHS_P2} epochs) …")
+log.info(f"  Stage 1 (frozen BERT)  : epochs 1-{config.FREEZE_BERT_EPOCHS}  lr={config.LR_GAT_P2}")
+log.info(f"  Stage 2 (unfrozen BERT): epochs {config.FREEZE_BERT_EPOCHS + 1}-{config.NUM_EPOCHS_P2}  BERT lr={config.LR_BERT_P2}  GAT lr={config.LR_GAT_P2}")
+log.info(f"  Residual graph_scale   : starts at sigmoid(-5)≈0.007 → grows as GAT improves")
 log.info("=" * 60)
 
 for epoch in range(config.NUM_EPOCHS_P2):
+
+    # ── Phase 2b: unfreeze BERT with differential LR after warm-up ────────────
+    if epoch == config.FREEZE_BERT_EPOCHS:
+        for p in base_model.parameters():
+            p.requires_grad_(True)
+        optimizer = _make_unfrozen_optimizer()
+        remaining_steps = (
+            (len(train_loader) // config.GRAD_ACCUM_STEPS)
+            * (config.NUM_EPOCHS_P2 - config.FREEZE_BERT_EPOCHS)
+        )
+        scheduler = get_linear_schedule_with_warmup(
+            optimizer,
+            num_warmup_steps=max(1, remaining_steps // 10),
+            num_training_steps=remaining_steps,
+        )
+        log.info(
+            f"BERT UNFROZEN at epoch {epoch + 1} — "
+            f"BERT lr={config.LR_BERT_P2}  GAT lr={config.LR_GAT_P2}"
+        )
+
     model.train()
     epoch_losses = defaultdict(list)
 
