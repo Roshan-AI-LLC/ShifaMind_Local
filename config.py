@@ -189,9 +189,13 @@ LR_GAT_P2          = 2e-4  # GAT / heads / concept-embs LR (fast convergence fro
 
 # ── Loss weights ───────────────────────────────────────────────────────────────
 LAMBDA_DX         = 1.0
-LAMBDA_ALIGN      = 0.0   # disabled for Phase 2 — the graph deliberately diverges
-                          # diagnosis scores from concept scores (that is the point);
-                          # penalising that divergence was actively fighting the GAT
+# Phase 2: LAMBDA_ALIGN = 0.0 — the residual GAT path deliberately diverges
+# diagnosis scores from concept-only scores; penalising that divergence fights
+# the graph. Concept coherence is preserved by LAMBDA_CONCEPT alone.
+# Phase 3: restored to 0.03 via LAMBDA_ALIGN_P3 to re-enforce interpretability
+# once the graph signal is learned and stabilised.
+LAMBDA_ALIGN      = 0.0
+LAMBDA_ALIGN_P3   = 0.03  # re-enabled for Phase 3 (RAG + frozen concept embeddings)
 LAMBDA_CONCEPT    = 0.05  # reduced from 0.3 — keyword concept F1 (~0.09) is too noisy
 LAMBDA_DX_P3      = 2.0   # Phase 3 emphasises diagnosis loss
 
