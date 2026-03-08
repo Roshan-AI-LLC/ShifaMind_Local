@@ -189,9 +189,9 @@ LR_GAT_P2          = 2e-4  # GAT / heads / concept-embs LR (fast convergence fro
 
 # ── Loss weights ───────────────────────────────────────────────────────────────
 LAMBDA_DX         = 1.0
-LAMBDA_ALIGN      = 0.03  # was 0.1 — align loss was drifting UP during P2 training,
-                          # indicating BERT and concept embeddings were diverging;
-                          # lower weight lets dx loss dominate
+LAMBDA_ALIGN      = 0.0   # disabled for Phase 2 — the graph deliberately diverges
+                          # diagnosis scores from concept scores (that is the point);
+                          # penalising that divergence was actively fighting the GAT
 LAMBDA_CONCEPT    = 0.05  # reduced from 0.3 — keyword concept F1 (~0.09) is too noisy
 LAMBDA_DX_P3      = 2.0   # Phase 3 emphasises diagnosis loss
 
