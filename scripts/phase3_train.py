@@ -227,7 +227,7 @@ log.info(f"Loaders — train {len(train_loader)} batches  val {len(val_loader)} 
 # ============================================================================
 
 # LAMBDA_DX_P3 = 2.0 to emphasise diagnosis loss in Phase 3
-criterion = MultiObjectiveLoss(config.LAMBDA_DX_P3, config.LAMBDA_ALIGN, config.LAMBDA_CONCEPT)
+criterion = MultiObjectiveLoss(config.LAMBDA_DX_P3, config.LAMBDA_ALIGN_P3, config.LAMBDA_CONCEPT)
 
 # Only model parameters — concept_embs_bert is frozen (not passed to optimizer)
 optimizer = torch.optim.AdamW(
