@@ -115,10 +115,34 @@ EVIDENCE_P3            = LOCAL / "evidence_store"
 EVIDENCE_CORPUS_JSON   = EVIDENCE_P3 / "evidence_corpus.json"
 FAISS_INDEX            = EVIDENCE_P3 / "faiss.index"
 
+# Phase 3 can be run on top of either Phase 1 or Phase 2 checkpoint.
+# Each base phase gets its own checkpoint and results directory so runs
+# can coexist and be compared cleanly.
 CKPT_P3                = LOCAL / "checkpoints" / "phase3"
-# Best checkpoint → CKPT_P3/<run_id>/phase3_best.pth
+CKPT_P3_FROM_P1        = LOCAL / "checkpoints" / "phase3_from_p1"
+CKPT_P3_FROM_P2        = LOCAL / "checkpoints" / "phase3_from_p2"
 
 RESULTS_P3             = LOCAL / "results" / "phase3"
+RESULTS_P3_FROM_P1     = LOCAL / "results" / "phase3_from_p1"
+RESULTS_P3_FROM_P2     = LOCAL / "results" / "phase3_from_p2"
+
+# --- convenience accessors (resolved at runtime via get_p3_paths()) ----------
+# Use config.get_p3_paths(base_phase=1 or 2) to get (ckpt_dir, results_dir)
+
+def get_p3_paths(base_phase: int = 2):
+    """Return (ckpt_dir, results_dir) for the given base phase."""
+    if base_phase == 1:
+        ckpt_dir    = CKPT_P3_FROM_P1
+        results_dir = RESULTS_P3_FROM_P1
+    else:
+        ckpt_dir    = CKPT_P3_FROM_P2
+        results_dir = RESULTS_P3_FROM_P2
+    ckpt_dir.mkdir(parents=True, exist_ok=True)
+    results_dir.mkdir(parents=True, exist_ok=True)
+    return ckpt_dir, results_dir
+
+
+# Legacy flat paths (kept for backward compatibility with any existing Phase 3 runs)
 P3_RESULTS_JSON        = RESULTS_P3 / "results.json"
 P3_TEST_PREDS_NPY      = RESULTS_P3 / "test_predictions.npy"
 P3_TEST_PROBS_NPY      = RESULTS_P3 / "test_probabilities.npy"
@@ -141,8 +165,8 @@ METRICS_JSONL          = LOGS / "metrics.jsonl"
 _ALL_OUTPUT_DIRS = [
     SHARED_DATA,
     CONCEPT_STORE,
-    CKPT_P1, CKPT_P2, CKPT_P3,
-    RESULTS_P1, RESULTS_P2, RESULTS_P3,
+    CKPT_P1, CKPT_P2, CKPT_P3, CKPT_P3_FROM_P1, CKPT_P3_FROM_P2,
+    RESULTS_P1, RESULTS_P2, RESULTS_P3, RESULTS_P3_FROM_P1, RESULTS_P3_FROM_P2,
     GRAPH_P2,
     EVIDENCE_P3,
     LOGS,
@@ -177,7 +201,7 @@ MAX_LENGTH        = 512   # increased from 384 — captures more of long clinica
 # ── Epochs ─────────────────────────────────────────────────────────────────────
 NUM_EPOCHS_P1     = 12    # increased from 7 — val dx_f1 was still rising at epoch 7
 NUM_EPOCHS_P2     = 12    # 3 frozen (GAT warm-up) + 9 unfrozen (joint fine-tune)
-NUM_EPOCHS_P3     = 5
+NUM_EPOCHS_P3     = 8     # increased from 5 — RAG layers need more steps to converge
 
 # ── Phase 2 staged training ─────────────────────────────────────────────────
 # Epochs 1-FREEZE_BERT_EPOCHS: BERT frozen, GAT + heads trained at LR_GAT_P2.
@@ -229,11 +253,15 @@ PUBMED_CACHE_JSON          = GRAPH_P2 / "pubmed_abstracts_cache.json"
 
 # ── RAG (Phase 3) ──────────────────────────────────────────────────────────────
 RAG_MODEL_NAME        = "sentence-transformers/all-MiniLM-L6-v2"
-RAG_TOP_K             = 3
-RAG_THRESHOLD         = 0.7
-RAG_GATE_MAX          = 0.4    # cap RAG influence at 40 %
-PROTOTYPES_PER_DX     = 20
-RAG_ENCODE_BATCH_SIZE = 32     # sentence-transformers encode batch (MPS-safe)
+RAG_TOP_K             = 5      # increased from 3 — more evidence per query
+# Threshold: concept-name queries are shorter and more keyword-focused than
+# full clinical notes, so cosine similarity with KB passages is higher.
+# 0.45 is appropriate for concept-name → KB passage matching.
+# (Old 0.7 was designed for full-note queries and caused ~0% retrieval hits.)
+RAG_THRESHOLD         = 0.45
+RAG_GATE_MAX          = 0.35   # cap RAG influence — Phase 2 base dominates
+PROTOTYPES_PER_DX     = 50     # increased from 20 — richer MIMIC prototype pool
+RAG_ENCODE_BATCH_SIZE = 64     # sentence-transformers encode batch (MPS-safe)
 
 # ── Threshold tuning ───────────────────────────────────────────────────────────
 THRESHOLD_CANDIDATES = [round(t, 2) for t in [x / 100 for x in range(5, 96, 5)]]

@@ -2,19 +2,21 @@
 """
 scripts/phase3_train.py
 
-Phase 3 training: Phase 2 GAT model + gated FAISS RAG augmentation
+Phase 3 training: Phase 2 (or Phase 1) model + gated FAISS RAG augmentation
 → Top-50 ICD-10 multilabel classification.
 
-Requires Phase 2 to have completed first.  The Phase 2 concept
-embeddings are loaded once and FROZEN (not updated during Phase 3).
-Only the RAG projection/gate layers and the Phase 2 model weights
-are fine-tuned.
+Supports two base-phase modes:
+  --base-phase 2  (default) — starts from Phase 2 best checkpoint (BERT + GAT).
+  --base-phase 1            — starts from Phase 1 best checkpoint (BERT only;
+                              GAT layers are freshly initialised with graph_scale
+                              fixed at −5 so GAT contribution ≈ 0 at start).
 
 Run:
     cd ShifaMind_Local
-    python scripts/phase3_train.py
+    python scripts/phase3_train.py              # Phase 2 base (default)
+    python scripts/phase3_train.py --base-phase 1   # Phase 1 base
 
-Inputs (from Phase 2):
+Required inputs (Phase 2 base):
     shifamind_local/shared_data/train_split.pkl
     shifamind_local/shared_data/val_split.pkl
     shifamind_local/shared_data/test_split.pkl
@@ -24,20 +26,23 @@ Inputs (from Phase 2):
     shifamind_local/shared_data/top50_icd10_info.json
     shifamind_local/concept_store/phase2_concept_embeddings.pt
     shifamind_local/graph/phase2/graph_data.pt
-    shifamind_local/checkpoints/phase2/phase2_best.pt
+    shifamind_local/checkpoints/phase2/<run_id>/phase2_best.pt
 
-Outputs:
+Additional requirements for Phase 1 base (instead of Phase 2 checkpoint):
+    shifamind_local/concept_store/phase1_concept_embeddings.pt
+    shifamind_local/checkpoints/phase1/<run_id>/phase1_best.pt
+
+Outputs (written to phase-specific subdirs):
     shifamind_local/evidence_store/evidence_corpus.json
     shifamind_local/evidence_store/faiss.index
-    shifamind_local/checkpoints/phase3/phase3_best.pth
-    shifamind_local/checkpoints/phase3/phase3_epoch_N.pth
-    shifamind_local/results/phase3/results.json
-    shifamind_local/results/phase3/test_predictions.npy
-    shifamind_local/results/phase3/test_probabilities.npy
-    shifamind_local/results/phase3/test_labels.npy
-    logs/shifamind.log
-    logs/metrics.jsonl
+    shifamind_local/checkpoints/phase3_from_p{N}/<run_id>/phase3_best.pth
+    shifamind_local/checkpoints/phase3_from_p{N}/<run_id>/phase3_epoch_N.pth
+    shifamind_local/results/phase3_from_p{N}/results.json
+    shifamind_local/results/phase3_from_p{N}/test_predictions.npy
+    shifamind_local/results/phase3_from_p{N}/test_probabilities.npy
+    shifamind_local/results/phase3_from_p{N}/test_labels.npy
 """
+import argparse
 import json
 import pickle
 import sys
@@ -50,6 +55,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import numpy as np
 import pandas as pd
 import torch
+import torch.nn as nn
 from sklearn.metrics import f1_score, precision_score, recall_score
 from tqdm.auto import tqdm
 from transformers import AutoModel, AutoTokenizer, get_linear_schedule_with_warmup
@@ -66,7 +72,24 @@ from utils import (
 )
 
 # ============================================================================
-# DEVICE
+# ARGS
+# ============================================================================
+
+parser = argparse.ArgumentParser(description="ShifaMind Phase 3 Training")
+parser.add_argument(
+    "--base-phase", type=int, choices=[1, 2], default=2,
+    help="Which phase checkpoint to start from (1 = Phase 1 BERT, 2 = Phase 2 GAT+BERT). "
+         "Default: 2",
+)
+parser.add_argument(
+    "--rebuild-corpus", action="store_true",
+    help="Force rebuild of the evidence corpus and FAISS index even if cached.",
+)
+args = parser.parse_args()
+BASE_PHASE = args.base_phase
+
+# ============================================================================
+# DEVICE + LOGGING
 # ============================================================================
 
 def _get_device() -> torch.device:
@@ -84,25 +107,42 @@ torch.manual_seed(config.SEED)
 np.random.seed(config.SEED)
 
 log.info("=" * 72)
-log.info("ShifaMind Phase 3 — Training (GAT + FAISS RAG)")
+log.info(f"ShifaMind Phase 3 — Training (base: Phase {BASE_PHASE})")
 log.info("=" * 72)
-log.info(f"Device : {device}")
+log.info(f"Device     : {device}")
+log.info(f"Base phase : {BASE_PHASE}")
+
+# Resolve phase-specific checkpoint and results directories
+run_ckpt_root, RESULTS_DIR = config.get_p3_paths(BASE_PHASE)
 
 # ============================================================================
 # LOAD SHARED DATA
 # ============================================================================
 
-log.info("Loading splits and concept labels from Phase 2 …")
-# Resolve the latest phase 2 checkpoint across any previous runs
-p2_best_path = find_latest_checkpoint(config.CKPT_P2, "phase2_best.pt")
+log.info("Loading splits and concept labels …")
 for path, name in [
-    (config.TRAIN_SPLIT,       "train_split.pkl"),
-    (config.VAL_SPLIT,         "val_split.pkl"),
-    (config.TEST_SPLIT,        "test_split.pkl"),
-    (config.P2_CONCEPT_EMBS,   "phase2_concept_embeddings.pt"),
-    (config.GRAPH_DATA_PT,     "graph_data.pt"),
+    (config.TRAIN_SPLIT,     "train_split.pkl"),
+    (config.VAL_SPLIT,       "val_split.pkl"),
+    (config.TEST_SPLIT,      "test_split.pkl"),
+    (config.GRAPH_DATA_PT,   "graph_data.pt"),
+    (config.TOP50_INFO_OUT,  "top50_icd10_info.json"),
 ]:
-    assert path.exists(), f"{name} not found at {path} — run phase2_train.py first"
+    if not path.exists():
+        log.error(f"Required file not found: {path}")
+        log.error(f"  → Run phase2_train.py first to generate shared data.")
+        sys.exit(1)
+
+# Concept embeddings depend on base phase
+if BASE_PHASE == 2:
+    CONCEPT_EMBS_PATH = config.P2_CONCEPT_EMBS
+    CONCEPT_PHASE_NAME = "Phase 2"
+else:
+    CONCEPT_EMBS_PATH = config.P1_CONCEPT_EMBS
+    CONCEPT_PHASE_NAME = "Phase 1"
+
+if not CONCEPT_EMBS_PATH.exists():
+    log.error(f"{CONCEPT_PHASE_NAME} concept embeddings not found: {CONCEPT_EMBS_PATH}")
+    sys.exit(1)
 
 with open(config.TRAIN_SPLIT, "rb") as f: df_train = pickle.load(f)
 with open(config.VAL_SPLIT,   "rb") as f: df_val   = pickle.load(f)
@@ -118,7 +158,10 @@ TOP_50_CODES = top50_info["top_50_codes"]
 NUM_LABELS   = len(TOP_50_CODES)
 NUM_CONCEPTS = len(config.GLOBAL_CONCEPTS)
 
-log.info(f"Dataset — train {len(df_train):,}  val {len(df_val):,}  test {len(df_test):,}")
+log.info(
+    f"Dataset — train {len(df_train):,}  val {len(df_val):,}  "
+    f"test {len(df_test):,}  labels {NUM_LABELS}  concepts {NUM_CONCEPTS}"
+)
 
 # ============================================================================
 # LOAD BIOCLINICALBERT + GRAPH
@@ -132,10 +175,10 @@ log.info("Loading graph data …")
 graph_data = torch.load(config.GRAPH_DATA_PT, map_location=device, weights_only=False)
 
 # ============================================================================
-# BUILD PHASE 2 MODEL & LOAD WEIGHTS
+# RECONSTRUCT PHASE 2 MODEL ARCHITECTURE
 # ============================================================================
 
-log.info("Reconstructing Phase 2 model and loading best checkpoint …")
+log.info("Constructing Phase 2 model architecture …")
 gat_encoder = GATEncoder(
     in_channels     = 768,
     hidden_channels = config.GRAPH_HIDDEN_DIM,
@@ -154,26 +197,80 @@ phase2_model = ShifaMindPhase2GAT(
     concepts_list    = config.GLOBAL_CONCEPTS,
 ).to(device)
 
-p2_ckpt = load_checkpoint(p2_best_path, device)
-phase2_model.load_state_dict(p2_ckpt["model_state_dict"])
-log.info(f"Phase 2 weights loaded (epoch {p2_ckpt.get('epoch', '?') + 1})")
+# ============================================================================
+# LOAD BASE CHECKPOINT (Phase 1 or Phase 2)
+# ============================================================================
 
-# Load Phase 2 concept embeddings — FROZEN throughout Phase 3
-p2_embs_ckpt       = torch.load(config.P2_CONCEPT_EMBS, map_location=device, weights_only=False)
-concept_embs_bert  = p2_embs_ckpt["concept_embeddings"].to(device).detach()
-# Freeze: no gradient updates on concept_embs_bert
+if BASE_PHASE == 2:
+    # ── Phase 2 base: full model state dict ──────────────────────────────────
+    p2_ckpt_path = find_latest_checkpoint(config.CKPT_P2, "phase2_best.pt")
+    p2_ckpt      = load_checkpoint(p2_ckpt_path, device)
+    phase2_model.load_state_dict(p2_ckpt["model_state_dict"])
+    log.info(f"Phase 2 weights loaded (epoch {p2_ckpt.get('epoch', '?') + 1})  ← {p2_ckpt_path.name}")
+
+else:
+    # ── Phase 1 base: BERT weights only; GAT/heads are freshly initialised ───
+    p1_ckpt_path = find_latest_checkpoint(config.CKPT_P1, "phase1_best.pt")
+    p1_ckpt      = load_checkpoint(p1_ckpt_path, device)
+    p1_state     = p1_ckpt["model_state_dict"]
+
+    # Phase 1 stores BERT under 'base_model.*'; Phase 2 stores it under 'bert.*'
+    # Remap keys and load with strict=False (GAT / head keys will be skipped)
+    bert_state = {
+        k.replace("base_model.", "bert.", 1): v
+        for k, v in p1_state.items()
+        if k.startswith("base_model.")
+    }
+    missing, unexpected = phase2_model.load_state_dict(bert_state, strict=False)
+    log.info(
+        f"Phase 1 BERT weights loaded into Phase 2 model  ← {p1_ckpt_path.name}"
+    )
+    log.info(f"  Loaded  : {len(bert_state)} tensors")
+    log.info(f"  Missing : {len(missing)} (Phase 2-specific layers — random init OK)")
+    log.info(f"  Unexpected: {len(unexpected)}")
+
+    # Ensure graph_scale stays near −5 so GAT contributes ≈ 0 at start
+    with torch.no_grad():
+        phase2_model.graph_scale.fill_(-5.0)
+    log.info("  graph_scale fixed to −5.0 (GAT contribution disabled at init)")
+
+# ============================================================================
+# LOAD CONCEPT EMBEDDINGS  (frozen throughout Phase 3)
+# ============================================================================
+
+embs_ckpt         = torch.load(CONCEPT_EMBS_PATH, map_location=device, weights_only=False)
+concept_embs_bert = embs_ckpt["concept_embeddings"].to(device).detach()
 concept_embs_bert.requires_grad_(False)
-log.info(f"Phase 2 concept embeddings loaded (frozen): {tuple(concept_embs_bert.shape)}")
+log.info(
+    f"{CONCEPT_PHASE_NAME} concept embeddings loaded (frozen): "
+    f"{tuple(concept_embs_bert.shape)}  ← {CONCEPT_EMBS_PATH.name}"
+)
 
 # ============================================================================
 # BUILD / LOAD RAG EVIDENCE CORPUS & FAISS INDEX
 # ============================================================================
 
+if args.rebuild_corpus and config.EVIDENCE_CORPUS_JSON.exists():
+    log.info("--rebuild-corpus: removing cached corpus and index.")
+    config.EVIDENCE_CORPUS_JSON.unlink(missing_ok=True)
+    config.FAISS_INDEX.unlink(missing_ok=True)
+
 if config.EVIDENCE_CORPUS_JSON.exists():
-    log.info(f"Loading cached evidence corpus from {config.EVIDENCE_CORPUS_JSON.name} …")
+    log.info(f"Loading cached evidence corpus ← {config.EVIDENCE_CORPUS_JSON.name} …")
     with open(config.EVIDENCE_CORPUS_JSON) as f:
         evidence_corpus = json.load(f)
+    # Auto-rebuild if corpus size suggests stale config (e.g. PROTOTYPES_PER_DX changed)
+    expected_min = len(TOP_50_CODES) * (1 + 1)  # at least 1 KB + 1 prototype per code
+    if len(evidence_corpus) < expected_min:
+        log.warning(
+            f"Cached corpus has only {len(evidence_corpus)} passages "
+            f"(expected ≥ {expected_min}). Rebuilding …"
+        )
+        evidence_corpus = None
 else:
+    evidence_corpus = None
+
+if evidence_corpus is None:
     log.info("Building evidence corpus …")
     evidence_corpus = build_evidence_corpus(
         top50_codes=TOP_50_CODES,
@@ -181,6 +278,7 @@ else:
         prototypes_per_dx=config.PROTOTYPES_PER_DX,
         seed=config.SEED,
     )
+    config.EVIDENCE_P3.mkdir(parents=True, exist_ok=True)
     with open(config.EVIDENCE_CORPUS_JSON, "w") as f:
         json.dump(evidence_corpus, f, indent=2)
     log.info(f"Evidence corpus saved → {config.EVIDENCE_CORPUS_JSON.name}")
@@ -200,13 +298,16 @@ rag.build_index(evidence_corpus, index_cache_path=config.FAISS_INDEX)
 
 log.info("Building Phase 3 RAG model …")
 model = ShifaMindPhase3RAG(
-    phase2_model=phase2_model,
-    rag_retriever=rag,
-    hidden_size=768,
+    phase2_model  = phase2_model,
+    rag_retriever = rag,
+    num_diagnoses = NUM_LABELS,
+    hidden_size   = 768,
+    concepts_list = config.GLOBAL_CONCEPTS,
 ).to(device)
 
-total_params = sum(p.numel() for p in model.parameters())
-log.info(f"Phase 3 model: {total_params:,} parameters (concept_embs_bert frozen separately)")
+total_params    = sum(p.numel() for p in model.parameters())
+trainable_all   = sum(p.numel() for p in model.parameters() if p.requires_grad)
+log.info(f"Phase 3 model: {total_params:,} parameters total (concept_embs frozen separately)")
 
 # ============================================================================
 # DATASETS & LOADERS
@@ -220,25 +321,37 @@ train_loader = make_loader(train_ds, config.TRAIN_BATCH_SIZE, shuffle=True)
 val_loader   = make_loader(val_ds,   config.VAL_BATCH_SIZE)
 test_loader  = make_loader(test_ds,  config.VAL_BATCH_SIZE)
 
-log.info(f"Loaders — train {len(train_loader)} batches  val {len(val_loader)}  test {len(test_loader)}")
+log.info(
+    f"Loaders — train {len(train_loader)} batches  "
+    f"val {len(val_loader)}  test {len(test_loader)}"
+)
 
 # ============================================================================
 # TRAINING SETUP
 # ============================================================================
 
-# LAMBDA_DX_P3 = 2.0 to emphasise diagnosis loss in Phase 3
 criterion = MultiObjectiveLoss(config.LAMBDA_DX_P3, config.LAMBDA_ALIGN_P3, config.LAMBDA_CONCEPT)
 
-# Only model parameters — concept_embs_bert is frozen (not passed to optimizer)
+# Freeze the GAT encoder and graph projection — they carry learned graph signal
+# from Phase 2 that we do not want to perturb with RAG updates.
+# For Phase 1 base: GAT is random (graph_scale≈0) so freezing it is safe —
+# it contributes nothing and we don't want random gradients to corrupt BERT.
+for name, param in model.phase2_model.named_parameters():
+    if name.startswith(("gat_encoder", "graph_proj", "concept_fusion")) or name == "graph_scale":
+        param.requires_grad_(False)
+
+trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+log.info(f"Phase 3 trainable parameters: {trainable:,}  (GAT encoder + graph_scale frozen)")
+
 optimizer = torch.optim.AdamW(
-    model.parameters(),
+    filter(lambda p: p.requires_grad, model.parameters()),
     lr=config.LEARNING_RATE,
     weight_decay=config.WEIGHT_DECAY,
 )
 num_optimizer_steps = (len(train_loader) // config.GRAD_ACCUM_STEPS) * config.NUM_EPOCHS_P3
 scheduler = get_linear_schedule_with_warmup(
     optimizer,
-    num_warmup_steps=num_optimizer_steps // 10,
+    num_warmup_steps=max(1, num_optimizer_steps // 10),
     num_training_steps=num_optimizer_steps,
 )
 
@@ -247,10 +360,14 @@ scheduler = get_linear_schedule_with_warmup(
 # ============================================================================
 
 RUN_ID       = datetime.now().strftime("%Y%m%d_%H%M%S")
-run_ckpt_dir = config.CKPT_P3 / RUN_ID
+run_ckpt_dir = run_ckpt_root / RUN_ID
 run_ckpt_dir.mkdir(parents=True, exist_ok=True)
+RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 _BEST_CKPT   = run_ckpt_dir / "phase3_best.pth"
-log.info(f"Run ID {RUN_ID} — checkpoints → {run_ckpt_dir}")
+
+log.info(f"Run ID : {RUN_ID}")
+log.info(f"Checkpoints → {run_ckpt_dir}")
+log.info(f"Results     → {RESULTS_DIR}")
 
 best_f1 = 0.0
 history = {"train_loss": [], "val_macro_f1": [], "val_micro_f1": []}
@@ -287,11 +404,15 @@ for epoch in range(config.NUM_EPOCHS_P3):
 
         for k, v in comp.items():
             epoch_losses[k].append(v)
-        pbar.set_postfix(loss=f"{comp['total']:.4f}", dx=f"{comp['dx']:.4f}")
+        pbar.set_postfix(
+            loss=f"{comp['total']:.4f}",
+            dx=f"{comp['dx']:.4f}",
+            gate=f"{outputs.get('rag_gate', 0.0):.3f}",
+        )
 
     avg_loss = float(np.mean(epoch_losses["total"]))
     log.info(
-        f"Epoch {epoch+1} train loss: total={avg_loss:.4f}  "
+        f"Epoch {epoch+1} train: total={avg_loss:.4f}  "
         f"dx={np.mean(epoch_losses['dx']):.4f}  "
         f"align={np.mean(epoch_losses['align']):.4f}  "
         f"concept={np.mean(epoch_losses['concept']):.4f}"
@@ -305,6 +426,8 @@ for epoch in range(config.NUM_EPOCHS_P3):
     log.info(
         f"Epoch {epoch+1} val:   macro_f1={val_metrics['macro_f1']:.4f}  "
         f"micro_f1={val_metrics['micro_f1']:.4f}  "
+        f"precision={val_metrics['precision']:.4f}  "
+        f"recall={val_metrics['recall']:.4f}  "
         f"loss={val_metrics['loss']:.4f}"
     )
 
@@ -315,7 +438,7 @@ for epoch in range(config.NUM_EPOCHS_P3):
     log_metrics("phase3", epoch + 1, {"train_loss": avg_loss, **val_metrics})
     log_memory_usage(device)
 
-    # --- Checkpoint ---
+    # --- Checkpoint (every epoch + track best) ---
     ckpt_state = {
         "epoch"                  : epoch,
         "model_state_dict"       : model.state_dict(),
@@ -323,24 +446,30 @@ for epoch in range(config.NUM_EPOCHS_P3):
         "optimizer_state_dict"   : optimizer.state_dict(),
         "scheduler_state_dict"   : scheduler.state_dict(),
         "macro_f1"               : val_metrics["macro_f1"],
+        "base_phase"             : BASE_PHASE,
         "config": {
             "num_concepts"     : NUM_CONCEPTS,
             "num_diagnoses"    : NUM_LABELS,
             "graph_hidden_dim" : config.GRAPH_HIDDEN_DIM,
             "top_50_codes"     : TOP_50_CODES,
             "lambda_dx"        : config.LAMBDA_DX_P3,
+            "base_phase"       : BASE_PHASE,
         },
     }
+
+    # Save every-epoch checkpoint
+    epoch_ckpt = run_ckpt_dir / f"phase3_epoch_{epoch+1}.pth"
+    torch.save(ckpt_state, epoch_ckpt)
 
     if val_metrics["macro_f1"] > best_f1:
         best_f1 = val_metrics["macro_f1"]
         save_best_checkpoint(ckpt_state, _BEST_CKPT)
-        log.info(f"  New best val macro_f1 = {best_f1:.4f}")
+        log.info(f"  *** New best val macro_f1 = {best_f1:.4f} (epoch {epoch+1})")
 
 log.info(f"Training done. Best val macro_f1 = {best_f1:.4f}")
 
 # ============================================================================
-# FINAL TEST EVALUATION
+# FINAL TEST EVALUATION  (best checkpoint)
 # ============================================================================
 
 log.info("Loading best Phase 3 model for test evaluation …")
@@ -351,7 +480,7 @@ model.eval()
 
 all_dx_probs, all_dx_labels = [], []
 with torch.no_grad():
-    for batch in tqdm(test_loader, desc="Test"):
+    for batch in tqdm(test_loader, desc="Test inference"):
         inp   = batch["input_ids"].to(device)
         mask  = batch["attention_mask"].to(device)
         texts = batch["text"]
@@ -366,7 +495,7 @@ dx_preds  = (dx_probs > 0.5).astype(int)
 macro_f1  = float(f1_score(dx_labels, dx_preds, average="macro",  zero_division=0))
 micro_f1  = float(f1_score(dx_labels, dx_preds, average="micro",  zero_division=0))
 precision = float(precision_score(dx_labels, dx_preds, average="macro", zero_division=0))
-recall    = float(recall_score(dx_labels, dx_preds, average="macro",    zero_division=0))
+recall    = float(recall_score(dx_labels, dx_preds,    average="macro", zero_division=0))
 
 per_class_f1 = [
     float(f1_score(dx_labels[:, i], dx_preds[:, i], zero_division=0))
@@ -374,7 +503,7 @@ per_class_f1 = [
 ]
 
 log.info("=" * 60)
-log.info("Phase 3 — Test Results (threshold = 0.5)")
+log.info(f"Phase 3 (base: Phase {BASE_PHASE}) — Test Results (threshold = 0.5)")
 log.info(f"  Macro F1   : {macro_f1:.4f}")
 log.info(f"  Micro F1   : {micro_f1:.4f}")
 log.info(f"  Precision  : {precision:.4f}")
@@ -385,26 +514,39 @@ log.info("=" * 60)
 # SAVE RESULTS & ARRAYS
 # ============================================================================
 
-np.save(config.P3_TEST_PROBS_NPY,  dx_probs)
-np.save(config.P3_TEST_PREDS_NPY,  dx_preds)
-np.save(config.P3_TEST_LABELS_NPY, dx_labels)
+np.save(RESULTS_DIR / "test_probabilities.npy", dx_probs)
+np.save(RESULTS_DIR / "test_predictions.npy",   dx_preds)
+np.save(RESULTS_DIR / "test_labels.npy",         dx_labels)
 
 results = {
-    "phase"            : "ShifaMind Phase 3",
+    "phase"            : f"ShifaMind Phase 3 (base: Phase {BASE_PHASE})",
+    "base_phase"       : BASE_PHASE,
+    "run_id"           : RUN_ID,
+    "best_val_macro_f1": best_f1,
     "diagnosis_metrics": {
         "macro_f1" : macro_f1,  "micro_f1" : micro_f1,
         "precision": precision, "recall"   : recall,
         "per_class_f1": dict(zip(TOP_50_CODES, per_class_f1)),
     },
     "training_history" : history,
-    "dataset_info"     : {"train": len(df_train), "val": len(df_val), "test": len(df_test)},
+    "dataset_info"     : {
+        "train": len(df_train), "val": len(df_val), "test": len(df_test)
+    },
+    "rag_config"       : {
+        "top_k"          : config.RAG_TOP_K,
+        "threshold"      : config.RAG_THRESHOLD,
+        "gate_max"       : config.RAG_GATE_MAX,
+        "prototypes_per_dx": config.PROTOTYPES_PER_DX,
+        "corpus_size"    : len(evidence_corpus),
+    },
 }
 
-with open(config.P3_RESULTS_JSON, "w") as f:
+with open(RESULTS_DIR / "results.json", "w") as f:
     json.dump(results, f, indent=2)
 
-log.info(f"Results saved         → {config.P3_RESULTS_JSON.name}")
-log.info(f"Test probabilities    → {config.P3_TEST_PROBS_NPY.name}")
-log.info(f"Test predictions      → {config.P3_TEST_PREDS_NPY.name}")
-log.info(f"Test labels           → {config.P3_TEST_LABELS_NPY.name}")
-log.info("Phase 3 training complete.")
+log.info(f"Results saved         → {RESULTS_DIR / 'results.json'}")
+log.info(f"Test probabilities    → {RESULTS_DIR / 'test_probabilities.npy'}")
+log.info(f"Test predictions      → {RESULTS_DIR / 'test_predictions.npy'}")
+log.info(f"Test labels           → {RESULTS_DIR / 'test_labels.npy'}")
+log.info(f"Best checkpoint       → {_BEST_CKPT}")
+log.info(f"Phase 3 training complete  (base: Phase {BASE_PHASE})")
