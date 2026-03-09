@@ -10,7 +10,8 @@ held-out test set using both default (0.5) and optimal thresholds.
 
 Run:
     cd ShifaMind_Local
-    python scripts/phase3_threshold.py
+    python scripts/phase3_threshold.py              # Phase 2 base (default)
+    python scripts/phase3_threshold.py --base-phase 1   # Phase 1 base
 
 Inputs (from Phase 3 training):
     shifamind_local/shared_data/val_split.pkl
@@ -18,17 +19,19 @@ Inputs (from Phase 3 training):
     shifamind_local/shared_data/val_concept_labels.npy
     shifamind_local/shared_data/test_concept_labels.npy
     shifamind_local/shared_data/top50_icd10_info.json
-    shifamind_local/concept_store/phase2_concept_embeddings.pt
+    shifamind_local/concept_store/phase{N}_concept_embeddings.pt
     shifamind_local/graph/phase2/graph_data.pt
-    shifamind_local/checkpoints/phase3/phase3_best.pth
+    shifamind_local/checkpoints/phase3_from_p{N}/<run_id>/phase3_best.pth
     shifamind_local/evidence_store/evidence_corpus.json
     shifamind_local/evidence_store/faiss.index
 
-Outputs:
-    shifamind_local/results/phase3/threshold_tuning.json
-    shifamind_local/results/phase3/final_test_results.json
-    shifamind_local/results/phase3/per_diagnosis_metrics.json
+Outputs (in results/phase3_from_p{N}/):
+    threshold_tuning.json
+    final_test_results.json
+    per_diagnosis_metrics.json
+    per_diagnosis_metrics.csv
 """
+import argparse
 import json
 import pickle
 import sys
@@ -40,8 +43,11 @@ import numpy as np
 import pandas as pd
 import torch
 from sklearn.metrics import (
-    f1_score, precision_score, recall_score,
-    roc_auc_score, average_precision_score,
+    average_precision_score,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
 )
 from tqdm.auto import tqdm
 from transformers import AutoModel, AutoTokenizer
@@ -53,7 +59,19 @@ from rag.retriever import SimpleRAG
 from utils import find_latest_checkpoint, get_logger, load_checkpoint
 
 # ============================================================================
-# DEVICE
+# ARGS
+# ============================================================================
+
+parser = argparse.ArgumentParser(description="ShifaMind Phase 3 Threshold Tuning")
+parser.add_argument(
+    "--base-phase", type=int, choices=[1, 2], default=2,
+    help="Which base phase to evaluate (1 or 2). Must match the training run. Default: 2",
+)
+args = parser.parse_args()
+BASE_PHASE = args.base_phase
+
+# ============================================================================
+# DEVICE + LOGGING
 # ============================================================================
 
 def _get_device() -> torch.device:
@@ -68,24 +86,36 @@ device = _get_device()
 log    = get_logger()
 
 log.info("=" * 72)
-log.info("ShifaMind Phase 3 — Threshold Tuning & Final Evaluation")
+log.info(f"ShifaMind Phase 3 — Threshold Tuning & Final Evaluation (base: Phase {BASE_PHASE})")
 log.info("=" * 72)
-log.info(f"Device : {device}")
+log.info(f"Device     : {device}")
+log.info(f"Base phase : {BASE_PHASE}")
+
+# Resolve phase-specific paths
+CKPT_DIR, RESULTS_DIR = config.get_p3_paths(BASE_PHASE)
+CONCEPT_EMBS_PATH = config.P2_CONCEPT_EMBS if BASE_PHASE == 2 else config.P1_CONCEPT_EMBS
+
+# ============================================================================
+# VALIDATE INPUTS
+# ============================================================================
+
+for path, name in [
+    (config.VAL_SPLIT,         "val_split.pkl"),
+    (config.TEST_SPLIT,        "test_split.pkl"),
+    (CONCEPT_EMBS_PATH,        f"phase{BASE_PHASE}_concept_embeddings.pt"),
+    (config.GRAPH_DATA_PT,     "graph_data.pt"),
+    (config.EVIDENCE_CORPUS_JSON, "evidence_corpus.json"),
+]:
+    if not path.exists():
+        log.error(f"Required file not found: {path}")
+        log.error(f"  → Run phase3_train.py --base-phase {BASE_PHASE} first.")
+        sys.exit(1)
 
 # ============================================================================
 # LOAD SHARED DATA
 # ============================================================================
 
 log.info("Loading splits …")
-p3_best_path = find_latest_checkpoint(config.CKPT_P3, "phase3_best.pth")
-for path, name in [
-    (config.VAL_SPLIT,       "val_split.pkl"),
-    (config.TEST_SPLIT,      "test_split.pkl"),
-    (config.P2_CONCEPT_EMBS, "phase2_concept_embeddings.pt"),
-    (config.GRAPH_DATA_PT,   "graph_data.pt"),
-]:
-    assert path.exists(), f"{name} not found — run phase3_train.py first"
-
 with open(config.VAL_SPLIT,  "rb") as f: df_val  = pickle.load(f)
 with open(config.TEST_SPLIT, "rb") as f: df_test = pickle.load(f)
 
@@ -101,7 +131,7 @@ NUM_CONCEPTS = len(config.GLOBAL_CONCEPTS)
 log.info(f"Val: {len(df_val):,}  Test: {len(df_test):,}")
 
 # ============================================================================
-# REBUILD MODEL ARCHITECTURE
+# REBUILD MODEL
 # ============================================================================
 
 log.info("Loading BioClinicalBERT …")
@@ -131,7 +161,6 @@ phase2_model = ShifaMindPhase2GAT(
 
 # Load evidence corpus + RAG
 log.info("Loading evidence corpus and FAISS index …")
-assert config.EVIDENCE_CORPUS_JSON.exists(), "evidence_corpus.json not found — run phase3_train.py first"
 with open(config.EVIDENCE_CORPUS_JSON) as f:
     evidence_corpus = json.load(f)
 
@@ -143,21 +172,37 @@ rag = SimpleRAG(
 rag.build_index(evidence_corpus, index_cache_path=config.FAISS_INDEX)
 
 model = ShifaMindPhase3RAG(
-    phase2_model=phase2_model,
-    rag_retriever=rag,
-    hidden_size=768,
+    phase2_model  = phase2_model,
+    rag_retriever = rag,
+    num_diagnoses = NUM_LABELS,
+    hidden_size   = 768,
+    concepts_list = config.GLOBAL_CONCEPTS,
 ).to(device)
 
 # Load Phase 3 best checkpoint
-best_ckpt = load_checkpoint(p3_best_path, device)
+p3_best_path = find_latest_checkpoint(CKPT_DIR, "phase3_best.pth")
+best_ckpt    = load_checkpoint(p3_best_path, device)
+
+# Validate checkpoint base_phase matches CLI arg
+ckpt_base = best_ckpt.get("base_phase", None)
+if ckpt_base is not None and ckpt_base != BASE_PHASE:
+    log.warning(
+        f"Checkpoint was trained with base_phase={ckpt_base} "
+        f"but --base-phase={BASE_PHASE} was requested. "
+        f"Proceeding — double-check this is intentional."
+    )
+
 model.load_state_dict(best_ckpt["model_state_dict"])
 model.eval()
 log.info(f"Phase 3 best model loaded (epoch {best_ckpt.get('epoch', '?') + 1})")
 
-# Phase 2 concept embeddings (frozen)
-p2_embs_ckpt      = torch.load(config.P2_CONCEPT_EMBS, map_location=device, weights_only=False)
-concept_embs_bert = p2_embs_ckpt["concept_embeddings"].to(device).detach()
-log.info(f"Phase 2 concept embeddings loaded (frozen): {tuple(concept_embs_bert.shape)}")
+# Phase concept embeddings (frozen)
+embs_ckpt         = torch.load(CONCEPT_EMBS_PATH, map_location=device, weights_only=False)
+concept_embs_bert = embs_ckpt["concept_embeddings"].to(device).detach()
+log.info(
+    f"Phase {BASE_PHASE} concept embeddings loaded (frozen): "
+    f"{tuple(concept_embs_bert.shape)}"
+)
 
 # ============================================================================
 # DATALOADERS
@@ -208,7 +253,8 @@ for j in range(NUM_LABELS):
     val_f1_per_label[j]   = best_f1
 
 log.info(
-    f"Threshold tuning done — mean optimal threshold: {optimal_thresholds.mean():.3f}  "
+    f"Threshold tuning done — "
+    f"mean optimal threshold: {optimal_thresholds.mean():.3f}  "
     f"mean val F1: {val_f1_per_label.mean():.4f}"
 )
 
@@ -218,9 +264,10 @@ threshold_tuning = {
     "mean_val_f1"     : float(val_f1_per_label.mean()),
     "mean_threshold"  : float(optimal_thresholds.mean()),
 }
-with open(config.P3_THRESH_JSON, "w") as f:
+thresh_json = RESULTS_DIR / "threshold_tuning.json"
+with open(thresh_json, "w") as f:
     json.dump(threshold_tuning, f, indent=2)
-log.info(f"Threshold tuning saved → {config.P3_THRESH_JSON.name}")
+log.info(f"Threshold tuning saved → {thresh_json.name}")
 
 # ============================================================================
 # COLLECT TEST PROBABILITIES
@@ -246,32 +293,38 @@ test_labels = np.vstack(test_labels_list)
 # ============================================================================
 
 def compute_metrics(labels, probs, thresholds, label_names):
-    preds = (probs > thresholds).astype(int)
+    """Compute macro/micro aggregate + per-class metrics."""
+    if hasattr(thresholds, "__len__"):
+        preds = (probs > thresholds).astype(int)
+    else:
+        preds = (probs > thresholds).astype(int)
 
-    # Per-class metrics
     per_class = {}
     for j, code in enumerate(label_names):
         n_pos = int(labels[:, j].sum())
+        thr   = float(thresholds[j]) if hasattr(thresholds, "__len__") else float(thresholds)
         per_class[code] = {
             "f1"       : float(f1_score(labels[:, j], preds[:, j], zero_division=0)),
             "precision": float(precision_score(labels[:, j], preds[:, j], zero_division=0)),
             "recall"   : float(recall_score(labels[:, j], preds[:, j], zero_division=0)),
-            "threshold": float(thresholds[j] if hasattr(thresholds, "__len__") else thresholds),
+            "threshold": thr,
             "support"  : n_pos,
         }
-        # AUC / AP only when both classes are present
         if n_pos > 0 and n_pos < len(labels):
-            per_class[code]["auc_roc"] = float(roc_auc_score(labels[:, j], probs[:, j]))
-            per_class[code]["avg_precision"] = float(
-                average_precision_score(labels[:, j], probs[:, j])
-            )
+            try:
+                per_class[code]["auc_roc"]       = float(roc_auc_score(labels[:, j], probs[:, j]))
+                per_class[code]["avg_precision"]  = float(
+                    average_precision_score(labels[:, j], probs[:, j])
+                )
+            except ValueError:
+                pass
 
     return {
-        "macro_f1"  : float(f1_score(labels, preds, average="macro",  zero_division=0)),
-        "micro_f1"  : float(f1_score(labels, preds, average="micro",  zero_division=0)),
-        "macro_p"   : float(precision_score(labels, preds, average="macro", zero_division=0)),
-        "macro_r"   : float(recall_score(labels, preds, average="macro",    zero_division=0)),
-        "per_class" : per_class,
+        "macro_f1": float(f1_score(labels, preds, average="macro",  zero_division=0)),
+        "micro_f1": float(f1_score(labels, preds, average="micro",  zero_division=0)),
+        "macro_p" : float(precision_score(labels, preds, average="macro", zero_division=0)),
+        "macro_r" : float(recall_score(labels,    preds, average="macro", zero_division=0)),
+        "per_class": per_class,
     }
 
 
@@ -279,16 +332,22 @@ default_metrics = compute_metrics(test_labels, test_probs, 0.5,                l
 tuned_metrics   = compute_metrics(test_labels, test_probs, optimal_thresholds, label_names=TOP_50_CODES)
 
 log.info("=" * 60)
-log.info("Phase 3 — Final Test Results")
-log.info(f"  Default (0.5)  — Macro F1: {default_metrics['macro_f1']:.4f}  "
-         f"Micro: {default_metrics['micro_f1']:.4f}")
-log.info(f"  Tuned          — Macro F1: {tuned_metrics['macro_f1']:.4f}  "
-         f"Micro: {tuned_metrics['micro_f1']:.4f}")
-log.info(f"  Precision (tuned): {tuned_metrics['macro_p']:.4f}  "
-         f"Recall (tuned): {tuned_metrics['macro_r']:.4f}")
+log.info(f"Phase 3 (base: Phase {BASE_PHASE}) — Final Test Results")
+log.info(
+    f"  Default (0.5)  — Macro F1: {default_metrics['macro_f1']:.4f}  "
+    f"Micro: {default_metrics['micro_f1']:.4f}"
+)
+log.info(
+    f"  Tuned          — Macro F1: {tuned_metrics['macro_f1']:.4f}  "
+    f"Micro: {tuned_metrics['micro_f1']:.4f}"
+)
+log.info(
+    f"  Precision (tuned): {tuned_metrics['macro_p']:.4f}  "
+    f"Recall (tuned): {tuned_metrics['macro_r']:.4f}"
+)
 log.info("=" * 60)
 
-# Per-diagnosis detail table
+# Per-diagnosis detail
 per_dx_rows = []
 for code in TOP_50_CODES:
     dm = tuned_metrics["per_class"][code]
@@ -305,7 +364,6 @@ for code in TOP_50_CODES:
     })
 per_dx_df = pd.DataFrame(per_dx_rows).sort_values("f1", ascending=False)
 
-# Top / bottom 5 by F1
 log.info("Top 5 diagnoses by F1:")
 for _, row in per_dx_df.head(5).iterrows():
     log.info(f"  {row['icd_code']:10s}  F1={row['f1']:.4f}  support={int(row['support'])}")
@@ -318,7 +376,9 @@ for _, row in per_dx_df.tail(5).iterrows():
 # ============================================================================
 
 final_results = {
-    "phase"        : "ShifaMind Phase 3 — Final Evaluation",
+    "phase"        : f"ShifaMind Phase 3 — Final Evaluation (base: Phase {BASE_PHASE})",
+    "base_phase"   : BASE_PHASE,
+    "checkpoint"   : str(p3_best_path),
     "default_0.5"  : {
         "macro_f1": default_metrics["macro_f1"],
         "micro_f1": default_metrics["micro_f1"],
@@ -332,19 +392,27 @@ final_results = {
         "macro_r" : tuned_metrics["macro_r"],
     },
     "dataset_info" : {"val": len(df_val), "test": len(df_test)},
+    "rag_config"   : {
+        "top_k"    : config.RAG_TOP_K,
+        "threshold": config.RAG_THRESHOLD,
+        "gate_max" : config.RAG_GATE_MAX,
+    },
 }
 
-with open(config.P3_FINAL_RESULTS_JSON, "w") as f:
+final_json = RESULTS_DIR / "final_test_results.json"
+per_dx_json = RESULTS_DIR / "per_diagnosis_metrics.json"
+per_dx_csv  = RESULTS_DIR / "per_diagnosis_metrics.csv"
+
+with open(final_json, "w") as f:
     json.dump(final_results, f, indent=2)
 
-with open(config.P3_PER_DX_JSON, "w") as f:
+with open(per_dx_json, "w") as f:
     json.dump(tuned_metrics["per_class"], f, indent=2)
 
-per_dx_df.to_csv(
-    config.RESULTS_P3 / "per_diagnosis_metrics.csv", index=False
-)
+per_dx_df.to_csv(per_dx_csv, index=False)
 
-log.info(f"Final results saved  → {config.P3_FINAL_RESULTS_JSON.name}")
-log.info(f"Per-diagnosis JSON   → {config.P3_PER_DX_JSON.name}")
-log.info(f"Per-diagnosis CSV    → per_diagnosis_metrics.csv")
-log.info("Phase 3 threshold tuning and final evaluation complete.")
+log.info(f"Final results saved  → {final_json.name}")
+log.info(f"Per-diagnosis JSON   → {per_dx_json.name}")
+log.info(f"Per-diagnosis CSV    → {per_dx_csv.name}")
+log.info(f"Results directory    → {RESULTS_DIR}")
+log.info(f"Phase 3 threshold tuning and final evaluation complete  (base: Phase {BASE_PHASE})")
