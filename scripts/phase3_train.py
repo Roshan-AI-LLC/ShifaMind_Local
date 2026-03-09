@@ -229,9 +229,19 @@ log.info(f"Loaders — train {len(train_loader)} batches  val {len(val_loader)} 
 # LAMBDA_DX_P3 = 2.0 to emphasise diagnosis loss in Phase 3
 criterion = MultiObjectiveLoss(config.LAMBDA_DX_P3, config.LAMBDA_ALIGN_P3, config.LAMBDA_CONCEPT)
 
+# Freeze the GAT encoder and graph_scale — they converged in Phase 2 and there
+# is no new graph signal for them to learn in Phase 3.  Freezing reduces active
+# parameters and keeps the graph contribution stable so RAG can fine-tune cleanly.
+for name, param in model.phase2_model.named_parameters():
+    if name.startswith(("gat_encoder", "graph_proj", "concept_fusion")) or name == "graph_scale":
+        param.requires_grad_(False)
+
+trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+log.info(f"Phase 3 trainable parameters: {trainable:,}  (GAT encoder + graph_scale frozen)")
+
 # Only model parameters — concept_embs_bert is frozen (not passed to optimizer)
 optimizer = torch.optim.AdamW(
-    model.parameters(),
+    filter(lambda p: p.requires_grad, model.parameters()),
     lr=config.LEARNING_RATE,
     weight_decay=config.WEIGHT_DECAY,
 )
