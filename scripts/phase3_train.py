@@ -331,6 +331,82 @@ trainable_all   = sum(p.numel() for p in model.parameters() if p.requires_grad)
 log.info(f"Phase 3 model: {total_params:,} parameters total (concept_embs frozen separately)")
 
 # ============================================================================
+# WARM-START rag_to_logits FROM CORPUS EMBEDDINGS
+# ============================================================================
+# Problem solved: with zero-mean random init of rag_to_logits, rag_boost
+# averages to ~0 across any batch.  Then gate_logit gradient =
+#   ∂L/∂logit * rag_boost * sigmoid'(gate_logit) * RAG_GATE_MAX ≈ 0
+# so the gate never moves regardless of LR or initialisation.
+#
+# Fix: set rag_to_logits.weight[i] to the unit direction produced by running
+# the mean corpus embedding for diagnosis i through rag_projection.  Now
+# rag_boost[i] > 0 for relevant-diagnosis passages from epoch 1, giving the
+# gate non-zero gradient so it can actually learn which diagnoses benefit from
+# RAG augmentation.
+
+def _warmstart_rag_head() -> None:
+    """
+    Initialise rag_to_logits from the evidence corpus so that
+    rag_boost[i] > 0 for diagnosis i's own passages from step 1.
+
+    Steps
+    ─────
+    1. Group corpus passages by diagnosis code (TOP_50_CODES order).
+    2. Encode up to _WS_PASSAGES passages per code → mean embed [384].
+    3. Forward through rag_projection (current random weights) → [768].
+    4. L2-normalise → unit direction per diagnosis.
+    5. Set rag_to_logits.weight[i]  = unit_hidden[i] * _WS_SCALE.
+       Set rag_to_logits.bias[:] = 0.
+    """
+    _WS_PASSAGES = 10   # corpus passages to average per diagnosis
+    _WS_SCALE    = 0.5  # weight norm after init; large enough for real gradient
+
+    log.info("Warm-starting rag_to_logits from corpus mean embeddings …")
+
+    # 1. Group passages
+    dx_to_texts: dict = defaultdict(list)
+    for doc in evidence_corpus:
+        diag = doc.get("diagnosis", "")
+        for code in TOP_50_CODES:
+            if diag == code or diag.startswith(code) or code.startswith(diag):
+                dx_to_texts[code].append(doc["text"])
+                break
+
+    # 2. Encode mean embedding per diagnosis (CPU encoder, numpy output)
+    mean_embeds = []
+    for code in TOP_50_CODES:
+        texts = dx_to_texts.get(code, [])[:_WS_PASSAGES]
+        if not texts:
+            texts = [f"{code} clinical diagnosis treatment management findings"]
+        embs = rag.encoder.encode(
+            texts,
+            convert_to_numpy=True,
+            show_progress_bar=False,
+            batch_size=len(texts),
+        ).astype("float32")
+        mean_embeds.append(embs.mean(axis=0))   # [384]
+
+    mean_tensor = torch.tensor(
+        np.array(mean_embeds), dtype=torch.float32, device=device
+    )  # [num_dx, 384]
+
+    # 3–5. Forward → normalise → set weights
+    with torch.no_grad():
+        hidden      = torch.nn.functional.relu(model.rag_projection(mean_tensor))  # [num_dx, 768]
+        hidden_norm = torch.nn.functional.normalize(hidden, dim=-1)                # unit vectors
+        model.rag_to_logits.weight.copy_(hidden_norm * _WS_SCALE)
+        model.rag_to_logits.bias.zero_()
+
+    w_norms = model.rag_to_logits.weight.norm(dim=-1)
+    log.info(
+        f"  rag_to_logits warm-started  "
+        f"weight_norm: mean={w_norms.mean():.4f}  min={w_norms.min():.4f}  max={w_norms.max():.4f}"
+    )
+
+
+_warmstart_rag_head()
+
+# ============================================================================
 # DATASETS & LOADERS
 # ============================================================================
 
@@ -491,6 +567,17 @@ for epoch in range(config.NUM_EPOCHS_P3):
         f"precision={val_metrics['precision']:.4f}  "
         f"recall={val_metrics['recall']:.4f}  "
         f"loss={val_metrics['loss']:.4f}"
+    )
+
+    # Per-diagnosis gate diagnostics — shows whether gate is learning per-label
+    with torch.no_grad():
+        gate_vals = (torch.sigmoid(model.rag_gate_logit) * config.RAG_GATE_MAX).cpu()
+    log.info(
+        f"Epoch {epoch+1} gate:  mean={gate_vals.mean():.4f}  "
+        f"std={gate_vals.std():.4f}  "
+        f"min={gate_vals.min():.4f}  "
+        f"max={gate_vals.max():.4f}  "
+        f"(target: std>0 means per-dx differentiation is happening)"
     )
 
     history["train_loss"].append(avg_loss)
