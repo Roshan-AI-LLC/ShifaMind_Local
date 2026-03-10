@@ -209,30 +209,51 @@ if BASE_PHASE == 2:
     log.info(f"Phase 2 weights loaded (epoch {p2_ckpt.get('epoch', '?') + 1})  ← {p2_ckpt_path.name}")
 
 else:
-    # ── Phase 1 base: BERT weights only; GAT/heads are freshly initialised ───
+    # ── Phase 1 base: BERT + concept_head + diagnosis_head from Phase 1 ──────
+    #
+    # Phase 1 model key layout                   Phase 2 target key
+    # ─────────────────────────────────────────   ──────────────────────
+    # base_model.embeddings.*                  →  bert.embeddings.*
+    # base_model.encoder.layer.*              →  bert.encoder.layer.*
+    # concept_head.weight / bias              →  concept_head.weight / bias  (same!)
+    # diagnosis_head.weight / bias            →  diagnosis_head.weight / bias (same!)
+    # concept_embeddings                       →  (Phase 2 receives externally, skip)
+    # fusion_modules.*                         →  (Phase 2 has different arch, skip)
+    #
+    # Phase 2-specific modules NOT in Phase 1 (will be frozen to avoid
+    # random initialisation corrupting Phase 1 quality during Phase 3 training):
+    #   concept_fusion, cross_attention, gate_net, layer_norm, graph_proj, gat_encoder
+    #
     p1_ckpt_path = find_latest_checkpoint(config.CKPT_P1, "phase1_best.pt")
     p1_ckpt      = load_checkpoint(p1_ckpt_path, device)
     p1_state     = p1_ckpt["model_state_dict"]
 
-    # Phase 1 stores BERT under 'base_model.*'; Phase 2 stores it under 'bert.*'
-    # Remap keys and load with strict=False (GAT / head keys will be skipped)
-    bert_state = {
-        k.replace("base_model.", "bert.", 1): v
-        for k, v in p1_state.items()
-        if k.startswith("base_model.")
-    }
-    missing, unexpected = phase2_model.load_state_dict(bert_state, strict=False)
-    log.info(
-        f"Phase 1 BERT weights loaded into Phase 2 model  ← {p1_ckpt_path.name}"
-    )
-    log.info(f"  Loaded  : {len(bert_state)} tensors")
-    log.info(f"  Missing : {len(missing)} (Phase 2-specific layers — random init OK)")
-    log.info(f"  Unexpected: {len(unexpected)}")
+    # Build remapped state dict:
+    #   1. BERT: base_model.* → bert.*
+    #   2. Shared heads: concept_head.*, diagnosis_head.* (keys identical)
+    p1_mapped = {}
+    for k, v in p1_state.items():
+        if k.startswith("base_model."):
+            p1_mapped[k.replace("base_model.", "bert.", 1)] = v
+        elif k.startswith(("concept_head.", "diagnosis_head.")):
+            p1_mapped[k] = v
+        # Skip: concept_embeddings (handled separately via P1_CONCEPT_EMBS)
+        #        fusion_modules.* (Phase 1 arch, not present in Phase 2)
 
-    # Ensure graph_scale stays near −5 so GAT contributes ≈ 0 at start
+    missing, unexpected = phase2_model.load_state_dict(p1_mapped, strict=False)
+    n_bert  = sum(1 for k in p1_mapped if k.startswith("bert."))
+    n_heads = sum(1 for k in p1_mapped if not k.startswith("bert."))
+    log.info(
+        f"Phase 1 weights loaded into Phase 2 model  ← {p1_ckpt_path.name}"
+    )
+    log.info(f"  BERT tensors   : {n_bert}")
+    log.info(f"  Head tensors   : {n_heads}  (concept_head + diagnosis_head)")
+    log.info(f"  Missing (P2-only layers, will be frozen): {len(missing)}")
+
+    # Fix graph_scale so GAT contributes ≈ 0 (sigmoid(−5) ≈ 0.007)
     with torch.no_grad():
         phase2_model.graph_scale.fill_(-5.0)
-    log.info("  graph_scale fixed to −5.0 (GAT contribution disabled at init)")
+    log.info("  graph_scale = −5.0  (GAT disabled at init)")
 
 # ============================================================================
 # LOAD CONCEPT EMBEDDINGS  (frozen throughout Phase 3)
@@ -332,16 +353,36 @@ log.info(
 
 criterion = MultiObjectiveLoss(config.LAMBDA_DX_P3, config.LAMBDA_ALIGN_P3, config.LAMBDA_CONCEPT)
 
-# Freeze the GAT encoder and graph projection — they carry learned graph signal
-# from Phase 2 that we do not want to perturb with RAG updates.
-# For Phase 1 base: GAT is random (graph_scale≈0) so freezing it is safe —
-# it contributes nothing and we don't want random gradients to corrupt BERT.
+# ── Freeze strategy depends on base phase ────────────────────────────────────
+#
+# Phase 2 base: Only freeze GAT components (they converged in Phase 2 and
+#   there is no new graph signal). All other Phase 2 weights are fine-tuned.
+#
+# Phase 1 base: Freeze ALL Phase 2-specific layers that were NOT loaded from
+#   Phase 1 (concept_fusion, cross_attention, gate_net, layer_norm).  These
+#   layers are randomly initialised and fine-tuning them would progressively
+#   corrupt the Phase 1 BERT quality. Only Phase 1-compatible weights (BERT,
+#   concept_head, diagnosis_head) and RAG layers are trained.
+#
+if BASE_PHASE == 2:
+    freeze_prefixes = ("gat_encoder", "graph_proj", "concept_fusion")
+    freeze_names    = {"graph_scale"}
+    freeze_label    = "GAT encoder + graph_scale"
+else:
+    # Phase 1 base: additionally freeze Phase 2-exclusive randomly-init layers
+    freeze_prefixes = (
+        "gat_encoder", "graph_proj", "concept_fusion",  # GAT / graph
+        "cross_attention", "gate_net", "layer_norm",     # Phase 2 bottleneck (random)
+    )
+    freeze_names = {"graph_scale"}
+    freeze_label = "GAT + graph_scale + cross_attention + gate_net + layer_norm"
+
 for name, param in model.phase2_model.named_parameters():
-    if name.startswith(("gat_encoder", "graph_proj", "concept_fusion")) or name == "graph_scale":
+    if name.startswith(freeze_prefixes) or name in freeze_names:
         param.requires_grad_(False)
 
 trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
-log.info(f"Phase 3 trainable parameters: {trainable:,}  (GAT encoder + graph_scale frozen)")
+log.info(f"Phase 3 trainable parameters: {trainable:,}  (frozen: {freeze_label})")
 
 optimizer = torch.optim.AdamW(
     filter(lambda p: p.requires_grad, model.parameters()),
