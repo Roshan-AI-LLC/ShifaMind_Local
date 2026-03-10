@@ -253,13 +253,18 @@ PUBMED_CACHE_JSON          = GRAPH_P2 / "pubmed_abstracts_cache.json"
 
 # ── RAG (Phase 3) ──────────────────────────────────────────────────────────────
 RAG_MODEL_NAME        = "sentence-transformers/all-MiniLM-L6-v2"
-RAG_TOP_K             = 5      # increased from 3 — more evidence per query
-# Threshold: concept-name queries are shorter and more keyword-focused than
-# full clinical notes, so cosine similarity with KB passages is higher.
-# 0.45 is appropriate for concept-name → KB passage matching.
-# (Old 0.7 was designed for full-note queries and caused ~0% retrieval hits.)
-RAG_THRESHOLD         = 0.45
+RAG_TOP_K             = 5      # retrieve top 5 passages per query
+# Threshold=0.0 means always retrieve top-K regardless of similarity score.
+# Previous threshold (0.45) was killing all retrievals: concept-name queries
+# (3-5 words) score 0.20-0.35 against 400-600 word passages in MiniLM.
+# With threshold=0, rag_boost is always non-zero → gate gradient flows → learning.
+# rag_to_logits learns to downweight irrelevant retrievals through training.
+RAG_THRESHOLD         = 0.0
 RAG_GATE_MAX          = 0.35   # cap RAG influence — Phase 2 base dominates
+# Separate LR for RAG head parameters (rag_projection, rag_to_logits, rag_gate_logit).
+# These layers train from scratch while BERT is already well-trained.
+# Standard practice: new heads get 50-100× higher LR than fine-tuned backbone.
+RAG_HEAD_LR           = 5e-4   # RAG-specific parameters learning rate
 PROTOTYPES_PER_DX     = 50     # increased from 20 — richer MIMIC prototype pool
 RAG_ENCODE_BATCH_SIZE = 64     # sentence-transformers encode batch (MPS-safe)
 

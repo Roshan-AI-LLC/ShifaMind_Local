@@ -384,10 +384,31 @@ for name, param in model.phase2_model.named_parameters():
 trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
 log.info(f"Phase 3 trainable parameters: {trainable:,}  (frozen: {freeze_label})")
 
+# Two-group optimizer: RAG head layers need a much higher LR than BERT.
+# BERT is already well-trained (Phase 2); rag_projection / rag_to_logits / rag_gate_logit
+# train from random initialisation. Using BERT LR (2e-5) for the RAG head is why
+# the gate never moved — the AdamW step for a freshly-initialised linear layer
+# needs to be ~50-100× larger than for a converged BERT weight.
+rag_param_ids = {
+    id(p) for p in [
+        model.rag_projection.weight, model.rag_projection.bias,
+        model.rag_to_logits.weight,  model.rag_to_logits.bias,
+        model.rag_gate_logit,
+    ]
+}
+rag_params   = [p for p in model.parameters() if p.requires_grad and id(p) in rag_param_ids]
+other_params = [p for p in model.parameters() if p.requires_grad and id(p) not in rag_param_ids]
+
+log.info(
+    f"Optimizer: BERT+heads LR={config.LEARNING_RATE:.0e}  "
+    f"RAG head LR={config.RAG_HEAD_LR:.0e}"
+)
+
 optimizer = torch.optim.AdamW(
-    filter(lambda p: p.requires_grad, model.parameters()),
-    lr=config.LEARNING_RATE,
-    weight_decay=config.WEIGHT_DECAY,
+    [
+        {"params": other_params, "lr": config.LEARNING_RATE,   "weight_decay": config.WEIGHT_DECAY},
+        {"params": rag_params,   "lr": config.RAG_HEAD_LR,     "weight_decay": 0.0},
+    ]
 )
 num_optimizer_steps = (len(train_loader) // config.GRAD_ACCUM_STEPS) * config.NUM_EPOCHS_P3
 scheduler = get_linear_schedule_with_warmup(

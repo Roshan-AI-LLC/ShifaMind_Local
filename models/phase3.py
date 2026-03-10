@@ -70,12 +70,13 @@ class ShifaMindPhase3RAG(nn.Module):
         self.rag_to_logits  = nn.Linear(hidden_size, num_diagnoses)
 
         # Per-diagnosis learnable gate magnitude: [num_diagnoses]
-        # Scalar gate FAILS because positive/negative gradients across the 50 diagnoses
-        # cancel each other → net gradient ≈ 0 → gate never moves (observed: stuck at 0.175).
-        # Per-diagnosis gate allows each label to independently learn whether RAG helps.
-        # Initialised to 0 → sigmoid(0) × RAG_GATE_MAX = 0.175 per diagnosis.
-        # Diagnoses that benefit from RAG will have their gate grow; others stay low.
-        self.rag_gate_logit = nn.Parameter(torch.zeros(num_diagnoses))
+        # Initialised to 1.0 → sigmoid(1) × RAG_GATE_MAX ≈ 0.27 per diagnosis.
+        # Starting above zero ensures non-trivial RAG contribution from epoch 1,
+        # which provides a meaningful gradient signal to rag_to_logits so both
+        # the gate and the RAG head can learn together.
+        # Diagnoses that hurt from RAG will have their gate shrink toward 0;
+        # those that benefit will grow toward RAG_GATE_MAX.
+        self.rag_gate_logit = nn.Parameter(torch.ones(num_diagnoses))
 
     # ------------------------------------------------------------------
     def _concept_query(
