@@ -69,10 +69,13 @@ class ShifaMindPhase3RAG(nn.Module):
         self.rag_projection = nn.Linear(rag_dim, hidden_size)
         self.rag_to_logits  = nn.Linear(hidden_size, num_diagnoses)
 
-        # Learnable gate magnitude.
-        # sigmoid(0) = 0.5 → initial RAG influence = 0.5 * RAG_GATE_MAX = 20 %
-        # Starts gently so Phase 2 weights dominate early, gate grows if RAG helps.
-        self.rag_gate_logit = nn.Parameter(torch.zeros(1))
+        # Per-diagnosis learnable gate magnitude: [num_diagnoses]
+        # Scalar gate FAILS because positive/negative gradients across the 50 diagnoses
+        # cancel each other → net gradient ≈ 0 → gate never moves (observed: stuck at 0.175).
+        # Per-diagnosis gate allows each label to independently learn whether RAG helps.
+        # Initialised to 0 → sigmoid(0) × RAG_GATE_MAX = 0.175 per diagnosis.
+        # Diagnoses that benefit from RAG will have their gate grow; others stay low.
+        self.rag_gate_logit = nn.Parameter(torch.zeros(num_diagnoses))
 
     # ------------------------------------------------------------------
     def _concept_query(
@@ -148,13 +151,15 @@ class ShifaMindPhase3RAG(nn.Module):
         rag_hidden  = F.relu(self.rag_projection(rag_tensor))   # [B, 768]
         rag_boost   = self.rag_to_logits(rag_hidden)             # [B, num_diagnoses]
 
-        # Gate: sigmoid(learnable) × RAG_GATE_MAX
-        # sigmoid(0) × 0.4 = 0.2 at init → RAG contributes at most 20 % initially
-        gate = torch.sigmoid(self.rag_gate_logit) * config.RAG_GATE_MAX  # scalar
+        # Per-diagnosis gate: [num_diagnoses]  →  [1, num_diagnoses]  (broadcast over B)
+        # sigmoid(0) × RAG_GATE_MAX = 0.175 per diagnosis at init.
+        # Each of the 50 diagnoses independently controls its RAG influence,
+        # so gradients do NOT cancel across labels and the gate can actually learn.
+        gate = torch.sigmoid(self.rag_gate_logit) * config.RAG_GATE_MAX  # [num_dx]
 
-        # --- 6. Augment logits (per sample, additive residual) -----------
+        # --- 6. Augment logits (per sample, per diagnosis) ---------------
         outputs = dict(base_outputs)
-        outputs["logits"]    = base_outputs["logits"] + gate * rag_boost
-        outputs["rag_gate"]  = gate.item()
+        outputs["logits"]    = base_outputs["logits"] + gate.unsqueeze(0) * rag_boost
+        outputs["rag_gate"]  = gate.mean().item()   # scalar summary for logging
         outputs["rag_boost"] = rag_boost.detach()
         return outputs

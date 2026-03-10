@@ -177,14 +177,19 @@ def build_evidence_corpus(
     df_train: pd.DataFrame,
     prototypes_per_dx: int = config.PROTOTYPES_PER_DX,
     seed: int = config.SEED,
+    pubmed_path: Optional[Path] = None,
 ) -> List[dict]:
     """
     Build the evidence corpus for Phase 3 RAG.
 
-    Two sources:
+    Three sources:
       1. Clinical knowledge base  — one passage per ICD chapter / code match.
       2. MIMIC prototypes         — up to *prototypes_per_dx* real notes
                                     per diagnosis from the training set.
+      3. PubMed abstracts (optional) — genuine clinical literature downloaded
+                                    via scripts/download_pubmed.py.  This is
+                                    the only source of truly new knowledge not
+                                    already in the model weights.
 
     Returns a list of dicts:  {"text": str, "diagnosis": str, "source": str}
     """
@@ -241,11 +246,33 @@ def build_evidence_corpus(
                     "source"   : "mimic_prototype",
                 })
 
+    # --- PubMed abstracts (new clinical knowledge, not in model weights) ------
+    pubmed_file = pubmed_path or (config.EVIDENCE_P3 / "pubmed_abstracts.json")
+    n_pubmed = 0
+    if pubmed_file.exists():
+        with open(pubmed_file) as f:
+            pubmed_docs = json.load(f)
+        for doc in pubmed_docs:
+            # Only include if the diagnosis code is in our top-50 set
+            diag = doc.get("diagnosis", "")
+            if diag in top50_codes or any(diag.startswith(c) or c.startswith(diag) for c in top50_codes):
+                corpus.append({
+                    "text"     : str(doc.get("text", ""))[:600],
+                    "diagnosis": diag,
+                    "source"   : "pubmed",
+                })
+                n_pubmed += 1
+        log.info(f"PubMed abstracts added: {n_pubmed}  ← {pubmed_file.name}")
+    else:
+        log.info(
+            f"No PubMed abstracts found at {pubmed_file.name}. "
+            "Run scripts/download_pubmed.py to add clinical literature."
+        )
+
     n_mimic = len([c for c in corpus if c["source"] == "mimic_prototype"])
     log.info(
         f"Evidence corpus: {len(corpus)} passages  "
-        f"({n_kb} clinical KB + {n_mimic} MIMIC prototypes, "
-        f"{prototypes_per_dx} per dx)"
+        f"({n_kb} clinical KB + {n_mimic} MIMIC prototypes + {n_pubmed} PubMed)"
     )
     return corpus
 
