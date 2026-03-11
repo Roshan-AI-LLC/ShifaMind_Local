@@ -88,7 +88,11 @@ def _extract(split):
     """Extract texts and labels from a split (list of dicts or DataFrame)."""
     if hasattr(split, "iterrows"):          # DataFrame
         texts  = split["text"].tolist()
-        labels = split[[c for c in split.columns if c != "text"]].values.tolist()
+        # Select only numeric columns — skips object-dtype columns such as
+        # raw icd_codes lists that cause inhomogeneous array errors.
+        num_cols = split.select_dtypes(include=[np.number]).columns.tolist()
+        labels   = split[num_cols].values.astype(np.float32)
+        return texts, labels
     else:                                   # list of dicts
         texts  = [s["text"] for s in split]
         labels = [s["labels"] for s in split]
