@@ -35,25 +35,23 @@ The paper reports three modes: independent, sequential, joint.
 Joint achieves the best label accuracy while maintaining concept accuracy,
 and is the recommended mode for comparison.
 
-Joint loss:
-    L = α · BCE(concept_logits, concept_labels)
-      + β · BCE(diag_logits, diag_labels)
+Joint loss (Koh et al. 2020, Section 3.1):
+    L = λ · BCE(concept_logits, concept_labels)
+      +      BCE(diag_logits,   diag_labels)
 
 where diag_logits are computed from the PREDICTED concept probabilities
 (not ground-truth).  BERT + concept_head + diag_head are all trained
 end-to-end.
 
-α = 0.5, β = 1.0  (following the paper's hyperparams for medical datasets).
+λ (lambda_concept) balances concept vs label supervision.  The paper
+treats it as a hyperparameter to tune per dataset — there is no single
+prescribed value.  Set it in config.yaml; 0.5 is a reasonable starting
+point (neither loss dominates).
 """
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from transformers import AutoModel
-
-
-# Loss weights (Koh et al. 2020, Table 3 — medical setting)
-ALPHA_CONCEPT = 0.5   # concept supervision weight
-BETA_DIAG     = 1.0   # diagnosis supervision weight
 
 
 class VanillaCBM(nn.Module):
@@ -70,11 +68,12 @@ class VanillaCBM(nn.Module):
     a linear combination of named concept probabilities.
 
     Args:
-        bert_model_name : HuggingFace model name
-        num_concepts    : concept bottleneck size (111 in ShifaMind)
-        num_labels      : output codes (50)
-        hidden_size     : BERT hidden dimension (768)
-        dropout         : dropout on [CLS] before concept_head
+        bert_model_name  : HuggingFace model name
+        num_concepts     : concept bottleneck size (111 in ShifaMind)
+        num_labels       : output codes (50)
+        hidden_size      : BERT hidden dimension (768)
+        dropout          : dropout on [CLS] before concept_head
+        lambda_concept   : λ weight on concept BCE in joint loss (tunable)
     """
 
     def __init__(
@@ -84,10 +83,13 @@ class VanillaCBM(nn.Module):
         num_labels:      int   = 50,
         hidden_size:     int   = 768,
         dropout:         float = 0.1,
+        lambda_concept:  float = 0.5,
     ) -> None:
         super().__init__()
         self.num_concepts = num_concepts
         self.num_labels   = num_labels
+
+        self.lambda_concept = lambda_concept
 
         self.bert         = AutoModel.from_pretrained(bert_model_name)
         self.dropout      = nn.Dropout(dropout)
@@ -104,8 +106,7 @@ class VanillaCBM(nn.Module):
     def _init_weights(self) -> None:
         nn.init.xavier_uniform_(self.concept_head.weight)
         nn.init.zeros_(self.concept_head.bias)
-        # Diag head: zero init — starts at neutral prediction, learns from concepts
-        nn.init.zeros_(self.diag_head.weight)
+        nn.init.xavier_uniform_(self.diag_head.weight)
         nn.init.zeros_(self.diag_head.bias)
 
     # ------------------------------------------------------------------
@@ -148,11 +149,11 @@ class VanillaCBM(nn.Module):
         concept_labels: torch.Tensor,
     ) -> torch.Tensor:
         """
-        Joint CBM loss (Koh et al. eq. 1):
-            L = α · BCE(concept_logits, concept_labels)
-              + β · BCE(diag_logits, diag_labels)
+        Joint CBM loss (Koh et al. 2020, Section 3.1):
+            L = λ · BCE(concept_logits, concept_labels)
+              +     BCE(diag_logits,    diag_labels)
 
-        Call this from the training loop instead of a plain BCE criterion.
+        λ = self.lambda_concept (set via config, tunable hyperparameter).
         """
         loss_concept = F.binary_cross_entropy_with_logits(
             outputs["concept_logits"], concept_labels
@@ -160,7 +161,7 @@ class VanillaCBM(nn.Module):
         loss_diag = F.binary_cross_entropy_with_logits(
             outputs["logits"], diag_labels
         )
-        return ALPHA_CONCEPT * loss_concept + BETA_DIAG * loss_diag
+        return self.lambda_concept * loss_concept + loss_diag
 
     # ------------------------------------------------------------------
     def freeze_concept_head(self) -> None:

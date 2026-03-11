@@ -137,12 +137,14 @@ group_a:
     hidden_size:  768
     num_concepts: 111   # matches ShifaMind concept space
     dropout:      0.1
-    # Two-stage training:
-    #   Stage 1 — fine-tune BERT + concept head (concept supervision)
-    #   Stage 2 — freeze BERT+concept, train linear dx head only
-    lr_stage1:    2e-5
-    lr_stage2:    1e-3
-    epochs_stage1: 6
+    # Joint training (Koh et al. 2020, Section 3.1):
+    #   L = lambda_concept * BCE(concepts) + BCE(diagnoses)
+    #   BERT + concept_head + diag_head trained end-to-end.
+    # lambda_concept is a TUNABLE hyperparameter (paper does not prescribe a value).
+    lambda_concept: 0.5
+    lr_bert:      2e-5   # low LR for pretrained BERT layers
+    lr_heads:     2e-4   # higher LR for concept_head + diag_head (trained from scratch)
+    epochs_stage1: 6     # kept for total-epoch compatibility (stage1 + stage2 = total)
     epochs_stage2: 6
     interpretable: "✓Full"
     hipaa_safe:    true

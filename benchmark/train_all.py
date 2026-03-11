@@ -341,16 +341,17 @@ def train_vanilla_cbm(
     """
     Joint training: BERT + concept_head + diag_head trained end-to-end.
 
-    Loss = α·BCE(concept_logits, concept_labels) + β·BCE(diag_logits, dx_labels)
-    α=0.5, β=1.0  (Koh et al. 2020, eq. 1, medical setting).
+    Loss = λ·BCE(concept_logits, concept_labels) + BCE(diag_logits, dx_labels)
+    λ = mcfg["lambda_concept"]  (tunable hyperparameter, set in config.yaml).
 
-    Two-group optimizer: BERT at low LR (preserves pre-training quality),
-    concept_head + diag_head at high LR (learn from scratch).
-    Total epochs = epochs_stage1 + epochs_stage2 (combined, since joint).
+    Two-group optimizer: BERT at lr_bert (preserves pre-training),
+    concept_head + diag_head at lr_heads (trained from scratch).
+    Total epochs = epochs_stage1 + epochs_stage2.
     """
     mcfg      = cfg["group_a"]["vanilla_cbm"]
     t         = cfg["training"]
     total_ep  = mcfg["epochs_stage1"] + mcfg["epochs_stage2"]
+    lam       = mcfg["lambda_concept"]
     ckpt_path = ckpt_dir / "vanilla_cbm_best.pt"
 
     train_loader, val_loader = _make_loaders(train_ds, val_ds, cfg)
@@ -364,12 +365,12 @@ def train_vanilla_cbm(
     head_params = [p for p in model.parameters() if id(p) not in bert_ids]
 
     optimizer = torch.optim.AdamW([
-        {"params": bert_params, "lr": mcfg["lr_stage1"],      "weight_decay": 0.01},
-        {"params": head_params, "lr": mcfg["lr_stage1"] * 10, "weight_decay": 0.0},
+        {"params": bert_params, "lr": mcfg["lr_bert"],  "weight_decay": 0.01},
+        {"params": head_params, "lr": mcfg["lr_heads"], "weight_decay": 0.0},
     ])
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=total_ep)
 
-    print(f"\n  [vanilla_cbm] Joint training  ({total_ep} epochs, α=0.5, β=1.0) …")
+    print(f"\n  [vanilla_cbm] Joint training  ({total_ep} epochs, λ={lam}) …")
 
     for epoch in range(1, total_ep + 1):
         model.train()
@@ -556,6 +557,7 @@ def main() -> None:
                 num_labels      = num_labels,
                 hidden_size     = mcfg["hidden_size"],
                 dropout         = mcfg["dropout"],
+                lambda_concept  = mcfg["lambda_concept"],
             ).to(device)
             train_vanilla_cbm(model, train_ds, val_ds, cfg, device, ckpt_dir)
 
