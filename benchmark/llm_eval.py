@@ -189,20 +189,42 @@ def call_openai(
     max_retries:  int,
     retry_delay:  float,
 ) -> str:
+    """
+    Call OpenAI using the Responses API (GPT-5+).
+
+    GPT-5 uses client.responses.create with:
+      - instructions : system prompt
+      - input        : user message (string)
+      - response.output_text : response text
+
+    Falls back to chat.completions for older model IDs.
+    """
     import openai
     client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+
     for attempt in range(max_retries):
         try:
-            resp = client.chat.completions.create(
-                model      = model_id,
-                messages   = [
-                    {"role": "system", "content": system},
-                    {"role": "user",   "content": user},
-                ],
-                max_tokens = max_tokens,
-                temperature= 0.0,
-            )
-            return resp.choices[0].message.content or ""
+            # GPT-5+ uses the new Responses API
+            if hasattr(client, "responses"):
+                resp = client.responses.create(
+                    model        = model_id,
+                    instructions = system,
+                    input        = user,
+                    max_output_tokens = max_tokens,
+                )
+                return resp.output_text or ""
+            else:
+                # Fallback for older SDK versions / model IDs (GPT-4o etc.)
+                resp = client.chat.completions.create(
+                    model      = model_id,
+                    messages   = [
+                        {"role": "system", "content": system},
+                        {"role": "user",   "content": user},
+                    ],
+                    max_tokens = max_tokens,
+                    temperature= 0.0,
+                )
+                return resp.choices[0].message.content or ""
         except Exception as e:
             print(f"    OpenAI error (attempt {attempt+1}/{max_retries}): {e}")
             if attempt < max_retries - 1:

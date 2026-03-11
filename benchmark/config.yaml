@@ -162,12 +162,12 @@ llm_eval:
 
   models:
     gpt:
-      display_name: "GPT (frontier)"
-      # Update this to the latest available model at run time.
-      # Was GPT-4o as of Aug 2025; check OpenAI for current name.
-      model_id:    "gpt-4o"
+      display_name: "GPT-5"
+      # GPT-5 uses the new OpenAI Responses API (client.responses.create).
+      # See: https://platform.openai.com/docs/api-reference/responses
+      model_id:    "gpt-5.4"
       provider:    "openai"
-      # Price per 1M tokens (update at run time from platform.openai.com/pricing)
+      # Price per 1M tokens (check platform.openai.com/pricing at run time)
       cost_per_1m_input:  5.00
       cost_per_1m_output: 15.00
       table_group: "Frontier LLMs"

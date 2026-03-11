@@ -328,7 +328,7 @@ def train_bert_model(
                              {"epoch": epoch, "val_macro_f1": best_f1})
 
 
-# ──── Vanilla CBM (two-stage) ────────────────────────────────────────────────
+# ──── Vanilla CBM (joint training — Koh et al. recommended mode) ─────────────
 
 def train_vanilla_cbm(
     model:    VanillaCBM,
@@ -338,89 +338,70 @@ def train_vanilla_cbm(
     device:   torch.device,
     ckpt_dir: Path,
 ) -> None:
-    mcfg     = cfg["group_a"]["vanilla_cbm"]
-    t        = cfg["training"]
+    """
+    Joint training: BERT + concept_head + diag_head trained end-to-end.
+
+    Loss = α·BCE(concept_logits, concept_labels) + β·BCE(diag_logits, dx_labels)
+    α=0.5, β=1.0  (Koh et al. 2020, eq. 1, medical setting).
+
+    Two-group optimizer: BERT at low LR (preserves pre-training quality),
+    concept_head + diag_head at high LR (learn from scratch).
+    Total epochs = epochs_stage1 + epochs_stage2 (combined, since joint).
+    """
+    mcfg      = cfg["group_a"]["vanilla_cbm"]
+    t         = cfg["training"]
+    total_ep  = mcfg["epochs_stage1"] + mcfg["epochs_stage2"]
     ckpt_path = ckpt_dir / "vanilla_cbm_best.pt"
 
-    concept_criterion = nn.BCEWithLogitsLoss()
-    diag_criterion    = nn.BCEWithLogitsLoss()
     train_loader, val_loader = _make_loaders(train_ds, val_ds, cfg)
+    diag_criterion = nn.BCEWithLogitsLoss()    # for val macro_f1 evaluation
     best_f1 = -1.0
 
-    # ── Stage 1: BERT + concept_head ──────────────────────────────────────
-    print("\n  [vanilla_cbm] Stage 1: training BERT + concept_head …")
     model.unfreeze_all()
-    model.diag_head.requires_grad_(False)
 
     bert_params = list(model.bert.parameters())
     bert_ids    = {id(p) for p in bert_params}
-    head_params = [p for p in model.concept_head.parameters()]
+    head_params = [p for p in model.parameters() if id(p) not in bert_ids]
 
-    opt_s1 = torch.optim.AdamW([
-        {"params": bert_params, "lr": mcfg["lr_stage1"], "weight_decay": 0.01},
+    optimizer = torch.optim.AdamW([
+        {"params": bert_params, "lr": mcfg["lr_stage1"],      "weight_decay": 0.01},
         {"params": head_params, "lr": mcfg["lr_stage1"] * 10, "weight_decay": 0.0},
     ])
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=total_ep)
 
-    for epoch in range(1, mcfg["epochs_stage1"] + 1):
-        model.train()
-        model.diag_head.requires_grad_(False)
-        train_loss = 0.0
-        pbar = tqdm(train_loader, desc=f"  [vanilla_cbm] S1 ep{epoch}/{mcfg['epochs_stage1']}")
-        for step, batch in enumerate(pbar, 1):
-            ids  = batch["input_ids"].to(device)
-            mask = batch["attention_mask"].to(device)
-            con  = batch["concept_labels"].to(device)
+    print(f"\n  [vanilla_cbm] Joint training  ({total_ep} epochs, α=0.5, β=1.0) …")
 
-            out  = model(ids, mask)
-            loss = concept_criterion(out["concept_logits"], con)
-            (loss / t["grad_accum_steps"]).backward()
-
-            if step % t["grad_accum_steps"] == 0:
-                torch.nn.utils.clip_grad_norm_(model.parameters(), t["max_grad_norm"])
-                opt_s1.step()
-                opt_s1.zero_grad()
-
-            train_loss += loss.item()
-            pbar.set_postfix(loss=f"{train_loss/step:.4f}")
-
-        print(f"    Stage 1 epoch {epoch}: train_loss={train_loss/len(train_loader):.4f}")
-
-    # ── Stage 2: diagnosis_head only (BERT + concept_head frozen) ─────────
-    print("\n  [vanilla_cbm] Stage 2: training diagnosis_head (BERT frozen) …")
-    model.freeze_stage1()
-    model.diag_head.requires_grad_(True)
-
-    opt_s2 = torch.optim.Adam(model.diag_head.parameters(), lr=mcfg["lr_stage2"])
-
-    for epoch in range(1, mcfg["epochs_stage2"] + 1):
+    for epoch in range(1, total_ep + 1):
         model.train()
         train_loss = 0.0
-        pbar = tqdm(train_loader, desc=f"  [vanilla_cbm] S2 ep{epoch}/{mcfg['epochs_stage2']}")
+        pbar = tqdm(train_loader, desc=f"  [vanilla_cbm] ep{epoch}/{total_ep}")
         for step, batch in enumerate(pbar, 1):
             ids  = batch["input_ids"].to(device)
             mask = batch["attention_mask"].to(device)
             labs = batch["labels"].to(device)
+            con  = batch["concept_labels"].to(device)
 
             out  = model(ids, mask)
-            loss = diag_criterion(out["logits"], labs)
-            (loss / t["grad_accum_steps"]).backward()
+            loss = model.joint_loss(out, labs, con)   # α·concept + β·diag
 
+            (loss / t["grad_accum_steps"]).backward()
             if step % t["grad_accum_steps"] == 0:
                 torch.nn.utils.clip_grad_norm_(model.parameters(), t["max_grad_norm"])
-                opt_s2.step()
-                opt_s2.zero_grad()
+                optimizer.step()
+                optimizer.zero_grad()
 
             train_loss += loss.item()
             pbar.set_postfix(loss=f"{train_loss/step:.4f}")
 
+        scheduler.step()
         val_m = compute_val_loss(model, val_loader, diag_criterion, device, "vanilla_cbm")
-        print(f"    Stage 2 epoch {epoch}: train_loss={train_loss/len(train_loader):.4f}  "
+        print(f"    Epoch {epoch}: train_loss={train_loss/len(train_loader):.4f}  "
               f"val_loss={val_m['loss']:.4f}  val_macro_f1={val_m['macro_f1']:.4f}")
 
         if val_m["macro_f1"] > best_f1:
             best_f1 = val_m["macro_f1"]
             _save_checkpoint(model, ckpt_path,
-                             {"epoch": f"S2-{epoch}", "val_macro_f1": best_f1})
+                             {"epoch": epoch, "val_macro_f1": best_f1})
 
 
 # ─────────────────────────────────────────────────────────────────────────────
