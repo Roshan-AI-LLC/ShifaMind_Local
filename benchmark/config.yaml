@@ -76,8 +76,8 @@ group_a:
     filter_size:  4
     dropout:      0.3
     lr:           0.001
-    epochs:       5
-    weight_decay: 0.00001
+    epochs:       10
+    weight_decay: 0.01
     # Long-document strategy: chunk into 512-token windows, max-pool logits
     chunk_size:   512
     chunk_overlap: 64
@@ -89,13 +89,12 @@ group_a:
     table_group:  "CNN/Attention Baselines"
     model_class:  "LAAT"
     embed_dim:    100
-    hidden_dim:   512    # BiGRU hidden (each direction)
-    label_embed_dim: 256
+    hidden_dim:   256    # BiLSTM hidden PER DIRECTION (512 total) — matches reference
     dropout:      0.3
-    lr:           0.0005
-    epochs:       5
-    weight_decay: 0.00001
-    chunk_size:   512
+    lr:           0.001
+    epochs:       10
+    weight_decay: 0.01
+    chunk_size:   512    # kept for API compatibility (no chunking occurs at L=512)
     chunk_overlap: 64
     interpretable: "Attention only"
     hipaa_safe:    true
