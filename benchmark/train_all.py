@@ -513,11 +513,12 @@ def main() -> None:
             # Build synonym tensors from top50_icd10_info.json
             with open(ROOT / cfg["data"]["top50_info"]) as f:
                 top50_info = json.load(f)
-            # top50_codes is the column order of train_labels
+            # top50_codes must align exactly with the 50 label columns
             if hasattr(train_split, "columns"):
-                top50_codes = [c for c in train_split.columns if c != "text"]
+                top50_codes = train_split.select_dtypes(include=[np.number]).columns.tolist()
             else:
                 top50_codes = list(top50_info.keys())[:num_labels]
+            top50_codes = top50_codes[:num_labels]   # safety truncation
 
             syn_ids, syn_mask = build_synonym_tensors(
                 top50_info   = top50_info,

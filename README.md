@@ -98,6 +98,38 @@ shifamind_local/
 
 ---
 
+---
+
+## 4. Benchmark (Group A baselines + frontier LLMs)
+
+Trains CAML, LAAT, PLM-ICD, MSMN, and Vanilla CBM on the same splits as ShifaMind, then evaluates frontier LLMs zero-shot.
+
+```bash
+# Train all Group A baselines (saves checkpoints to benchmark/checkpoints/)
+python benchmark/train_all.py
+
+# Evaluate frontier LLMs via OpenRouter (requires OPENROUTER_API_KEY in .env)
+python benchmark/llm_eval.py --dry-run   # cost estimate only
+python benchmark/llm_eval.py             # run all three LLMs
+
+# Generate the comparison table (LaTeX + CSV)
+python benchmark/evaluate_all.py
+python benchmark/generate_table.py
+```
+
+Outputs go to `benchmark/results/`. Checkpoints are gitignored.
+
+### Frontier LLM setup
+
+All models (GPT-4o, Claude Sonnet 3.7, Gemini 2.5 Pro) are called through a single [OpenRouter](https://openrouter.ai) key — no separate OpenAI / Anthropic / Google accounts required.
+
+```bash
+cp .env.example .env
+# edit .env and set OPENROUTER_API_KEY
+```
+
+---
+
 ## Notes
 
 - Phases must be run in order (each phase reads outputs from the previous one).

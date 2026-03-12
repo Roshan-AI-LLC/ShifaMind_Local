@@ -12,8 +12,11 @@ Protocol:
   • Evaluation: fixed threshold 0.5 (no tuning — clearly noted in table).
   • Cost estimate printed before any API call.
 
-API keys (read from .env in project root or environment variables):
-  OPENAI_API_KEY, ANTHROPIC_API_KEY, GOOGLE_API_KEY
+API key (read from .env in project root or environment variable):
+  OPENROUTER_API_KEY   — single key for all models via openrouter.ai
+
+All three models (GPT, Claude, Gemini) are called through OpenRouter's
+OpenAI-compatible endpoint so only one API key is needed.
 
 Usage:
     cd ShifaMind_Local
@@ -178,10 +181,10 @@ def parse_llm_response(response_text: str, top50_codes: list) -> list[int]:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# API callers
+# API caller — all models via OpenRouter (single key, OpenAI-compatible)
 # ─────────────────────────────────────────────────────────────────────────────
 
-def call_openai(
+def call_openrouter(
     model_id:     str,
     system:       str,
     user:         str,
@@ -190,106 +193,47 @@ def call_openai(
     retry_delay:  float,
 ) -> str:
     """
-    Call OpenAI using the Responses API (GPT-5+).
+    Call any model through OpenRouter's OpenAI-compatible endpoint.
 
-    GPT-5 uses client.responses.create with:
-      - instructions : system prompt
-      - input        : user message (string)
-      - response.output_text : response text
-
-    Falls back to chat.completions for older model IDs.
+    Set OPENROUTER_API_KEY in .env.  Model IDs use OpenRouter's format:
+      openai/gpt-4o, anthropic/claude-3-7-sonnet-20250219,
+      google/gemini-2.5-pro-preview, etc.
+    Full model list: https://openrouter.ai/models
     """
     import openai
-    client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-
-    for attempt in range(max_retries):
-        try:
-            # GPT-5+ uses the new Responses API
-            if hasattr(client, "responses"):
-                resp = client.responses.create(
-                    model        = model_id,
-                    instructions = system,
-                    input        = user,
-                    max_output_tokens = max_tokens,
-                )
-                return resp.output_text or ""
-            else:
-                # Fallback for older SDK versions / model IDs (GPT-4o etc.)
-                resp = client.chat.completions.create(
-                    model      = model_id,
-                    messages   = [
-                        {"role": "system", "content": system},
-                        {"role": "user",   "content": user},
-                    ],
-                    max_tokens = max_tokens,
-                    temperature= 0.0,
-                )
-                return resp.choices[0].message.content or ""
-        except Exception as e:
-            print(f"    OpenAI error (attempt {attempt+1}/{max_retries}): {e}")
-            if attempt < max_retries - 1:
-                time.sleep(retry_delay * (2 ** attempt))
-    return ""
-
-
-def call_anthropic(
-    model_id:     str,
-    system:       str,
-    user:         str,
-    max_tokens:   int,
-    max_retries:  int,
-    retry_delay:  float,
-) -> str:
-    import anthropic
-    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
-    for attempt in range(max_retries):
-        try:
-            msg = client.messages.create(
-                model      = model_id,
-                max_tokens = max_tokens,
-                system     = system,
-                messages   = [{"role": "user", "content": user}],
-            )
-            return msg.content[0].text if msg.content else ""
-        except Exception as e:
-            print(f"    Anthropic error (attempt {attempt+1}/{max_retries}): {e}")
-            if attempt < max_retries - 1:
-                time.sleep(retry_delay * (2 ** attempt))
-    return ""
-
-
-def call_google(
-    model_id:     str,
-    system:       str,
-    user:         str,
-    max_tokens:   int,
-    max_retries:  int,
-    retry_delay:  float,
-) -> str:
-    import google.generativeai as genai
-    genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
-    model = genai.GenerativeModel(
-        model_id,
-        system_instruction=system,
+    client = openai.OpenAI(
+        base_url   = "https://openrouter.ai/api/v1",
+        api_key    = os.environ.get("OPENROUTER_API_KEY", ""),
+        default_headers = {
+            "HTTP-Referer": "https://github.com/Roshan-AI-LLC/ShifaMind_Local",
+            "X-Title": "ShifaMind Benchmark",
+        },
     )
     for attempt in range(max_retries):
         try:
-            resp = model.generate_content(
-                user,
-                generation_config={"max_output_tokens": max_tokens, "temperature": 0.0},
+            resp = client.chat.completions.create(
+                model       = model_id,
+                messages    = [
+                    {"role": "system", "content": system},
+                    {"role": "user",   "content": user},
+                ],
+                max_tokens  = max_tokens,
+                temperature = 0.0,
             )
-            return resp.text or ""
+            return resp.choices[0].message.content or ""
         except Exception as e:
-            print(f"    Google error (attempt {attempt+1}/{max_retries}): {e}")
+            print(f"    OpenRouter error (attempt {attempt+1}/{max_retries}): {e}")
             if attempt < max_retries - 1:
                 time.sleep(retry_delay * (2 ** attempt))
     return ""
 
 
 _CALLERS = {
-    "openai"   : call_openai,
-    "anthropic": call_anthropic,
-    "google"   : call_google,
+    "openrouter": call_openrouter,
+    # Legacy aliases so existing config.yaml provider values still work
+    "openai"    : call_openrouter,
+    "anthropic" : call_openrouter,
+    "google"    : call_openrouter,
 }
 
 
