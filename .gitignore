@@ -27,3 +27,4 @@ shifamind_local/
 .idea/
 *.swp
 *.swo
+benchmark/checkpoints
