@@ -209,10 +209,11 @@ def train_cnn_model(
     t       = cfg["training"]
     epochs  = mcfg["epochs"]
     lr      = mcfg["lr"]
-    wd      = mcfg.get("weight_decay", 1e-5)
+    wd      = float(mcfg.get("weight_decay", 0.01))
 
     train_loader, val_loader = _make_loaders(train_ds, val_ds, cfg)
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=wd)
+    # AdamW with weight_decay=0.01 matches reference training (Colab p6/p7)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=wd)
     criterion = nn.BCEWithLogitsLoss()
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
 
@@ -233,16 +234,13 @@ def train_cnn_model(
                          chunk_overlap=mcfg.get("chunk_overlap", 64))
             loss = criterion(out["logits"], labs)
 
-            if t["grad_accum_steps"] > 1:
-                loss = loss / t["grad_accum_steps"]
+            # No grad accumulation — CNN models update every step (matches reference)
+            optimizer.zero_grad()
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), t["max_grad_norm"])
+            optimizer.step()
 
-            if step % t["grad_accum_steps"] == 0:
-                torch.nn.utils.clip_grad_norm_(model.parameters(), t["max_grad_norm"])
-                optimizer.step()
-                optimizer.zero_grad()
-
-            train_loss += loss.item() * t["grad_accum_steps"]
+            train_loss += loss.item()
             pbar.set_postfix(loss=f"{train_loss/step:.4f}")
 
         scheduler.step()
@@ -490,13 +488,12 @@ def main() -> None:
         elif model_name == "laat":
             mcfg  = cfg["group_a"]["laat"]
             model = LAAT(
-                vocab_size       = vocab_size,
-                num_labels       = num_labels,
-                embed_dim        = mcfg["embed_dim"],
-                hidden_dim       = mcfg["hidden_dim"],
-                label_embed_dim  = mcfg["label_embed_dim"],
-                dropout          = mcfg["dropout"],
-                pad_token_id     = tokenizer.pad_token_id or 0,
+                vocab_size   = vocab_size,
+                num_labels   = num_labels,
+                embed_dim    = mcfg["embed_dim"],
+                hidden_dim   = mcfg["hidden_dim"],
+                dropout      = mcfg["dropout"],
+                pad_token_id = tokenizer.pad_token_id or 0,
             ).to(device)
             train_cnn_model("laat", model, train_ds, val_ds, cfg, device, ckpt_dir)
 
