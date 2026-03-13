@@ -197,7 +197,10 @@ class ShifaMindPhase2GAT(nn.Module):
         )                                          # [B, seq_len, 768]
 
         # 5. Multiplicative bottleneck gate
-        pooled_text    = hidden_states.mean(dim=1)  # [B, 768]
+        # Use CLS token (position 0) to match Phase 1's pooling, which also uses
+        # the CLS position after concept fusion.  This makes the warm-started
+        # diagnosis_head weights (copied from Phase 1) immediately useful.
+        pooled_text    = hidden_states[:, 0, :]     # [B, 768]  CLS token
         pooled_context = context.mean(dim=1)         # [B, 768]
         gate           = self.gate_net(torch.cat([pooled_text, pooled_context], dim=-1))
         bottleneck     = self.layer_norm(gate * pooled_context)
