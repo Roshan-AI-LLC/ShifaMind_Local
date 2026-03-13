@@ -226,6 +226,7 @@ try:
 except Exception as _e:
     log.warning(f"Could not warm-start heads from Phase 1: {_e}")
 
+total_params = sum(p.numel() for p in model.parameters())
 log.info(f"Phase 2 model: {total_params:,} parameters (including concept_embs_p2)")
 
 # ============================================================================
