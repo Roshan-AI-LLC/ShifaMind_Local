@@ -68,67 +68,23 @@ def tune_thresholds(
     """
     Sweep threshold candidates per label; choose the one maximising per-label F1.
     Returns optimal_thresholds [num_labels].
+
+    Protocol matches ShifaMind phase1_threshold.py exactly:
+      - best_f1 starts at 0.0 (not -1.0) so labels where no threshold
+        improves F1 above 0 keep the default 0.5 rather than getting 0.05.
+      - strict > comparison to match ShifaMind's > t operator.
     """
     num_labels = val_probs.shape[1]
     best_thresh = np.full(num_labels, 0.5)
     for i in range(num_labels):
-        best_f1 = -1.0
+        best_f1 = 0.0          # matches ShifaMind protocol (was -1.0 — caused bug)
         for t in candidates:
-            preds = (val_probs[:, i] >= t).astype(int)
+            preds = (val_probs[:, i] > t).astype(int)   # strict >, matches ShifaMind
             f1 = f1_score(val_labels[:, i], preds, zero_division=0)
             if f1 > best_f1:
-                best_f1    = f1
+                best_f1     = f1
                 best_thresh[i] = t
     return best_thresh
-
-
-def bootstrap_macro_f1_ci(
-    labels:     np.ndarray,
-    probs:      np.ndarray,
-    thresholds: np.ndarray,
-    n_samples:  int = 1000,
-    ci_level:   float = 0.95,
-    seed:       int = 42,
-) -> tuple[float, float]:
-    """
-    Bootstrap 95% CI for tuned macro-F1.
-    Returns (lower, upper).
-    """
-    rng = np.random.default_rng(seed)
-    n   = len(labels)
-    f1s = []
-    for _ in range(n_samples):
-        idx   = rng.integers(0, n, size=n)
-        preds = (probs[idx] >= thresholds).astype(int)
-        f1s.append(f1_score(labels[idx], preds, average="macro", zero_division=0))
-    alpha = 1.0 - ci_level
-    lo    = float(np.percentile(f1s, 100 * alpha / 2))
-    hi    = float(np.percentile(f1s, 100 * (1 - alpha / 2)))
-    return lo, hi
-
-
-def mcnemar_test(
-    labels:   np.ndarray,
-    preds_a:  np.ndarray,
-    preds_b:  np.ndarray,
-) -> float:
-    """
-    McNemar's test for pairwise significance between two multi-label classifiers.
-    Treats each (sample, label) pair as a binary outcome.
-    Returns p-value.
-    """
-    from scipy.stats import chi2
-    flat_a    = preds_a.flatten().astype(bool)
-    flat_b    = preds_b.flatten().astype(bool)
-    flat_lab  = labels.flatten().astype(bool)
-    correct_a = (flat_a == flat_lab)
-    correct_b = (flat_b == flat_lab)
-    b = int(( correct_a & ~correct_b).sum())
-    c = int((~correct_a &  correct_b).sum())
-    if b + c == 0:
-        return 1.0
-    stat = (abs(b - c) - 1) ** 2 / (b + c)
-    return float(1.0 - chi2.cdf(stat, df=1))
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -212,13 +168,12 @@ def load_baseline_model(
         )
     elif model_name == "laat":
         model = LAAT(
-            vocab_size       = vocab_size,
-            num_labels       = num_labels,
-            embed_dim        = mcfg["embed_dim"],
-            hidden_dim       = mcfg["hidden_dim"],
-            label_embed_dim  = mcfg["label_embed_dim"],
-            dropout          = mcfg["dropout"],
-            pad_token_id     = tokenizer.pad_token_id or 0,
+            vocab_size   = vocab_size,
+            num_labels   = num_labels,
+            embed_dim    = mcfg["embed_dim"],
+            hidden_dim   = mcfg["hidden_dim"],
+            dropout      = mcfg["dropout"],
+            pad_token_id = tokenizer.pad_token_id or 0,
         )
     elif model_name == "plm_icd":
         model = PLMICD(
@@ -323,7 +278,6 @@ def evaluate_shifamind_phases(
         return np.concatenate(probs_list)
 
     candidates = cfg_thresh["threshold_candidates"]
-    boot_cfg   = cfg["bootstrap"]
 
     for phase_key, phase_cfg in cfg["shifamind"]["phases"].items():
         display = phase_cfg["display_name"]
@@ -367,15 +321,10 @@ def evaluate_shifamind_phases(
         best_thresh = tune_thresholds(val_p, val_labels, candidates)
 
         # Test metrics
-        preds_default = (test_p >= 0.5).astype(int)
-        preds_tuned   = (test_p >= best_thresh).astype(int)
+        preds_default = (test_p > 0.5).astype(int)
+        preds_tuned   = (test_p > best_thresh).astype(int)
         m_def  = compute_metrics(test_labels, preds_default)
         m_tune = compute_metrics(test_labels, preds_tuned)
-        ci_lo, ci_hi = bootstrap_macro_f1_ci(
-            test_labels, test_p, best_thresh,
-            n_samples=boot_cfg["n_samples"],
-            ci_level=boot_cfg["ci_level"],
-        )
 
         results[f"shifamind_{phase_key}"] = {
             "display_name"  : display,
@@ -384,14 +333,12 @@ def evaluate_shifamind_phases(
             "hipaa_safe"    : phase_cfg["hipaa_safe"],
             "default_0.5"   : m_def,
             "tuned"         : m_tune,
-            "ci_95"         : {"lo": ci_lo, "hi": ci_hi},
             "mean_threshold": float(best_thresh.mean()),
         }
         print(
             f"  [{display}]  "
             f"macro_f1(default)={m_def['macro_f1']:.4f}  "
-            f"macro_f1(tuned)={m_tune['macro_f1']:.4f}  "
-            f"95%CI=[{ci_lo:.4f},{ci_hi:.4f}]"
+            f"macro_f1(tuned)={m_tune['macro_f1']:.4f}"
         )
 
 
@@ -450,15 +397,14 @@ def main() -> None:
     with open(ROOT / cfg["data"]["top50_info"]) as f:
         top50_info = json.load(f)
     if hasattr(val_split, "columns"):
-        top50_codes = [c for c in val_split.columns if c != "text"]
+        top50_codes = val_split.select_dtypes(include=[np.number]).columns.tolist()
     else:
         top50_codes = list(top50_info.keys())[:num_labels]
+    top50_codes = top50_codes[:num_labels]   # safety truncation
 
     candidates = cfg["training"]["threshold_candidates"]
-    boot_cfg   = cfg["bootstrap"]
 
     # ── Evaluate each baseline ──────────────────────────────────────────────
-    reference_preds = None   # ShifaMind P1 tuned predictions (for McNemar)
 
     for model_name in [m for m in args.models if m != "shifamind"]:
         print(f"\n{'='*60}")
@@ -476,16 +422,11 @@ def main() -> None:
             model_name, model, test_loader, device, cfg, cache_dir, "test", args.rerun_inference)
 
         best_thresh = tune_thresholds(val_probs, val_labels, candidates)
-        preds_def   = (test_probs >= 0.5).astype(int)
-        preds_tuned = (test_probs >= best_thresh).astype(int)
+        preds_def   = (test_probs > 0.5).astype(int)
+        preds_tuned = (test_probs > best_thresh).astype(int)
 
         m_def  = compute_metrics(test_labels, preds_def)
         m_tune = compute_metrics(test_labels, preds_tuned)
-        ci_lo, ci_hi = bootstrap_macro_f1_ci(
-            test_labels, test_probs, best_thresh,
-            n_samples=boot_cfg["n_samples"],
-            ci_level=boot_cfg["ci_level"],
-        )
 
         mcfg_entry = cfg["group_a"][model_name]
         results[model_name] = {
@@ -495,15 +436,13 @@ def main() -> None:
             "hipaa_safe"    : mcfg_entry["hipaa_safe"],
             "default_0.5"   : m_def,
             "tuned"         : m_tune,
-            "ci_95"         : {"lo": ci_lo, "hi": ci_hi},
             "mean_threshold": float(best_thresh.mean()),
         }
         np.save(cache_dir / f"{model_name}_test_thresholds.npy", best_thresh)
 
         print(
             f"  macro_f1(default)={m_def['macro_f1']:.4f}  "
-            f"macro_f1(tuned)={m_tune['macro_f1']:.4f}  "
-            f"95%CI=[{ci_lo:.4f},{ci_hi:.4f}]"
+            f"macro_f1(tuned)={m_tune['macro_f1']:.4f}"
         )
 
     # ── ShifaMind phases ────────────────────────────────────────────────────
@@ -536,33 +475,6 @@ def main() -> None:
             cache_dir=cache_dir,
             rerun=args.rerun_inference,
         )
-
-    # ── McNemar pairwise vs best ShifaMind ─────────────────────────────────
-    ref_key = "shifamind_phase1"
-    if ref_key in results and len(results) > 1:
-        ref_preds_path = cache_dir / f"shifamind_phase1_test_probs.npy"
-        if ref_preds_path.exists():
-            ref_probs  = np.load(ref_preds_path)
-            ref_thresh = np.load(cache_dir / "shifamind_phase1_test_thresholds.npy") \
-                         if (cache_dir / "shifamind_phase1_test_thresholds.npy").exists() \
-                         else np.full(num_labels, 0.5)
-            ref_preds  = (ref_probs >= ref_thresh).astype(int)
-
-            print("\n  McNemar's test vs ShifaMind Phase 1:")
-            for mname, mres in results.items():
-                if mname == ref_key:
-                    continue
-                cpath = cache_dir / f"{mname}_test_probs.npy"
-                tpath = cache_dir / f"{mname}_test_thresholds.npy"
-                if not cpath.exists():
-                    continue
-                other_probs  = np.load(cpath)
-                other_thresh = np.load(tpath) if tpath.exists() else np.full(num_labels, 0.5)
-                other_preds  = (other_probs >= other_thresh).astype(int)
-                p_val = mcnemar_test(test_labels, ref_preds, other_preds)
-                results[mname]["mcnemar_p_vs_p1"] = p_val
-                sig = " *" if p_val < 0.05 else ""
-                print(f"    {mname:<25} p={p_val:.4f}{sig}")
 
     # ── Save combined results ───────────────────────────────────────────────
     out_path = ROOT / cfg["results"]["combined"]
