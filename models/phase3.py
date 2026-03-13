@@ -31,8 +31,10 @@ import config
 from .phase2 import ShifaMindPhase2GAT
 
 
-# How many top concept names to use as the RAG query per sample
-_RAG_QUERY_TOP_CONCEPTS = 5
+# How many top concept names to use as the RAG query per sample.
+# More concepts = longer, richer query string = better cosine similarity
+# against long clinical KB passages (400-600 words).  Raised from 5 → 15.
+_RAG_QUERY_TOP_CONCEPTS = 15
 
 
 class ShifaMindPhase3RAG(nn.Module):
