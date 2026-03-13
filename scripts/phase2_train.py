@@ -205,7 +205,27 @@ model = ShifaMindPhase2GAT(
     concepts_list    = config.GLOBAL_CONCEPTS,
 ).to(device)
 
-total_params = sum(p.numel() for p in model.parameters()) + concept_embs_p2.numel()
+# ── Warm-start diagnosis_head + concept_head from Phase 1 ─────────────────────
+# The graph_scale parameter initialises at -5 (sigmoid ≈ 0.007), which means the
+# GAT graph_boost is ~0 at init. But the diagnosis_head is still a *new* random
+# Linear — so Phase 2 does NOT start at Phase 1 performance unless we copy the
+# head weights.  Warm-starting guarantees Phase 2 predictions ≈ Phase 1 at
+# epoch 0, then the GAT gradually adds signal on top.
+try:
+    _p1_sd = p1_ckpt["model_state_dict"]
+    for _p1_key, _p2_key in [
+        ("diagnosis_head.weight", "diagnosis_head.weight"),
+        ("diagnosis_head.bias",   "diagnosis_head.bias"),
+        ("concept_head.weight",   "concept_head.weight"),
+        ("concept_head.bias",     "concept_head.bias"),
+    ]:
+        if _p1_key in _p1_sd:
+            _p2_param = dict(model.named_parameters())[_p2_key]
+            _p2_param.data.copy_(_p1_sd[_p1_key])
+    log.info("Phase 1 diagnosis_head + concept_head warm-started into Phase 2 ✓")
+except Exception as _e:
+    log.warning(f"Could not warm-start heads from Phase 1: {_e}")
+
 log.info(f"Phase 2 model: {total_params:,} parameters (including concept_embs_p2)")
 
 # ============================================================================

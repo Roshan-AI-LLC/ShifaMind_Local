@@ -31,7 +31,7 @@ import config
 from .phase2 import ShifaMindPhase2GAT
 
 
-# How many top concept names to use as the RAG query per sample
+# How many top concept names to use as the RAG query per sample.
 _RAG_QUERY_TOP_CONCEPTS = 5
 
 
@@ -70,13 +70,14 @@ class ShifaMindPhase3RAG(nn.Module):
         self.rag_to_logits  = nn.Linear(hidden_size, num_diagnoses)
 
         # Per-diagnosis learnable gate magnitude: [num_diagnoses]
-        # Initialised to 1.0 → sigmoid(1) × RAG_GATE_MAX ≈ 0.27 per diagnosis.
-        # Starting above zero ensures non-trivial RAG contribution from epoch 1,
-        # which provides a meaningful gradient signal to rag_to_logits so both
-        # the gate and the RAG head can learn together.
-        # Diagnoses that hurt from RAG will have their gate shrink toward 0;
-        # those that benefit will grow toward RAG_GATE_MAX.
-        self.rag_gate_logit = nn.Parameter(torch.ones(num_diagnoses))
+        # Initialised to -5.0 → sigmoid(-5) × RAG_GATE_MAX ≈ 0.002 per diagnosis.
+        # Near-zero at init means Phase 3 starts as Phase 2 (no RAG influence),
+        # guaranteeing Phase 3 >= Phase 2 at epoch 0.  As training progresses,
+        # diagnoses that benefit from RAG will have their gate grow toward
+        # RAG_GATE_MAX; those that don't will stay near zero.
+        # (The old init of 1.0 immediately added ~25% noise from a random head,
+        # forcing BERT to compensate and drift from Phase 2's optimal weights.)
+        self.rag_gate_logit = nn.Parameter(torch.full((num_diagnoses,), -5.0))
 
     # ------------------------------------------------------------------
     def _concept_query(

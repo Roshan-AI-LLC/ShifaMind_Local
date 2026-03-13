@@ -429,33 +429,24 @@ log.info(
 
 criterion = MultiObjectiveLoss(config.LAMBDA_DX_P3, config.LAMBDA_ALIGN_P3, config.LAMBDA_CONCEPT)
 
-# ── Freeze strategy depends on base phase ────────────────────────────────────
+# ── Freeze strategy ───────────────────────────────────────────────────────────
 #
-# Phase 2 base: Only freeze GAT components (they converged in Phase 2 and
-#   there is no new graph signal). All other Phase 2 weights are fine-tuned.
+# Phase 3 trains ONLY the RAG projection head + diagnosis_head.
+# Everything in phase2_model is frozen except diagnosis_head.
 #
-# Phase 1 base: Freeze ALL Phase 2-specific layers that were NOT loaded from
-#   Phase 1 (concept_fusion, cross_attention, gate_net, layer_norm).  These
-#   layers are randomly initialised and fine-tuning them would progressively
-#   corrupt the Phase 1 BERT quality. Only Phase 1-compatible weights (BERT,
-#   concept_head, diagnosis_head) and RAG layers are trained.
+# Rationale: rag_gate_logit starts at sigmoid(-5) ≈ 0 so Phase 3 begins as
+# an exact copy of Phase 2.  BERT + all Phase 2 bottleneck weights are already
+# optimal from Phase 2 training — re-training them with noisy RAG signal
+# (before rag_projection/rag_to_logits have learned anything) causes drift and
+# degradation.  Freezing BERT ensures Phase 3 >= Phase 2 in practice.
+# The diagnosis_head is kept trainable at a low LR so it can adapt to the RAG
+# context once the RAG head learns signal.
 #
-if BASE_PHASE == 2:
-    freeze_prefixes = ("gat_encoder", "graph_proj", "concept_fusion")
-    freeze_names    = {"graph_scale"}
-    freeze_label    = "GAT encoder + graph_scale"
-else:
-    # Phase 1 base: additionally freeze Phase 2-exclusive randomly-init layers
-    freeze_prefixes = (
-        "gat_encoder", "graph_proj", "concept_fusion",  # GAT / graph
-        "cross_attention", "gate_net", "layer_norm",     # Phase 2 bottleneck (random)
-    )
-    freeze_names = {"graph_scale"}
-    freeze_label = "GAT + graph_scale + cross_attention + gate_net + layer_norm"
-
 for name, param in model.phase2_model.named_parameters():
-    if name.startswith(freeze_prefixes) or name in freeze_names:
+    if not name.startswith("diagnosis_head"):
         param.requires_grad_(False)
+
+freeze_label = "all Phase 2 layers except diagnosis_head"
 
 trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
 log.info(f"Phase 3 trainable parameters: {trainable:,}  (frozen: {freeze_label})")

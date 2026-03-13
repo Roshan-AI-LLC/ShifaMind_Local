@@ -41,134 +41,243 @@ log = get_logger()
 
 _CLINICAL_KB = {
     # ── Respiratory ──────────────────────────────────────────────────────────
-    "J"   : ("Respiratory: cough dyspnea hypoxia respiratory failure oxygen saturation "
-             "pulmonary infiltrate chest imaging bronchospasm wheezing accessory muscles"),
-    "J18" : ("Pneumonia J18: fever productive cough pleuritic chest pain dyspnea "
-             "lobar consolidation infiltrate leukocytosis elevated CRP antibiotics "
-             "community-acquired hospital-acquired aspiration sputum cultures"),
-    "J44" : ("COPD J44: chronic airflow obstruction emphysema chronic bronchitis "
-             "dyspnea exacerbation FEV1 bronchodilator steroids oxygen home oxygen"),
+    "J"   : ("Respiratory disease: cough dyspnea hypoxia tachypnea respiratory failure "
+             "oxygen saturation SpO2 pulmonary infiltrate chest X-ray bronchospasm "
+             "wheezing accessory muscle use retractions pleural effusion atelectasis "
+             "ventilation perfusion mismatch intubation"),
+    "J18" : ("Pneumonia J18: fever chills productive cough pleuritic chest pain dyspnea "
+             "tachycardia tachypnea hypoxia lobar consolidation infiltrate leukocytosis "
+             "elevated CRP procalcitonin community-acquired hospital-acquired aspiration "
+             "sputum cultures blood cultures antibiotics azithromycin ceftriaxone "
+             "beta-lactam respiratory distress bronchopneumonia interstitial pneumonia "
+             "viral bacterial atypical Legionella Mycoplasma"),
+    "J44" : ("COPD chronic obstructive pulmonary disease J44: chronic airflow obstruction "
+             "emphysema chronic bronchitis dyspnea exacerbation FEV1 FVC ratio <0.70 "
+             "bronchodilator albuterol ipratropium tiotropium steroids prednisone "
+             "oxygen home oxygen LTOT hypercapnia CO2 retention barrel chest pursed lip "
+             "pink puffer blue bloater cor pulmonale pulmonary hypertension"),
     "J45" : ("Asthma J45: episodic wheezing bronchospasm reversible airflow obstruction "
-             "inhaler albuterol corticosteroids peak flow atopy allergic"),
-    "J96" : ("Respiratory failure J96: hypoxia hypercapnia PaO2 PaCO2 intubation "
-             "mechanical ventilation oxygen supplementation BiPAP CPAP ABG pH"),
+             "dyspnea chest tightness cough inhaler albuterol beta-agonist "
+             "corticosteroids budesonide fluticasone peak flow meter atopy allergic "
+             "triggers exercise cold air IgE eosinophils spirometry steroid burst "
+             "status asthmaticus nebulizer magnesium"),
+    "J96" : ("Respiratory failure J96: hypoxia hypercapnia PaO2 <60 mmHg PaCO2 >50 "
+             "type 1 type 2 failure intubation mechanical ventilation BiPAP CPAP "
+             "oxygen supplementation ABG arterial blood gas pH acidosis ARDS "
+             "acute respiratory distress syndrome weaning extubation"),
     "J13" : ("Streptococcal pneumonia J13: Streptococcus pneumoniae lobar pneumonia "
-             "fever consolidation bacteremia blood cultures penicillin"),
-    "J20" : ("Acute bronchitis J20: cough sputum viral respiratory infection "
-             "self-limiting bronchodilator inhaler"),
+             "fever rigors productive cough rust-coloured sputum consolidation "
+             "bacteremia blood cultures penicillin amoxicillin"),
+    "J20" : ("Acute bronchitis J20: cough purulent sputum viral respiratory tract infection "
+             "self-limiting bronchodilator fever malaise URI upper respiratory infection"),
     # ── Cardiac / Cardiovascular ─────────────────────────────────────────────
-    "I"   : ("Cardiovascular: chest pain dyspnea edema palpitations syncope "
-             "cardiac markers troponin BNP EKG echocardiogram"),
-    "I50" : ("Heart failure I50: dyspnea orthopnea paroxysmal nocturnal dyspnea "
-             "peripheral edema elevated BNP reduced EF pulmonary congestion "
-             "diuretics ACE inhibitor beta-blocker cardiomegaly JVD"),
-    "I25" : ("Ischemic heart disease I25: stable angina exertional chest pressure "
-             "troponin EKG ST changes coronary artery disease catheterization stent"),
-    "I21" : ("Acute MI STEMI NSTEMI I21: acute chest pain crushing pressure radiation "
-             "arm jaw troponin elevation CKMB ST segment elevation thrombolysis PCI "
-             "aspirin heparin nitrates fibrinolysis"),
-    "I48" : ("Atrial fibrillation I48: irregular rhythm palpitations rapid ventricular "
-             "rate stroke risk anticoagulation warfarin DOAC rate control beta-blocker "
-             "cardioversion ablation CHA2DS2-VASc"),
-    "I10" : ("Hypertension I10: elevated blood pressure end-organ damage kidney "
-             "hypertensive urgency emergency headache ACE inhibitor ARB diuretic"),
-    "I63" : ("Ischemic stroke I63: sudden focal neurological deficit hemiplegia "
-             "aphasia CT brain MRI DWI tPA thrombolysis antiplatelet anticoagulation"),
-    "I47" : ("Supraventricular tachycardia I47: rapid heart rate palpitations "
-             "adenosine vagal maneuver cardioversion EPS ablation"),
+    "I"   : ("Cardiovascular disease: chest pain dyspnea edema palpitations syncope "
+             "presyncope cardiac markers troponin BNP NT-proBNP EKG ECG echocardiogram "
+             "tachycardia bradycardia arrhythmia heart murmur JVD jugular venous distension"),
+    "I50" : ("Heart failure congestive cardiac failure I50: dyspnea orthopnea paroxysmal "
+             "nocturnal dyspnea PND exertional dyspnea peripheral edema leg swelling "
+             "elevated BNP NT-proBNP reduced ejection fraction EF systolic diastolic "
+             "pulmonary congestion crackles S3 gallop cardiomegaly diuretics furosemide "
+             "ACE inhibitor ARB beta-blocker cardiomyopathy fluid overload weight gain "
+             "bilateral crackles pleural effusion JVD"),
+    "I25" : ("Ischemic heart disease coronary artery disease I25: stable angina "
+             "exertional chest pressure tightness radiation arm jaw troponin EKG ST "
+             "changes T-wave inversion stress test catheterization PCI stent CABG "
+             "antiplatelet aspirin clopidogrel statin atherosclerosis risk factors"),
+    "I21" : ("Acute myocardial infarction MI STEMI NSTEMI I21: acute chest pain "
+             "crushing pressure radiation left arm jaw diaphoresis nausea troponin "
+             "elevation CKMB CK ST segment elevation thrombolysis PCI angioplasty "
+             "aspirin heparin nitrates fibrinolysis door-to-balloon time reperfusion "
+             "cardiogenic shock arrhythmia ventricular fibrillation"),
+    "I48" : ("Atrial fibrillation AFib I48: irregular heart rhythm palpitations "
+             "rapid ventricular rate stroke risk anticoagulation warfarin DOAC "
+             "apixaban rivaroxaban rate control beta-blocker diltiazem digoxin "
+             "cardioversion ablation CHA2DS2-VASc HAS-BLED thyrotoxicosis valvular "
+             "lone paroxysmal persistent permanent flutter"),
+    "I10" : ("Hypertension HTN I10: elevated blood pressure systolic diastolic "
+             "end-organ damage hypertensive urgency emergency hypertensive crisis "
+             "headache visual changes kidney damage proteinuria ACE inhibitor ARB "
+             "calcium channel blocker diuretic thiazide amlodipine lisinopril"),
+    "I63" : ("Ischemic stroke cerebrovascular accident CVA I63: sudden focal "
+             "neurological deficit hemiplegia hemiparesis aphasia dysarthria "
+             "facial droop arm drift CT brain MRI diffusion DWI tPA alteplase "
+             "thrombolysis thrombectomy antiplatelet anticoagulation NIHSS "
+             "atrial fibrillation carotid stenosis"),
+    "I47" : ("Supraventricular tachycardia SVT I47: rapid heart rate palpitations "
+             "dizziness presyncope narrow complex tachycardia adenosine vagal maneuver "
+             "Valsalva cardioversion EPS electrophysiology ablation"),
     # ── Infection / Sepsis ────────────────────────────────────────────────────
-    "A"   : ("Infectious disease: fever leukocytosis elevated WBC cultures antibiotics "
-             "source control bacteremia viremia fungemia immunocompromised"),
-    "A41" : ("Sepsis septic shock A41: organ dysfunction hypotension tachycardia "
-             "elevated lactate >2 mmol positive blood cultures broad-spectrum antibiotics "
-             "fluid resuscitation vasopressors norepinephrine SOFA qSOFA ICU"),
-    "A40" : ("Streptococcal sepsis A40: group A streptococcus bacteremia penicillin "
-             "source control necrotizing fasciitis"),
-    "B37" : ("Candidiasis B37: fungal infection immunocompromised central line "
-             "azole fluconazole echinocandin blood cultures"),
+    "A"   : ("Infectious disease infection: fever chills rigors leukocytosis "
+             "elevated WBC neutrophilia cultures blood urine sputum antibiotics "
+             "source control bacteremia viremia fungemia immunocompromised "
+             "temperature >38.3 or <36 tachycardia tachypnea"),
+    "A41" : ("Sepsis septic shock systemic inflammatory response A41: organ dysfunction "
+             "hypotension tachycardia tachypnea fever chills altered mental status "
+             "elevated lactate >2 mmol/L positive blood cultures broad-spectrum "
+             "antibiotics piperacillin-tazobactam vancomycin fluid resuscitation "
+             "crystalloid vasopressors norepinephrine dopamine SOFA qSOFA ICU "
+             "septic shock MAP <65 despite fluid oliguria creatinine rise bilirubin"),
+    "A40" : ("Streptococcal sepsis A40: group A streptococcus GAS bacteremia "
+             "penicillin source control necrotizing fasciitis cellulitis wound infection"),
+    "B37" : ("Candidiasis fungal infection B37: Candida immunocompromised neutropenic "
+             "central line catheter azole fluconazole echinocandin caspofungin "
+             "blood cultures oral thrush esophageal candidemia"),
     # ── Renal ─────────────────────────────────────────────────────────────────
-    "N"   : ("Renal: creatinine BUN GFR urine output proteinuria electrolytes "
-             "urinalysis renal function acute chronic kidney"),
+    "N"   : ("Renal kidney disease: creatinine BUN GFR urine output proteinuria "
+             "electrolytes urinalysis renal function acute chronic kidney failure "
+             "hematuria casts oliguria anuria edema hypertension"),
     "N17" : ("Acute kidney injury AKI N17: rapid creatinine rise BUN elevated "
-             "oliguria anuria prerenal intrinsic postrenal IV fluids dialysis "
-             "nephrotoxin avoidance contrast creatinine AKIN KDIGO stages"),
-    "N18" : ("Chronic kidney disease CKD N18: GFR <60 proteinuria anemia "
-             "hypertension phosphate calcium parathyroid erythropoietin dialysis "
-             "transplant uremia"),
-    "N39" : ("Urinary tract infection N39: dysuria frequency urgency pyuria "
-             "positive urine culture nitrites leukocyte esterase antibiotics "
-             "complicated uncomplicated pyelonephritis"),
+             "oliguria anuria urine output <0.5 ml/kg/hr prerenal intrinsic postrenal "
+             "obstruction IV fluids dialysis CRRT nephrotoxin avoidance contrast "
+             "NSAID aminoglycoside AKIN KDIGO stages tubular necrosis ATN ischemia "
+             "renal hypoperfusion shock sepsis"),
+    "N18" : ("Chronic kidney disease CKD N18: GFR <60 ml/min/1.73m2 proteinuria "
+             "anemia normocytic hypertension phosphate calcium parathyroid PTH "
+             "erythropoietin ESA dialysis hemodialysis peritoneal transplant uremia "
+             "hyperkalemia acidosis fluid retention edema"),
+    "N39" : ("Urinary tract infection UTI N39: dysuria frequency urgency pyuria "
+             "bacteriuria positive urine culture nitrites leukocyte esterase WBC "
+             "antibiotics trimethoprim nitrofurantoin ciprofloxacin complicated "
+             "uncomplicated pyelonephritis fever flank pain costovertebral tenderness"),
     # ── Metabolic / Endocrine ─────────────────────────────────────────────────
-    "E"   : ("Metabolic endocrine: glucose electrolytes sodium potassium "
-             "thyroid hormone insulin HbA1c metabolic panel"),
-    "E11" : ("Type 2 diabetes mellitus E11: hyperglycemia HbA1c >6.5% "
-             "insulin resistance polyuria polydipsia metformin insulin GLP-1 "
-             "SGLT2 DKA HHS complications neuropathy nephropathy retinopathy"),
-    "E10" : ("Type 1 diabetes E10: autoimmune insulin-dependent DKA ketones "
-             "insulin pump basal bolus glucose monitoring"),
-    "E87" : ("Electrolyte disorder E87: hyponatremia hypernatremia hypokalemia "
-             "hyperkalemia hypomagnesemia sodium correction fluid management IV"),
-    "E86" : ("Volume depletion dehydration E86: hypovolemia orthostatic hypotension "
-             "tachycardia dry mucous membranes decreased urine output IV fluids"),
-    "E66" : ("Obesity E66: BMI >30 metabolic syndrome insulin resistance sleep apnea"),
+    "E"   : ("Metabolic endocrine disorder: glucose hyperglycemia hypoglycemia "
+             "electrolytes sodium potassium thyroid hormone insulin HbA1c hemoglobin A1c "
+             "metabolic panel basic comprehensive BMP CMP"),
+    "E11" : ("Type 2 diabetes mellitus T2DM E11: hyperglycemia elevated HbA1c >6.5% "
+             "insulin resistance polyuria polydipsia polyphagia weight loss fatigue "
+             "metformin insulin GLP-1 agonist SGLT2 inhibitor DKA diabetic ketoacidosis "
+             "HHS hyperosmolar hyperglycemic state microvascular macrovascular "
+             "neuropathy peripheral nephropathy retinopathy cardiovascular risk "
+             "glucose monitoring fingerstick"),
+    "E10" : ("Type 1 diabetes mellitus T1DM E10: autoimmune insulin-dependent "
+             "DKA ketoacidosis anion gap metabolic acidosis ketones ketonuria "
+             "insulin pump continuous subcutaneous basal bolus blood glucose monitoring "
+             "hypoglycemia glucagon C-peptide absent antibodies GAD"),
+    "E87" : ("Electrolyte disorder E87: hyponatremia sodium <135 hypernatremia "
+             "sodium >145 hypokalemia potassium <3.5 hyperkalemia >5.5 EKG changes "
+             "peaked T waves hypomagnesemia hypocalcemia sodium correction rate "
+             "SIADH cerebral salt wasting fluid management IV replacement"),
+    "E86" : ("Volume depletion dehydration hypovolemia E86: orthostatic hypotension "
+             "tachycardia dry mucous membranes skin turgor decreased urine output "
+             "concentrated urine elevated BUN creatinine ratio IV fluids normal saline "
+             "lactated Ringer's poor oral intake vomiting diarrhea fever"),
+    "E66" : ("Obesity E66: BMI >30 body mass index metabolic syndrome insulin "
+             "resistance dyslipidemia hypertension obstructive sleep apnea OSA "
+             "NAFLD non-alcoholic fatty liver bariatric surgery weight management"),
     # ── GI / Hepatic ──────────────────────────────────────────────────────────
-    "K"   : ("Gastrointestinal: abdominal pain nausea vomiting diarrhea LFTs "
-             "amylase lipase imaging ultrasound CT scan"),
-    "K80" : ("Cholelithiasis cholecystitis K80: right upper quadrant pain Murphy sign "
-             "ultrasound gallstones bile duct cholecystectomy ERCP"),
-    "K92" : ("GI hemorrhage K92: hematemesis melena hematochezia hemoglobin drop "
-             "endoscopy colonoscopy IV PPI blood transfusion"),
-    "K85" : ("Acute pancreatitis K85: epigastric pain elevated amylase lipase "
-             "nausea vomiting CT scan severity gallstone alcohol Ranson Balthazar"),
-    "K21" : ("GERD K21: heartburn acid reflux esophagitis PPI antacid Barrets"),
-    "K57" : ("Diverticular disease K57: left lower quadrant pain fever diverticulitis "
-             "CT scan antibiotics perforation"),
+    "K"   : ("Gastrointestinal GI disorder: abdominal pain nausea vomiting diarrhea "
+             "LFTs liver function tests amylase lipase imaging ultrasound CT abdomen "
+             "bowel obstruction distension tenderness guarding rebound"),
+    "K80" : ("Cholelithiasis cholecystitis biliary colic K80: right upper quadrant "
+             "pain Murphy sign positive fever nausea vomiting ultrasound gallstones "
+             "bile duct common bile duct dilation cholecystectomy ERCP laparoscopic "
+             "acute chronic acalculous elevated alkaline phosphatase bilirubin"),
+    "K92" : ("GI hemorrhage gastrointestinal bleeding K92: hematemesis coffee-ground "
+             "emesis melena black tarry stool hematochezia hemoglobin drop transfusion "
+             "endoscopy upper lower colonoscopy IV PPI proton pump inhibitor "
+             "peptic ulcer variceal portal hypertension diverticular angiodysplasia"),
+    "K85" : ("Acute pancreatitis K85: severe epigastric pain radiation to back "
+             "elevated amylase lipase nausea vomiting CT scan Balthazar severity "
+             "gallstone biliary alcohol Ranson criteria APACHE necrotizing hemorrhagic "
+             "pseudocyst pleural effusion fluid resuscitation NPO bowel rest"),
+    "K21" : ("GERD gastroesophageal reflux disease K21: heartburn pyrosis acid reflux "
+             "regurgitation esophagitis erosive PPI proton pump inhibitor antacid "
+             "Barrett's esophagus dysplasia hiatal hernia dysphagia"),
+    "K57" : ("Diverticular disease diverticulitis K57: left lower quadrant LLQ pain "
+             "fever leukocytosis CT scan antibiotics perforation abscess peritonitis "
+             "colonic diverticula microperforation bowel rest"),
     # ── Mental Health ──────────────────────────────────────────────────────────
-    "F"   : ("Psychiatric mental health: mood affect cognition behavior orientation "
-             "psychiatric assessment PHQ GAD"),
-    "F32" : ("Major depressive disorder F32: low mood anhedonia sleep disturbance "
-             "fatigue concentration poor suicidal ideation antidepressant SSRI SNRI"),
-    "F41" : ("Anxiety disorder F41: excessive worry panic attack autonomic symptoms "
-             "tachycardia diaphoresis benzodiazepine SSRI"),
-    "F10" : ("Alcohol use disorder F10: withdrawal tremor seizure delirium thiamine "
-             "CIWA benzodiazepine detox"),
+    "F"   : ("Psychiatric mental health disorder: mood affect cognition behavior "
+             "orientation psychiatric assessment PHQ-9 GAD-7 MMSE cognition "
+             "psychosis hallucinations delusions agitation"),
+    "F32" : ("Major depressive disorder MDD depression F32: persistent low mood "
+             "anhedonia sleep disturbance insomnia hypersomnia fatigue poor concentration "
+             "worthlessness hopelessness suicidal ideation psychomotor retardation "
+             "antidepressant SSRI SNRI venlafaxine sertraline fluoxetine CBT"),
+    "F41" : ("Anxiety disorder F41: excessive worry generalized panic attack "
+             "autonomic symptoms tachycardia diaphoresis palpitations chest tightness "
+             "tremor shortness of breath derealization benzodiazepine lorazepam "
+             "clonazepam SSRI buspirone CBT"),
+    "F10" : ("Alcohol use disorder alcoholism F10: alcohol dependence withdrawal "
+             "tremor seizure delirium tremens DTs diaphoresis agitation thiamine "
+             "Wernicke Korsakoff CIWA scale benzodiazepine chlordiazepoxide detox "
+             "elevated GGT AST:ALT ratio"),
     # ── Injury / Trauma ────────────────────────────────────────────────────────
-    "S"   : "Trauma injury: mechanism imaging stabilisation hemorrhage orthopedic fracture",
-    "T"   : "Poisoning overdose: toxicology antidote supportive care gastric lavage activated charcoal",
+    "S"   : ("Trauma injury S: mechanism blunt penetrating imaging fracture dislocation "
+             "hemorrhage hemorrhagic shock stabilisation ATLS primary survey airway "
+             "breathing circulation orthopedic surgery internal fixation ORIF"),
+    "T"   : ("Poisoning overdose toxicity T: toxicology antidote supportive care "
+             "gastric lavage activated charcoal acetylcysteine naloxone flumazenil "
+             "drug level serum acetaminophen salicylate opioid benzodiazepine"),
     # ── Neoplasm ──────────────────────────────────────────────────────────────
-    "C"   : ("Malignancy cancer C: histology pathology staging chemotherapy radiation "
-             "surgery biopsy metastasis lymph node tumor marker"),
-    "C34" : ("Lung cancer C34: cough hemoptysis weight loss CT scan PET biopsy "
-             "NSCLC SCLC staging chemotherapy immunotherapy"),
-    "C50" : ("Breast cancer C50: mass lumpectomy mastectomy hormone receptor HER2 "
-             "chemotherapy radiation tamoxifen"),
-    "D"   : "Benign neoplasm D: imaging biopsy excision surveillance",
-    "D50" : ("Iron deficiency anemia D50: microcytic hypochromic low ferritin "
-             "iron supplementation GI blood loss"),
-    "D64" : ("Anemia D64: hemoglobin CBC iron B12 folate reticulocyte transfusion "
-             "erythropoietin chronic disease hemolysis"),
+    "C"   : ("Malignancy cancer neoplasm C: histology pathology staging TNM "
+             "chemotherapy radiation surgery biopsy metastasis lymph node tumor "
+             "marker CA-125 CEA PSA weight loss fatigue cachexia"),
+    "C34" : ("Lung cancer carcinoma C34: cough hemoptysis weight loss dyspnea "
+             "CT chest PET scan biopsy bronchoscopy NSCLC SCLC adenocarcinoma "
+             "squamous cell staging chemotherapy platinum immunotherapy pembrolizumab "
+             "EGFR ALK mutation targeted therapy"),
+    "C50" : ("Breast cancer carcinoma C50: breast mass lump lumpectomy mastectomy "
+             "hormone receptor ER PR HER2 positive negative sentinel node biopsy "
+             "axillary dissection chemotherapy radiation tamoxifen aromatase inhibitor "
+             "trastuzumab adjuvant neoadjuvant"),
+    "D"   : ("Benign neoplasm D: imaging ultrasound CT MRI biopsy excision surveillance "
+             "watchful waiting incidental finding polyp lipoma cyst"),
+    "D50" : ("Iron deficiency anemia IDA D50: microcytic hypochromic low MCV "
+             "low ferritin iron deficiency GI blood loss menorrhagia malabsorption "
+             "iron supplementation IV iron blood loss workup colonoscopy"),
+    "D64" : ("Anemia D64: low hemoglobin hematocrit CBC iron studies B12 folate "
+             "reticulocyte count transfusion erythropoietin chronic disease "
+             "hemolysis hemolytic direct Coombs aplastic pernicious macrocytic"),
     # ── Neurological ──────────────────────────────────────────────────────────
-    "G"   : ("Neurological: mental status level of consciousness focal deficits "
-             "imaging CT MRI EEG"),
-    "G20" : ("Parkinson disease G20: tremor rigidity bradykinesia dopamine levodopa "
-             "carbidopa DBS gait freezing"),
-    "G40" : ("Epilepsy G40: seizure EEG anticonvulsant levetiracetam phenytoin valproate "
-             "status epilepticus benzodiazepine lorazepam"),
-    "G89" : ("Pain G89: acute chronic assessment multimodal analgesia opioid NSAID "
-             "neuropathic gabapentin pregabalin"),
+    "G"   : ("Neurological disease: mental status altered consciousness focal deficits "
+             "weakness sensory loss coordination gait imaging CT MRI EEG lumbar puncture "
+             "CSF headache seizure syncope dementia encephalopathy"),
+    "G20" : ("Parkinson disease PD G20: resting tremor rigidity cogwheel bradykinesia "
+             "shuffling gait festination postural instability dopamine dopaminergic "
+             "levodopa carbidopa pramipexole DBS deep brain stimulation micrographia "
+             "masked facies freezing falls substantia nigra"),
+    "G40" : ("Epilepsy seizure disorder G40: tonic clonic grand mal focal partial "
+             "EEG electroencephalogram anticonvulsant antiepileptic levetiracetam "
+             "phenytoin valproate carbamazepine lamotrigine status epilepticus "
+             "benzodiazepine lorazepam diazepam postictal aura"),
+    "G89" : ("Pain management G89: acute chronic pain numeric rating scale NRS "
+             "multimodal analgesia opioid morphine hydromorphone oxycodone fentanyl "
+             "NSAID ibuprofen ketorolac neuropathic gabapentin pregabalin duloxetine "
+             "pain assessment sedation analgesic ladder"),
     # ── Musculoskeletal ───────────────────────────────────────────────────────
-    "M"   : ("Musculoskeletal: joint pain swelling arthritis gout uric acid "
-             "rheumatoid autoimmune NSAID corticosteroid"),
-    "M79" : ("Soft tissue disorder M79: myalgia fibromyalgia pain physical therapy"),
+    "M"   : ("Musculoskeletal rheumatologic disease: joint pain arthralgia swelling "
+             "arthritis gout uric acid hyperuricemia inflammatory rheumatoid "
+             "autoimmune ANA RF CCP NSAID corticosteroid DMARDs"),
+    "M79" : ("Soft tissue musculoskeletal disorder M79: myalgia muscle pain "
+             "fibromyalgia widespread pain fatigue tender points physical therapy "
+             "trigger point injection NSAID low-impact exercise"),
     # ── Blood / Coagulation ───────────────────────────────────────────────────
-    "D68" : ("Coagulopathy D68: prolonged PT INR PTT bleeding anticoagulation reversal "
-             "FFP vitamin K factor deficiency DIC"),
-    "D69" : ("Thrombocytopenia D69: low platelet count bleeding hematology ITP HIT TTP"),
+    "D68" : ("Coagulopathy bleeding disorder D68: prolonged PT INR PTT elevated "
+             "bleeding bruising anticoagulation reversal FFP fresh frozen plasma "
+             "vitamin K factor deficiency DIC disseminated intravascular coagulation "
+             "hemophilia factor VIII IX warfarin reversal platelet transfusion"),
+    "D69" : ("Thrombocytopenia low platelet count D69: bleeding petechiae purpura "
+             "ecchymosis spontaneous bleeding hematology ITP immune thrombocytopenic "
+             "HIT heparin-induced TTP thrombotic thrombocytopenic purpura ADAMTS13 "
+             "platelet transfusion threshold <10,000 <50,000"),
     # ── Genitourinary ──────────────────────────────────────────────────────────
-    "N20" : ("Nephrolithiasis kidney stone N20: flank pain hematuria CT scan "
-             "stone size urology lithotripsy"),
-    "N40" : ("Benign prostatic hyperplasia N40: urinary retention hesitancy frequency "
-             "PSA urinalysis alpha-blocker 5-alpha reductase"),
+    "N20" : ("Nephrolithiasis kidney stone urolithiasis N20: acute severe flank pain "
+             "colicky radiation groin hematuria gross microscopic CT KUB non-contrast "
+             "stone size hydronephrosis urology lithotripsy ESWL ureteroscopy"),
+    "N40" : ("Benign prostatic hyperplasia BPH N40: lower urinary tract symptoms LUTS "
+             "urinary retention hesitancy weak stream frequency nocturia overflow "
+             "incontinence PSA prostate specific antigen urinalysis post-void residual "
+             "alpha-blocker tamsulosin 5-alpha reductase finasteride"),
+    # ── Pulmonary vascular ────────────────────────────────────────────────────
+    "I26" : ("Pulmonary embolism PE I26: sudden dyspnea pleuritic chest pain "
+             "tachycardia tachypnea hemoptysis hypoxia Wells score D-dimer "
+             "CT pulmonary angiogram CTPA VQ scan anticoagulation heparin "
+             "LMWH enoxaparin warfarin DOAC massive submassive saddle PE "
+             "right heart strain troponin BNP thrombolysis"),
+    "I82" : ("Deep vein thrombosis DVT I82: unilateral leg swelling pain erythema "
+             "warmth Homans sign Wells score D-dimer duplex ultrasound venous "
+             "Doppler anticoagulation LMWH heparin thrombosis thrombus occlusion"),
 }
 
 

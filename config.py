@@ -229,12 +229,12 @@ FOCAL_ALPHA       = 0.75  # positive-class weight; addresses severe label imbala
 
 # ── Graph (Phase 2) — GNN architecture ────────────────────────────────────────
 GRAPH_HIDDEN_DIM  = 256
-GAT_HEADS         = 4
+GAT_HEADS         = 4       # 256 // 4 = 64 per head
 GAT_LAYERS        = 2
 GAT_DROPOUT       = 0.3
 
 # ── Multi-Source KG edge thresholds ───────────────────────────────────────────
-# Co-coding edges (concept→code): add edge when training-data NPMI exceeds this
+# Co-coding edges (concept→code): add edge when training-data NPMI exceeds this.
 GRAPH_COCODING_NPMI_MIN    = 0.05
 
 # Competitive edges (code↔code): exclusivity score threshold and minimum
@@ -248,12 +248,12 @@ GRAPH_PUBMED_NPMI_MIN      = 0.10
 # ── PubMed (Phase 2 KG enrichment) ────────────────────────────────────────────
 # Set to False to skip PubMed fetching (graph still uses UMLS + data-driven edges)
 USE_PUBMED_EDGES           = True
-PUBMED_ABSTRACTS_PER_CODE  = 200       # abstracts fetched per ICD-10 condition
+PUBMED_ABSTRACTS_PER_CODE  = 200
 PUBMED_CACHE_JSON          = GRAPH_P2 / "pubmed_abstracts_cache.json"
 
 # ── RAG (Phase 3) ──────────────────────────────────────────────────────────────
 RAG_MODEL_NAME        = "sentence-transformers/all-MiniLM-L6-v2"
-RAG_TOP_K             = 5      # retrieve top 5 passages per query
+RAG_TOP_K             = 5
 # Threshold=0.0 means always retrieve top-K regardless of similarity score.
 # Previous threshold (0.45) was killing all retrievals: concept-name queries
 # (3-5 words) score 0.20-0.35 against 400-600 word passages in MiniLM.
@@ -265,7 +265,7 @@ RAG_GATE_MAX          = 0.35   # cap RAG influence — Phase 2 base dominates
 # These layers train from scratch while BERT is already well-trained.
 # Standard practice: new heads get 50-100× higher LR than fine-tuned backbone.
 RAG_HEAD_LR           = 5e-4   # RAG-specific parameters learning rate
-PROTOTYPES_PER_DX     = 50     # increased from 20 — richer MIMIC prototype pool
+PROTOTYPES_PER_DX     = 50
 RAG_ENCODE_BATCH_SIZE = 64     # sentence-transformers encode batch (MPS-safe)
 
 # ── Threshold tuning ───────────────────────────────────────────────────────────
