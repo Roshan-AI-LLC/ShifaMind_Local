@@ -236,95 +236,47 @@ def _find_latest_ckpt(ckpt_dir: Path, filename: str) -> Path | None:
 
 def evaluate_shifamind_phases(
     cfg:        dict,
-    val_probs_ref: np.ndarray,   # used for threshold tuning
-    val_labels: np.ndarray,
-    test_labels: np.ndarray,
-    val_loader,
-    test_loader,
-    device:     torch.device,
-    num_labels: int,
-    num_concepts: int,
-    concept_embs_p1: torch.Tensor,
-    concept_embs_p2: torch.Tensor,
-    tokenizer,
-    top50_codes: list,
-    top50_info:  dict,
-    cfg_thresh:  dict,
-    results:     dict,
-    cache_dir:   Path,
-    rerun:       bool,
+    results:    dict,
 ) -> None:
     """
-    Evaluate ShifaMind Phase 1, 2, 3 using their existing checkpoints.
-    Appends results to the `results` dict.
+    Load ShifaMind Phase 1/2/3 metrics from the JSON files produced by the
+    phase{N}_threshold.py scripts.  Run those scripts first if needed:
+        python scripts/phase1_threshold.py
+        python scripts/phase2_threshold.py
+        python scripts/phase3_threshold.py
     """
-    # Import ShifaMind models
-    from models.phase1 import ShifaMindPhase1
-    from models.phase2 import ShifaMindPhase2
-    from models.phase3 import ShifaMindPhase3RAG
-    from utils.checkpoints import find_latest_checkpoint
     import config as sm_cfg
 
-    def _infer_sm(model, loader, extra_kw=None) -> np.ndarray:
-        model.eval()
-        probs_list = []
-        with torch.no_grad():
-            for batch in tqdm(loader, desc="  SM inference", leave=False):
-                ids  = batch["input_ids"].to(device)
-                mask = batch["attention_mask"].to(device)
-                kw   = extra_kw or {}
-                out  = model(ids, mask, **kw)
-                probs_list.append(torch.sigmoid(out["logits"]).cpu().numpy())
-        return np.concatenate(probs_list)
-
-    candidates = cfg_thresh["threshold_candidates"]
+    phase_json = {
+        "phase1": sm_cfg.P1_THRESH_RESULTS_JSON,
+        "phase2": sm_cfg.P2_THRESH_RESULTS_JSON,
+        "phase3": sm_cfg.RESULTS_P3_FROM_P2 / "final_test_results.json",
+    }
 
     for phase_key, phase_cfg in cfg["shifamind"]["phases"].items():
-        display = phase_cfg["display_name"]
-        cache_v = cache_dir / f"shifamind_{phase_key}_val_probs.npy"
-        cache_t = cache_dir / f"shifamind_{phase_key}_test_probs.npy"
+        display   = phase_cfg["display_name"]
+        json_path = phase_json.get(phase_key)
 
-        if not rerun and cache_v.exists() and cache_t.exists():
-            print(f"  [{display}] Loading cached probs …")
-            val_p  = np.load(cache_v)
-            test_p = np.load(cache_t)
-        else:
-            # Use pre-saved .npy files from ShifaMind threshold scripts if available
-            sm_res_dir = ROOT / cfg["checkpoints"][f"shifamind_{phase_key.replace('phase','p')}"]
-            # Phase-specific npy paths
-            if phase_key == "phase1":
-                probs_dir = ROOT / sm_cfg.RESULTS_P1
-            elif phase_key == "phase2":
-                probs_dir = ROOT / sm_cfg.RESULTS_P2
-            else:
-                probs_dir = ROOT / sm_cfg.RESULTS_P3_FROM_P2
+        if json_path is None or not Path(json_path).exists():
+            print(f"  [{display}] No results found.")
+            print(f"    → Run: python scripts/{phase_key}_threshold.py first.")
+            continue
 
-            vp = probs_dir / "val_probabilities.npy"
-            tp = probs_dir / "test_probabilities.npy"
+        with open(json_path) as f:
+            sm_res = json.load(f)
 
-            if vp.exists() and tp.exists() and not rerun:
-                print(f"  [{display}] Using existing ShifaMind probs …")
-                val_p  = np.load(vp)
-                test_p = np.load(tp)
-            else:
-                print(f"  [{display}] Re-running inference (not cached) …")
-                # Fall back to rerunning — requires loading the ShifaMind model
-                # (this path is rarely needed; pre-saved probs should exist)
-                print(f"    WARNING: val/test probs not found for {display}")
-                print(f"    Run the corresponding ShifaMind threshold script first.")
-                continue
+        def _norm(m: dict) -> dict:
+            """Normalise metric keys: phase 1/2 use 'precision'/'recall',
+            phase 3 uses 'macro_p'/'macro_r'."""
+            return {
+                "macro_f1" : m.get("macro_f1",  0.0),
+                "micro_f1" : m.get("micro_f1",  0.0),
+                "precision": m.get("precision", m.get("macro_p", 0.0)),
+                "recall"   : m.get("recall",    m.get("macro_r", 0.0)),
+            }
 
-            np.save(cache_v, val_p)
-            np.save(cache_t, test_p)
-
-        # Threshold tuning on val
-        best_thresh = tune_thresholds(val_p, val_labels, candidates)
-
-        # Test metrics
-        preds_default = (test_p > 0.5).astype(int)
-        preds_tuned   = (test_p > best_thresh).astype(int)
-        m_def  = compute_metrics(test_labels, preds_default)
-        m_tune = compute_metrics(test_labels, preds_tuned)
+        m_def  = _norm(sm_res["default_0.5"])
+        m_tune = _norm(sm_res["optimal_tuned"])
 
         results[f"shifamind_{phase_key}"] = {
             "display_name"  : display,
@@ -333,7 +285,6 @@ def evaluate_shifamind_phases(
             "hipaa_safe"    : phase_cfg["hipaa_safe"],
             "default_0.5"   : m_def,
             "tuned"         : m_tune,
-            "mean_threshold": float(best_thresh.mean()),
         }
         print(
             f"  [{display}]  "
@@ -451,30 +402,7 @@ def main() -> None:
         print(f"  Evaluating: ShifaMind phases")
         print(f"{'='*60}")
 
-        import config as sm_cfg
-        p1_embs = torch.load(ROOT / sm_cfg.P1_CONCEPT_EMBS, map_location=device, weights_only=False)
-        p2_embs = torch.load(ROOT / sm_cfg.P2_CONCEPT_EMBS, map_location=device, weights_only=False)
-
-        evaluate_shifamind_phases(
-            cfg=cfg,
-            val_probs_ref=None,
-            val_labels=val_labels,
-            test_labels=test_labels,
-            val_loader=val_loader,
-            test_loader=test_loader,
-            device=device,
-            num_labels=num_labels,
-            num_concepts=num_concepts,
-            concept_embs_p1=p1_embs,
-            concept_embs_p2=p2_embs,
-            tokenizer=tokenizer,
-            top50_codes=top50_codes,
-            top50_info=top50_info,
-            cfg_thresh=cfg["training"],
-            results=results,
-            cache_dir=cache_dir,
-            rerun=args.rerun_inference,
-        )
+        evaluate_shifamind_phases(cfg=cfg, results=results)
 
     # ── Save combined results ───────────────────────────────────────────────
     out_path = ROOT / cfg["results"]["combined"]
