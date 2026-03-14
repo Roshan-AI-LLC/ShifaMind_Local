@@ -108,7 +108,7 @@ group_a:
     dropout:      0.1
     lr_bert:      0.00002
     lr_head:      0.001
-    epochs:       3
+    epochs:       5
     freeze_bert_epochs: 0
     interpretable: "×"
     hipaa_safe:    true

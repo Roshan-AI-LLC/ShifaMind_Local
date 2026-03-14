@@ -151,7 +151,7 @@ def compute_val_loss(model, loader, criterion, device, model_name: str) -> dict:
                 loss  = criterion(out["logits"], labs)
                 # Stage 1 also adds concept supervision
                 if out.get("concept_logits") is not None:
-                    loss = loss + 0.1 * nn.functional.binary_cross_entropy_with_logits(
+                    loss = loss + model.lambda_concept * nn.functional.binary_cross_entropy_with_logits(
                         out["concept_logits"], con
                     )
             else:
@@ -209,13 +209,17 @@ def train_cnn_model(
     t       = cfg["training"]
     epochs  = mcfg["epochs"]
     lr      = mcfg["lr"]
-    wd      = float(mcfg.get("weight_decay", 0.01))
 
     train_loader, val_loader = _make_loaders(train_ds, val_ds, cfg)
-    # AdamW with weight_decay=0.01 matches reference training (Colab p6/p7)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=wd)
+
+    # Plain Adam with no weight decay and no LR scheduler.
+    # Both the CAML (Mullenbach et al. 2018) and LAAT (Vu et al. 2020) papers
+    # report Adam with default betas and a fixed learning rate.  AdamW with
+    # weight decay and CosineAnnealingLR are standard for BERT fine-tuning but
+    # were NOT used in the original CNN/BiLSTM experiments — using them here
+    # would artificially inflate or deflate the baselines vs their real papers.
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     criterion = nn.BCEWithLogitsLoss()
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
 
     best_f1   = -1.0
     ckpt_path = ckpt_dir / f"{model_name}_best.pt"
@@ -243,7 +247,7 @@ def train_cnn_model(
             train_loss += loss.item()
             pbar.set_postfix(loss=f"{train_loss/step:.4f}")
 
-        scheduler.step()
+        # No scheduler.step() — original CAML/LAAT use constant LR
         val_m = compute_val_loss(model, val_loader, criterion, device, model_name)
         print(f"  Epoch {epoch}: train_loss={train_loss/len(train_loader):.4f}  "
               f"val_loss={val_m['loss']:.4f}  val_macro_f1={val_m['macro_f1']:.4f}")
@@ -253,14 +257,13 @@ def train_cnn_model(
             _save_checkpoint(model, ckpt_path,
                              {"epoch": epoch, "val_macro_f1": best_f1})
 
-        # Free MPS/CUDA allocator pool between epochs
         if device.type == "mps":
             torch.mps.empty_cache()
         elif device.type == "cuda":
             torch.cuda.empty_cache()
 
 
-# ──── BERT-based models (PLM-ICD, MSMN) ────────────────────────────────────
+# ──── BERT-based models (PLM-ICD) ──────────────────────────────────────────
 
 def train_bert_model(
     model_name: str,
@@ -270,8 +273,16 @@ def train_bert_model(
     cfg:        dict,
     device:     torch.device,
     ckpt_dir:   Path,
-    extra_forward_kwargs: dict = None,
 ) -> None:
+    """
+    Standard BERT fine-tuning for PLM-ICD.
+
+    Two-LR AdamW (standard for BERT fine-tuning per Devlin et al. 2019):
+      - BERT backbone: small LR to preserve pre-training
+      - Attention + classifier heads: larger LR (trained from scratch)
+    Linear warmup + cosine decay matches the standard BERT fine-tuning recipe
+    used in the original PLM-ICD paper.
+    """
     mcfg    = cfg["group_a"][model_name]
     t       = cfg["training"]
     epochs  = mcfg["epochs"]
@@ -279,7 +290,6 @@ def train_bert_model(
     lr_head = mcfg["lr_head"]
     freeze_n = mcfg.get("freeze_bert_epochs", 0)
 
-    # Two-group optimizer: BERT backbone at low LR, head at high LR
     bert_params = list(model.bert.parameters())
     bert_ids    = {id(p) for p in bert_params}
     head_params = [p for p in model.parameters() if id(p) not in bert_ids]
@@ -289,14 +299,19 @@ def train_bert_model(
         {"params": head_params, "lr": lr_head, "weight_decay": 0.0},
     ])
     criterion = nn.BCEWithLogitsLoss()
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
+    total_steps = (len(train_ds) // (t["train_batch_size"] * t["grad_accum_steps"])) * epochs
+    from transformers import get_linear_schedule_with_warmup
+    scheduler   = get_linear_schedule_with_warmup(
+        optimizer,
+        num_warmup_steps  = max(1, total_steps // 10),
+        num_training_steps= total_steps,
+    )
 
     train_loader, val_loader = _make_loaders(train_ds, val_ds, cfg)
     best_f1   = -1.0
     ckpt_path = ckpt_dir / f"{model_name}_best.pt"
 
     for epoch in range(1, epochs + 1):
-        # Freeze BERT during warm-up epochs
         requires_grad = (epoch > freeze_n)
         for p in model.bert.parameters():
             p.requires_grad = requires_grad
@@ -309,8 +324,7 @@ def train_bert_model(
             mask = batch["attention_mask"].to(device)
             labs = batch["labels"].to(device)
 
-            fwd_kwargs = extra_forward_kwargs or {}
-            out  = model(ids, mask, **fwd_kwargs)
+            out  = model(ids, mask)
             loss = criterion(out["logits"], labs)
 
             if t["grad_accum_steps"] > 1:
@@ -320,13 +334,121 @@ def train_bert_model(
             if step % t["grad_accum_steps"] == 0:
                 torch.nn.utils.clip_grad_norm_(model.parameters(), t["max_grad_norm"])
                 optimizer.step()
+                scheduler.step()
                 optimizer.zero_grad(set_to_none=True)
 
             train_loss += loss.item() * t["grad_accum_steps"]
             pbar.set_postfix(loss=f"{train_loss/step:.4f}")
 
-        scheduler.step()
         val_m = compute_val_loss(model, val_loader, criterion, device, model_name)
+        print(f"  Epoch {epoch}: train_loss={train_loss/len(train_loader):.4f}  "
+              f"val_loss={val_m['loss']:.4f}  val_macro_f1={val_m['macro_f1']:.4f}")
+
+        if val_m["macro_f1"] > best_f1:
+            best_f1 = val_m["macro_f1"]
+            _save_checkpoint(model, ckpt_path,
+                             {"epoch": epoch, "val_macro_f1": best_f1})
+
+        if device.type == "mps":
+            torch.mps.empty_cache()
+        elif device.type == "cuda":
+            torch.cuda.empty_cache()
+
+
+# ──── MSMN (dedicated trainer — refreshes synonym embeddings each epoch) ─────
+
+def train_msmn(
+    model:    "MSMN",
+    train_ds,
+    val_ds,
+    cfg:      dict,
+    device:   torch.device,
+    ckpt_dir: Path,
+) -> None:
+    """
+    MSMN training with per-epoch synonym refresh (Yuan et al. 2022).
+
+    The synonym CLS embeddings are computed once per epoch using the current
+    BERT weights — not pre-computed once before training.  The original paper
+    uses shared BERT weights for both note and synonym encoding, so synonym
+    representations must be refreshed as BERT updates to remain coherent.
+
+    Pre-computing synonyms once (the naive approach) freezes synonym
+    representations at the random-init BERT weights and causes a train/val
+    inconsistency (val calls encode_synonyms() on the fly; train would use
+    stale representations).
+    """
+    from benchmark.models.msmn import MSMN  # local import to avoid circular
+    mcfg     = cfg["group_a"]["msmn"]
+    t        = cfg["training"]
+    epochs   = mcfg["epochs"]
+    lr_bert  = mcfg["lr_bert"]
+    lr_head  = mcfg["lr_head"]
+    freeze_n = mcfg.get("freeze_bert_epochs", 0)
+
+    bert_params = list(model.bert.parameters())
+    bert_ids    = {id(p) for p in bert_params}
+    head_params = [p for p in model.parameters() if id(p) not in bert_ids]
+
+    optimizer = torch.optim.AdamW([
+        {"params": bert_params, "lr": lr_bert, "weight_decay": 0.01},
+        {"params": head_params, "lr": lr_head, "weight_decay": 0.0},
+    ])
+    criterion = nn.BCEWithLogitsLoss()
+    total_steps = (len(train_ds) // (t["train_batch_size"] * t["grad_accum_steps"])) * epochs
+    from transformers import get_linear_schedule_with_warmup
+    scheduler   = get_linear_schedule_with_warmup(
+        optimizer,
+        num_warmup_steps  = max(1, total_steps // 10),
+        num_training_steps= total_steps,
+    )
+
+    train_loader, val_loader = _make_loaders(train_ds, val_ds, cfg)
+    best_f1   = -1.0
+    ckpt_path = ckpt_dir / "msmn_best.pt"
+
+    for epoch in range(1, epochs + 1):
+        requires_grad = (epoch > freeze_n)
+        for p in model.bert.parameters():
+            p.requires_grad = requires_grad
+
+        # Refresh synonym embeddings with current BERT weights at each epoch.
+        # Using no_grad here is efficient AND correct: synonym representations
+        # are used as fixed queries within the epoch — gradients flow into BERT
+        # via the note encoding path, not the synonym path.
+        # This matches the original MSMN paper's one-BERT-encoder design where
+        # synonyms are re-encoded at training time with the shared encoder.
+        model.eval()
+        with torch.no_grad():
+            synonym_cls = model.encode_synonyms()   # [K, S, H]
+        print(f"  [msmn] ep{epoch}: synonym embeddings refreshed  {synonym_cls.shape}")
+
+        model.train()
+        train_loss = 0.0
+        pbar = tqdm(train_loader, desc=f"[msmn] ep{epoch}/{epochs}")
+        for step, batch in enumerate(pbar, 1):
+            ids  = batch["input_ids"].to(device)
+            mask = batch["attention_mask"].to(device)
+            labs = batch["labels"].to(device)
+
+            out  = model(ids, mask, synonym_cls=synonym_cls)
+            loss = criterion(out["logits"], labs)
+
+            if t["grad_accum_steps"] > 1:
+                loss = loss / t["grad_accum_steps"]
+            loss.backward()
+
+            if step % t["grad_accum_steps"] == 0:
+                torch.nn.utils.clip_grad_norm_(model.parameters(), t["max_grad_norm"])
+                optimizer.step()
+                scheduler.step()
+                optimizer.zero_grad(set_to_none=True)
+
+            train_loss += loss.item() * t["grad_accum_steps"]
+            pbar.set_postfix(loss=f"{train_loss/step:.4f}")
+
+        # Val: call without synonym_cls → model re-encodes on the fly (same approach)
+        val_m = compute_val_loss(model, val_loader, criterion, device, "msmn")
         print(f"  Epoch {epoch}: train_loss={train_loss/len(train_loader):.4f}  "
               f"val_loss={val_m['loss']:.4f}  val_macro_f1={val_m['macro_f1']:.4f}")
 
@@ -555,17 +677,7 @@ def main() -> None:
                 synonym_attn_mask = syn_mask,
             ).to(device)
 
-            # Pre-compute synonym CLS embeddings once
-            print("  Pre-computing synonym BERT embeddings …")
-            model.eval()
-            with torch.no_grad():
-                synonym_cls = model.encode_synonyms()   # [K, S, H]
-            print(f"  Synonym embeddings: {synonym_cls.shape}")
-
-            train_bert_model(
-                "msmn", model, train_ds, val_ds, cfg, device, ckpt_dir,
-                extra_forward_kwargs={"synonym_cls": synonym_cls},
-            )
+            train_msmn(model, train_ds, val_ds, cfg, device, ckpt_dir)
 
         elif model_name == "vanilla_cbm":
             mcfg  = cfg["group_a"]["vanilla_cbm"]

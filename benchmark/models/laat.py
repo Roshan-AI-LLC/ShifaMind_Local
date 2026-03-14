@@ -92,8 +92,12 @@ class LAAT(nn.Module):
         x = self.embedding(input_ids)           # [B, L, E]
         H, _ = self.lstm(x)                     # [B, L, 2H]
 
-        # Projected keys for attention
-        H_proj = self.W_attn(H)                 # [B, L, 2H]
+        # Projected + non-linear keys for attention.
+        # Vu et al. (2020) Eq. 2: Z = tanh(W_a * H^T)
+        # The tanh is not cosmetic — it bounds the attention keys, preventing
+        # runaway dot-products with the label queries and ensuring the attention
+        # distribution is meaningfully concentrated on relevant tokens.
+        H_proj = torch.tanh(self.W_attn(H))     # [B, L, 2H]
 
         # Label-specific attention scores
         # einsum 'bth,lh->blt': [B, L, 2H] × [K, 2H] → [B, K, L]
