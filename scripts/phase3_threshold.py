@@ -289,7 +289,7 @@ test_probs  = np.vstack(test_probs_list)
 test_labels = np.vstack(test_labels_list)
 
 # ============================================================================
-# COMPREHENSIVE FINAL EVALUATION
+# EVALUATE WITH OPTIMAL THRESHOLDS (tuned on val set)
 # ============================================================================
 
 def compute_metrics(labels, probs, thresholds, label_names):
@@ -328,17 +328,12 @@ def compute_metrics(labels, probs, thresholds, label_names):
     }
 
 
-default_metrics = compute_metrics(test_labels, test_probs, 0.5,                label_names=TOP_50_CODES)
-tuned_metrics   = compute_metrics(test_labels, test_probs, optimal_thresholds, label_names=TOP_50_CODES)
+tuned_metrics = compute_metrics(test_labels, test_probs, optimal_thresholds, label_names=TOP_50_CODES)
 
 log.info("=" * 60)
 log.info(f"Phase 3 (base: Phase {BASE_PHASE}) — Final Test Results")
 log.info(
-    f"  Default (0.5)  — Macro F1: {default_metrics['macro_f1']:.4f}  "
-    f"Micro: {default_metrics['micro_f1']:.4f}"
-)
-log.info(
-    f"  Tuned          — Macro F1: {tuned_metrics['macro_f1']:.4f}  "
+    f"  Tuned — Macro F1: {tuned_metrics['macro_f1']:.4f}  "
     f"Micro: {tuned_metrics['micro_f1']:.4f}"
 )
 log.info(

@@ -180,7 +180,7 @@ test_probs  = np.vstack(test_probs_list)
 test_labels = np.vstack(test_labels_list)
 
 # ============================================================================
-# EVALUATE WITH DEFAULT 0.5 vs OPTIMAL THRESHOLDS
+# EVALUATE WITH OPTIMAL THRESHOLDS (tuned on val set)
 # ============================================================================
 
 def compute_metrics(labels, probs, thresholds):
