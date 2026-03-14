@@ -220,14 +220,11 @@ def compute_metrics(labels, probs, thresholds):
     }
 
 
-default_metrics = compute_metrics(test_labels, test_probs, 0.5)
 tuned_metrics   = compute_metrics(test_labels, test_probs, optimal_thresholds)
 
 log.info("=" * 60)
-log.info("Phase 2 — Threshold Comparison (test set)")
-log.info(f"  Default (0.5)  — Macro F1: {default_metrics['macro_f1']:.4f}  "
-         f"Micro: {default_metrics['micro_f1']:.4f}")
-log.info(f"  Tuned          — Macro F1: {tuned_metrics['macro_f1']:.4f}  "
+log.info("Phase 2 — Threshold Tuning Results (test set)")
+log.info(f"  Tuned — Macro F1: {tuned_metrics['macro_f1']:.4f}  "
          f"Micro: {tuned_metrics['micro_f1']:.4f}")
 log.info("=" * 60)
 
@@ -236,8 +233,7 @@ log.info("=" * 60)
 # ============================================================================
 
 results = {
-    "phase"       : "ShifaMind Phase 2 — Threshold Tuning",
-    "default_0.5" : default_metrics,
+    "phase"        : "ShifaMind Phase 2 — Threshold Tuning",
     "optimal_tuned": tuned_metrics,
     "dataset_info" : {"val": len(df_val), "test": len(df_test)},
 }
@@ -249,7 +245,6 @@ comparison_df = pd.DataFrame({
     "icd_code"          : TOP_50_CODES,
     "optimal_threshold" : optimal_thresholds.tolist(),
     "val_f1_tuned"      : val_f1_per_label.tolist(),
-    "test_f1_default"   : default_metrics["per_class_f1"],
     "test_f1_tuned"     : tuned_metrics["per_class_f1"],
     "train_count"       : [top50_info.get("top_50_counts", {}).get(c, 0) for c in TOP_50_CODES],
 }).sort_values("test_f1_tuned", ascending=False)

@@ -379,12 +379,6 @@ final_results = {
     "phase"        : f"ShifaMind Phase 3 — Final Evaluation (base: Phase {BASE_PHASE})",
     "base_phase"   : BASE_PHASE,
     "checkpoint"   : str(p3_best_path),
-    "default_0.5"  : {
-        "macro_f1": default_metrics["macro_f1"],
-        "micro_f1": default_metrics["micro_f1"],
-        "macro_p" : default_metrics["macro_p"],
-        "macro_r" : default_metrics["macro_r"],
-    },
     "optimal_tuned": {
         "macro_f1": tuned_metrics["macro_f1"],
         "micro_f1": tuned_metrics["micro_f1"],
