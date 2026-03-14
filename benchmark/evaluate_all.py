@@ -38,8 +38,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from benchmark.train_all import (
-    BaselineDataset, CAMLDataset, caml_collate_fn,
-    _extract, get_device, load_cfg, load_splits,
+    BaselineDataset, _extract, get_device, load_cfg, load_splits
 )
 from benchmark.models.caml        import CAML
 from benchmark.models.laat        import LAAT
@@ -346,16 +345,6 @@ def main() -> None:
     test_loader = DataLoader(test_ds, batch_size=t_cfg["val_batch_size"],
                              shuffle=False, num_workers=t_cfg["num_workers"])
 
-    # CAML-specific loaders: full (non-truncated) text, dynamic padding
-    caml_val_ds   = CAMLDataset(val_texts,  val_labels,  val_con,  tokenizer)
-    caml_test_ds  = CAMLDataset(test_texts, test_labels, test_con, tokenizer)
-    caml_val_loader  = DataLoader(caml_val_ds,  batch_size=t_cfg["val_batch_size"],
-                                  shuffle=False, num_workers=t_cfg["num_workers"],
-                                  collate_fn=caml_collate_fn)
-    caml_test_loader = DataLoader(caml_test_ds, batch_size=t_cfg["val_batch_size"],
-                                  shuffle=False, num_workers=t_cfg["num_workers"],
-                                  collate_fn=caml_collate_fn)
-
     with open(ROOT / cfg["data"]["top50_info"]) as f:
         top50_info = json.load(f)
     if hasattr(val_split, "columns"):
@@ -378,14 +367,10 @@ def main() -> None:
             num_labels, num_concepts, top50_info, top50_codes,
         )
 
-        # CAML uses full-text (non-truncated) loaders so its chunking fires
-        _val_loader  = caml_val_loader  if model_name == "caml" else val_loader
-        _test_loader = caml_test_loader if model_name == "caml" else test_loader
-
         val_probs  = _load_or_infer(
-            model_name, model, _val_loader,  device, cfg, cache_dir, "val",  args.rerun_inference)
+            model_name, model, val_loader,  device, cfg, cache_dir, "val",  args.rerun_inference)
         test_probs = _load_or_infer(
-            model_name, model, _test_loader, device, cfg, cache_dir, "test", args.rerun_inference)
+            model_name, model, test_loader, device, cfg, cache_dir, "test", args.rerun_inference)
 
         best_thresh = tune_thresholds(val_probs, val_labels, candidates)
         preds_def   = (test_probs > 0.5).astype(int)
