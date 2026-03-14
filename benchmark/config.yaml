@@ -108,7 +108,7 @@ group_a:
     dropout:      0.1
     lr_bert:      0.00002
     lr_head:      0.001
-    epochs:       3
+    epochs:       5
     freeze_bert_epochs: 0
     interpretable: "×"
     hipaa_safe:    true
@@ -119,11 +119,11 @@ group_a:
     model_class:  "MSMN"
     bert_model:   "emilyalsentzer/Bio_ClinicalBERT"
     hidden_size:  768
-    num_synonyms: 4      # synonyms per ICD code (from top50_info name + desc)
+    num_synonyms: 6      # synonyms per ICD code (from top50_info name + desc)
     dropout:      0.1
     lr_bert:      0.00002
     lr_head:      0.001
-    epochs:       3
+    epochs:       5
     freeze_bert_epochs: 1
     interpretable: "✓Partial"
     hipaa_safe:    true
@@ -142,7 +142,7 @@ group_a:
     # lambda_concept is a TUNABLE hyperparameter (paper does not prescribe a value).
     lambda_concept: 0.5
     lr_bert:      0.00002   # low LR for pretrained BERT layers
-    lr_heads:     0.0002    # higher LR for concept_head + diag_head (trained from scratch)
+    lr_heads:     0.001     # same as PLM-ICD / MSMN head LR for fair comparison
     epochs_stage1: 2     # kept for total-epoch compatibility (stage1 + stage2 = total)
     epochs_stage2: 2
     interpretable: "✓Full"
