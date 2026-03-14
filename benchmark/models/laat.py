@@ -92,8 +92,8 @@ class LAAT(nn.Module):
         x = self.embedding(input_ids)           # [B, L, E]
         H, _ = self.lstm(x)                     # [B, L, 2H]
 
-        # Projected keys for attention
-        H_proj = self.W_attn(H)                 # [B, L, 2H]
+        # Projected keys for attention — tanh as in Vu et al. (2020)
+        H_proj = torch.tanh(self.W_attn(H))     # [B, L, 2H]
 
         # Label-specific attention scores
         # einsum 'bth,lh->blt': [B, L, 2H] × [K, 2H] → [B, K, L]
