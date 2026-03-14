@@ -510,15 +510,13 @@ def main() -> None:
         elif model_name == "msmn":
             mcfg = cfg["group_a"]["msmn"]
 
-            # Build synonym tensors from top50_icd10_info.json
             with open(ROOT / cfg["data"]["top50_info"]) as f:
                 top50_info = json.load(f)
-            # top50_codes must align exactly with the 50 label columns
             if hasattr(train_split, "columns"):
                 top50_codes = train_split.select_dtypes(include=[np.number]).columns.tolist()
             else:
                 top50_codes = list(top50_info.keys())[:num_labels]
-            top50_codes = top50_codes[:num_labels]   # safety truncation
+            top50_codes = top50_codes[:num_labels]
 
             syn_ids, syn_mask = build_synonym_tensors(
                 top50_info   = top50_info,
@@ -530,26 +528,22 @@ def main() -> None:
             )
 
             model = MSMN(
-                bert_model_name   = mcfg["bert_model"],
+                vocab_size        = vocab_size,
                 num_labels        = num_labels,
                 num_synonyms      = mcfg["num_synonyms"],
-                hidden_size       = mcfg["hidden_size"],
+                embed_dim         = mcfg["embed_dim"],
+                hidden_dim        = mcfg["hidden_dim"],
+                attention_dim     = mcfg["attention_dim"],
+                attention_head    = mcfg["attention_head"],
                 dropout           = mcfg["dropout"],
+                lstm_dropout      = mcfg["lstm_dropout"],
+                pad_token_id      = tokenizer.pad_token_id or 0,
                 synonym_input_ids = syn_ids,
                 synonym_attn_mask = syn_mask,
             ).to(device)
 
-            # Pre-compute synonym CLS embeddings once
-            print("  Pre-computing synonym BERT embeddings …")
-            model.eval()
-            with torch.no_grad():
-                synonym_cls = model.encode_synonyms()   # [K, S, H]
-            print(f"  Synonym embeddings: {synonym_cls.shape}")
-
-            train_bert_model(
-                "msmn", model, train_ds, val_ds, cfg, device, ckpt_dir,
-                extra_forward_kwargs={"synonym_cls": synonym_cls},
-            )
+            # Synonyms are encoded on-the-fly via the shared BiLSTM (no pre-computation)
+            train_cnn_model("msmn", model, train_ds, val_ds, cfg, device, ckpt_dir)
 
         elif model_name == "vanilla_cbm":
             mcfg  = cfg["group_a"]["vanilla_cbm"]

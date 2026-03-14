@@ -68,17 +68,17 @@ group_a:
     display_name: "CAML"
     table_group:  "CNN/Attention Baselines"
     model_class:  "CAML"
-    # Original: word2vec 100-dim, conv filter 4, 500 hidden.
-    # Here: learned embeddings over BERT WordPiece vocab (same tokenizer as
-    # ShifaMind so text preprocessing is identical).
-    embed_dim:    100
-    num_filters:  500
-    filter_size:  4
-    dropout:      0.3
-    lr:           0.001
+    # Paper values: Mullenbach et al. (2018), train_new_model.sh
+    #   embed_size=200, num_filter_maps=50, filter_size=10, lr=1e-4, dropout=0.2
+    # Learned embeddings over BERT WordPiece vocab (same tokenizer as ShifaMind
+    # so text preprocessing is identical).
+    embed_dim:    200
+    num_filters:  50
+    filter_size:  10
+    dropout:      0.2
+    lr:           0.0001
     epochs:       10
     weight_decay: 0.01
-    # Long-document strategy: chunk into 512-token windows, max-pool logits
     chunk_size:   512
     chunk_overlap: 64
     interpretable: "Attention only"
@@ -89,7 +89,7 @@ group_a:
     table_group:  "CNN/Attention Baselines"
     model_class:  "LAAT"
     embed_dim:    100
-    hidden_dim:   256    # BiLSTM hidden PER DIRECTION (512 total) — matches reference
+    hidden_dim:   512    # BiLSTM hidden PER DIRECTION (1024 total) — paper value (Vu et al. 2020)
     dropout:      0.3
     lr:           0.001
     epochs:       10
@@ -115,16 +115,25 @@ group_a:
 
   msmn:
     display_name: "MSMN"
-    table_group:  "Transformer Baselines"
+    table_group:  "CNN/Attention Baselines"
     model_class:  "MSMN"
-    bert_model:   "emilyalsentzer/Bio_ClinicalBERT"
-    hidden_size:  768
-    num_synonyms: 4      # synonyms per ICD code (from top50_info name + desc)
-    dropout:      0.1
-    lr_bert:      0.00002
-    lr_head:      0.001
-    epochs:       3
-    freeze_bert_epochs: 1
+    # Paper values: Yuan et al. (2022), train_parser.py
+    #   embed_dim=100, hidden_dim=512/dir (1024 total), attention_dim=512,
+    #   attention_head=4, rep_dropout=0.2, lstm_dp=0.1, lr=1e-4
+    # Uses shared BERT WordPiece tokenizer (same as other models); learned
+    # word embeddings + BiLSTM replace BERT (faithful to original paper).
+    embed_dim:      100
+    hidden_dim:     512    # BiLSTM hidden PER DIRECTION (1024 total)
+    attention_dim:  512    # total attention dim; per-head = 512/4 = 128
+    attention_head: 4
+    num_synonyms:   8      # synonyms per ICD code
+    dropout:        0.2    # rep_dropout
+    lstm_dropout:   0.1    # inter-layer BiLSTM dropout (no effect for 1 layer)
+    lr:             0.0001
+    epochs:         10
+    weight_decay:   0.01
+    chunk_size:     512    # for API compatibility
+    chunk_overlap:  64
     interpretable: "✓Partial"
     hipaa_safe:    true
 

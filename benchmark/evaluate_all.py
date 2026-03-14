@@ -60,6 +60,37 @@ def compute_metrics(labels: np.ndarray, preds: np.ndarray) -> dict:
     }
 
 
+def bootstrap_macro_f1_ci(
+    probs:      np.ndarray,
+    labels:     np.ndarray,
+    thresholds: np.ndarray,
+    n_samples:  int   = 1000,
+    ci_level:   float = 0.95,
+) -> tuple[float, float]:
+    """
+    Bootstrap 95% CI for macro-F1.
+
+    Args:
+        probs      : [N, K] predicted probabilities (or binary preds)
+        labels     : [N, K] binary ground-truth labels
+        thresholds : [K]    per-label decision thresholds
+        n_samples  : bootstrap resamples
+        ci_level   : confidence level (default 0.95)
+
+    Returns:
+        (ci_lo, ci_hi)
+    """
+    rng = np.random.default_rng(42)
+    N   = labels.shape[0]
+    f1s = np.empty(n_samples)
+    for i in range(n_samples):
+        idx    = rng.integers(0, N, size=N)
+        preds  = (probs[idx] > thresholds).astype(int)
+        f1s[i] = f1_score(labels[idx], preds, average="macro", zero_division=0)
+    alpha = (1.0 - ci_level) / 2.0
+    return float(np.percentile(f1s, 100 * alpha)), float(np.percentile(f1s, 100 * (1 - alpha)))
+
+
 def tune_thresholds(
     val_probs:  np.ndarray,
     val_labels: np.ndarray,
@@ -192,11 +223,16 @@ def load_baseline_model(
             device       = device,
         )
         model = MSMN(
-            bert_model_name   = mcfg["bert_model"],
+            vocab_size        = vocab_size,
             num_labels        = num_labels,
             num_synonyms      = mcfg["num_synonyms"],
-            hidden_size       = mcfg["hidden_size"],
+            embed_dim         = mcfg["embed_dim"],
+            hidden_dim        = mcfg["hidden_dim"],
+            attention_dim     = mcfg["attention_dim"],
+            attention_head    = mcfg["attention_head"],
             dropout           = mcfg["dropout"],
+            lstm_dropout      = mcfg["lstm_dropout"],
+            pad_token_id      = tokenizer.pad_token_id or 0,
             synonym_input_ids = syn_ids,
             synonym_attn_mask = syn_mask,
         )
