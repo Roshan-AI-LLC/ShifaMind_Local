@@ -501,6 +501,12 @@ log.info(f"Results     → {RESULTS_DIR}")
 best_f1 = 0.0
 history = {"train_loss": [], "val_macro_f1": [], "val_micro_f1": []}
 
+def _empty_device_cache():
+    if device.type == "mps":
+        torch.mps.empty_cache()
+    elif device.type == "cuda":
+        torch.cuda.empty_cache()
+
 log.info("=" * 60)
 log.info(f"Starting Phase 3 training ({config.NUM_EPOCHS_P3} epochs) …")
 log.info("=" * 60)
@@ -509,7 +515,7 @@ for epoch in range(config.NUM_EPOCHS_P3):
     model.train()
     epoch_losses = defaultdict(list)
 
-    optimizer.zero_grad()
+    optimizer.zero_grad(set_to_none=True)
     pbar = tqdm(train_loader, desc=f"Epoch {epoch+1}/{config.NUM_EPOCHS_P3}")
     for step, batch in enumerate(pbar):
         input_ids      = batch["input_ids"].to(device)
@@ -529,7 +535,7 @@ for epoch in range(config.NUM_EPOCHS_P3):
             torch.nn.utils.clip_grad_norm_(model.parameters(), config.MAX_GRAD_NORM)
             optimizer.step()
             scheduler.step()
-            optimizer.zero_grad()
+            optimizer.zero_grad(set_to_none=True)
 
         for k, v in comp.items():
             epoch_losses[k].append(v)
@@ -577,6 +583,7 @@ for epoch in range(config.NUM_EPOCHS_P3):
 
     log_metrics("phase3", epoch + 1, {"train_loss": avg_loss, **val_metrics})
     log_memory_usage(device)
+    _empty_device_cache()
 
     # --- Checkpoint (every epoch + track best) ---
     ckpt_state = {
@@ -630,7 +637,37 @@ with torch.no_grad():
 
 dx_probs  = np.vstack(all_dx_probs)
 dx_labels = np.vstack(all_dx_labels)
-dx_preds  = (dx_probs > 0.5).astype(int)
+# ── Tune per-label thresholds on validation set ──────────────────────────
+log.info("Tuning per-label thresholds on validation set …")
+val_dx_probs_list, val_dx_labels_list = [], []
+with torch.no_grad():
+    for batch in tqdm(val_loader, desc="Val (threshold tuning)"):
+        inp   = batch["input_ids"].to(device)
+        mask  = batch["attention_mask"].to(device)
+        texts = batch["text"]
+        out   = model(inp, mask, concept_embs_best, input_texts=texts, use_rag=True)
+        val_dx_probs_list.append(torch.sigmoid(out["logits"]).cpu().numpy())
+        val_dx_labels_list.append(batch["labels"].numpy())
+
+val_dx_probs_all  = np.vstack(val_dx_probs_list)
+val_dx_labels_all = np.vstack(val_dx_labels_list)
+
+_THRESH_CANDIDATES = [0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40,
+                      0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80,
+                      0.85, 0.90, 0.95]
+best_thresh = np.full(NUM_LABELS, 0.5)
+for i in range(NUM_LABELS):
+    best_f1_t = 0.0
+    for t in _THRESH_CANDIDATES:
+        preds_t = (val_dx_probs_all[:, i] > t).astype(int)
+        f1_t = f1_score(val_dx_labels_all[:, i], preds_t, zero_division=0)
+        if f1_t > best_f1_t:
+            best_f1_t      = f1_t
+            best_thresh[i] = t
+log.info(f"Threshold tuning done. mean={best_thresh.mean():.3f}  "
+         f"min={best_thresh.min():.2f}  max={best_thresh.max():.2f}")
+
+dx_preds  = (dx_probs > best_thresh).astype(int)
 
 macro_f1  = float(f1_score(dx_labels, dx_preds, average="macro",  zero_division=0))
 micro_f1  = float(f1_score(dx_labels, dx_preds, average="micro",  zero_division=0))
@@ -643,7 +680,7 @@ per_class_f1 = [
 ]
 
 log.info("=" * 60)
-log.info(f"Phase 3 (base: Phase {BASE_PHASE}) — Test Results (threshold = 0.5)")
+log.info(f"Phase 3 (base: Phase {BASE_PHASE}) — Test Results (per-label tuned thresholds)")
 log.info(f"  Macro F1   : {macro_f1:.4f}")
 log.info(f"  Micro F1   : {micro_f1:.4f}")
 log.info(f"  Precision  : {precision:.4f}")

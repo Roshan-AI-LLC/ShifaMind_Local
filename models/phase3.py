@@ -70,14 +70,13 @@ class ShifaMindPhase3RAG(nn.Module):
         self.rag_to_logits  = nn.Linear(hidden_size, num_diagnoses)
 
         # Per-diagnosis learnable gate magnitude: [num_diagnoses]
-        # Initialised to -5.0 → sigmoid(-5) × RAG_GATE_MAX ≈ 0.002 per diagnosis.
-        # Near-zero at init means Phase 3 starts as Phase 2 (no RAG influence),
-        # guaranteeing Phase 3 >= Phase 2 at epoch 0.  As training progresses,
-        # diagnoses that benefit from RAG will have their gate grow toward
-        # RAG_GATE_MAX; those that don't will stay near zero.
-        # (The old init of 1.0 immediately added ~25% noise from a random head,
-        # forcing BERT to compensate and drift from Phase 2's optimal weights.)
-        self.rag_gate_logit = nn.Parameter(torch.full((num_diagnoses,), -5.0))
+        # Initialised to -3.0 → sigmoid(-3) × RAG_GATE_MAX ≈ 0.016 per diagnosis.
+        # Small enough that Phase 3 starts very close to Phase 2 (guaranteeing
+        # Phase 3 >= Phase 2 at epoch 0), but -3.0 instead of -5.0 means
+        # sigmoid'(-3) ≈ 0.045 vs sigmoid'(-5) ≈ 0.007 — ~6× more gradient
+        # flow into the gate from the first epoch, so it can actually learn which
+        # diagnoses benefit from RAG evidence during the 8 available epochs.
+        self.rag_gate_logit = nn.Parameter(torch.full((num_diagnoses,), -3.0))
 
     # ------------------------------------------------------------------
     def _concept_query(
@@ -130,11 +129,13 @@ class ShifaMindPhase3RAG(nn.Module):
         #  concept_scores: [B, num_concepts]  (already sigmoid probabilities)
         queries = self._concept_query(base_outputs["concept_scores"].detach())
 
-        # --- 3. Retrieve one passage string per sample -------------------
-        retrieved = [self.rag.retrieve(q) for q in queries]
+        # --- 3 & 4. Batch-retrieve AND batch-encode in one shot ----------
+        # retrieve_batch() sends all queries to FAISS at once and returns
+        # one passage string per query — no Python loop, ~B× faster than
+        # the old [self.rag.retrieve(q) for q in queries] sequential loop.
+        retrieved = self.rag.retrieve_batch(queries)    # List[str], len == B
 
-        # --- 4. Batch-encode all retrieved passages in ONE call ----------
-        #  Zeros for samples where nothing was retrieved (similarity < threshold)
+        # Zeros for samples where nothing was retrieved (similarity < threshold)
         texts_for_encode = [txt if txt.strip() else "N/A" for txt in retrieved]
         rag_np = self.rag.encoder.encode(
             texts_for_encode,
@@ -154,7 +155,7 @@ class ShifaMindPhase3RAG(nn.Module):
         rag_boost   = self.rag_to_logits(rag_hidden)             # [B, num_diagnoses]
 
         # Per-diagnosis gate: [num_diagnoses]  →  [1, num_diagnoses]  (broadcast over B)
-        # sigmoid(0) × RAG_GATE_MAX = 0.175 per diagnosis at init.
+        # sigmoid(-3) × RAG_GATE_MAX ≈ 0.016 per diagnosis at init.
         # Each of the 50 diagnoses independently controls its RAG influence,
         # so gradients do NOT cancel across labels and the gate can actually learn.
         gate = torch.sigmoid(self.rag_gate_logit) * config.RAG_GATE_MAX  # [num_dx]

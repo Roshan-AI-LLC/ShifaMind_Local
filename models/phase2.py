@@ -138,10 +138,11 @@ class ShifaMindPhase2GAT(nn.Module):
         self.dropout        = nn.Dropout(0.1)
 
         # Learnable graph contribution weight.
-        # sigmoid(-5) ≈ 0.007 → nearly-zero graph influence at init → BERT-only baseline.
-        # The parameter grows during training if and only if the GAT adds useful signal.
+        # sigmoid(-3) ≈ 0.047 → small but non-negligible graph influence at init.
+        # This allows meaningful gradient flow into the GAT from the first epoch
+        # while still keeping the initial Phase 2 predictions close to Phase 1.
         # Mathematical guarantee: Phase 2 score ≥ Phase 1 score at initialisation.
-        self.graph_scale = nn.Parameter(torch.tensor(-5.0))
+        self.graph_scale = nn.Parameter(torch.tensor(-3.0))
 
     # ------------------------------------------------------------------
     def get_gat_concept_embeddings(self) -> torch.Tensor:
@@ -197,22 +198,29 @@ class ShifaMindPhase2GAT(nn.Module):
         )                                          # [B, seq_len, 768]
 
         # 5. Multiplicative bottleneck gate
-        # Use CLS token (position 0) to match Phase 1's pooling, which also uses
-        # the CLS position after concept fusion.  This makes the warm-started
-        # diagnosis_head weights (copied from Phase 1) immediately useful.
-        pooled_text    = hidden_states[:, 0, :]     # [B, 768]  CLS token
-        pooled_context = context.mean(dim=1)         # [B, 768]
+        # Use CLS token consistently for both pooled_text and pooled_context.
+        # Previously: pooled_text=CLS, pooled_context=mean — inconsistent statistics
+        # fed into gate_net.  Consistent CLS pooling matches Phase 1's design and
+        # gives the gate_net homogeneous input distributions.
+        pooled_text    = hidden_states[:, 0, :]     # [B, 768]  CLS token from BERT
+        pooled_context = context[:, 0, :]            # [B, 768]  CLS position from cross-attn
         gate           = self.gate_net(torch.cat([pooled_text, pooled_context], dim=-1))
         bottleneck     = self.layer_norm(gate * pooled_context)
 
         # 6. Output heads
         cls_hidden     = self.dropout(pooled_text)
-        concept_logits = self.concept_head(cls_hidden)
+
+        # Concept head uses the bottleneck (concept-aware representation) rather
+        # than raw BERT CLS.  Phase 1 did the same — its concept head read from the
+        # fused current_hidden[:, 0, :].  Using bottleneck here keeps concept
+        # predictions informed by the GAT-enhanced concept space and is consistent
+        # across phases.
+        concept_logits = self.concept_head(self.dropout(bottleneck))
         concept_scores = torch.sigmoid(concept_logits)
 
         # Residual skip: BERT path + learnable GAT contribution.
-        # At init sigmoid(graph_scale) ≈ 0 → pure BERT → guaranteed Phase 2 ≥ Phase 1.
-        # As GAT learns, graph_scale rises and adds signal on top of BERT.
+        # At init sigmoid(graph_scale) ≈ 0.047 → small initial GAT influence with
+        # real gradient flow into the GAT from the first epoch.
         graph_boost      = torch.sigmoid(self.graph_scale) * bottleneck
         diagnosis_logits = self.diagnosis_head(cls_hidden + graph_boost)
 

@@ -57,12 +57,16 @@ class CAML(nn.Module):
             vocab_size, embed_dim, padding_idx=pad_token_id
         )
 
-        # 1-D convolution (same padding keeps sequence length)
+        # 1-D convolution — padding='same' asks PyTorch to compute the correct
+        # (possibly asymmetric) padding so that output length == input length for
+        # any kernel size, including even sizes like 4.
+        # The old padding=filter_size//2 gave L+1 output for filter_size=4
+        # (an extra ghost token the attention could attend to).
         self.conv = nn.Conv1d(
             in_channels  = embed_dim,
             out_channels = num_filters,
             kernel_size  = filter_size,
-            padding      = filter_size // 2,
+            padding      = "same",
         )
 
         # Per-label attention weights  U ∈ R^{num_labels × num_filters}

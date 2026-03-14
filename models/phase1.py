@@ -133,12 +133,15 @@ class ShifaMind2Phase1(nn.Module):
         bert_out      = self.base_model(
             input_ids=input_ids,
             attention_mask=attention_mask,
-            output_hidden_states=True,
+            output_hidden_states=False,   # no intermediate states needed → saves ~13×[B,S,H] memory
             return_dict=True,
         )
 
-        hidden_states  = bert_out.hidden_states   # tuple of [B, S, H] per layer
-        current_hidden = bert_out.last_hidden_state
+        # Start from BERT's final hidden state; apply fusion modules sequentially
+        # so every module in fusion_layers is live (receives gradient, updates weights).
+        # Previously: each iteration fed hidden_states[layer_idx] (raw BERT) so the
+        # layer-9 module's output was immediately overwritten and never used.
+        current_hidden = bert_out.last_hidden_state   # [B, S, H]
         attention_maps: dict = {}
         gate_values:    list = []
 
@@ -146,11 +149,11 @@ class ShifaMind2Phase1(nn.Module):
             key = str(layer_idx)
             if key in self.fusion_modules:
                 fused, attn, gate = self.fusion_modules[key](
-                    hidden_states[layer_idx],
+                    current_hidden,            # ← progressive: feed previous output forward
                     self.concept_embeddings,
                     attention_mask,
                 )
-                current_hidden = fused
+                current_hidden = fused         # each module refines the representation
                 gate_values.append(gate.item())
                 if return_attention:
                     attention_maps[f"layer_{layer_idx}"] = attn

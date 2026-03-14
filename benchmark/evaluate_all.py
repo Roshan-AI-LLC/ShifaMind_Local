@@ -6,9 +6,9 @@ Unified evaluation for ALL Group A models (baselines + ShifaMind phases).
 Protocol (identical for every model):
   1. Load test probabilities (run inference if .npy not found).
   2. Tune per-label thresholds on the validation set (19 candidates, 0.05–0.95).
-  3. Report test metrics at:
-       • Default threshold 0.5
-       • Tuned thresholds (per-label)
+  3. Report test metrics at tuned thresholds only (default 0.5 is not reported —
+     per-label tuning is the scientifically correct evaluation for multilabel
+     classification and avoids artificially penalising high-precision models).
   4. Bootstrap 95% CI for macro-F1 (N=1000 re-samples).
   5. Pairwise McNemar significance test vs ShifaMind Phase 1 (best baseline).
   6. Write benchmark/results/all_results.json for generate_table.py.
@@ -275,7 +275,6 @@ def evaluate_shifamind_phases(
                 "recall"   : m.get("recall",    m.get("macro_r", 0.0)),
             }
 
-        m_def  = _norm(sm_res["default_0.5"])
         m_tune = _norm(sm_res["optimal_tuned"])
 
         results[f"shifamind_{phase_key}"] = {
@@ -283,14 +282,9 @@ def evaluate_shifamind_phases(
             "table_group"   : phase_cfg["table_group"],
             "interpretable" : phase_cfg["interpretable"],
             "hipaa_safe"    : phase_cfg["hipaa_safe"],
-            "default_0.5"   : m_def,
             "tuned"         : m_tune,
         }
-        print(
-            f"  [{display}]  "
-            f"macro_f1(default)={m_def['macro_f1']:.4f}  "
-            f"macro_f1(tuned)={m_tune['macro_f1']:.4f}"
-        )
+        print(f"  [{display}]  macro_f1(tuned)={m_tune['macro_f1']:.4f}")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -373,10 +367,8 @@ def main() -> None:
             model_name, model, test_loader, device, cfg, cache_dir, "test", args.rerun_inference)
 
         best_thresh = tune_thresholds(val_probs, val_labels, candidates)
-        preds_def   = (test_probs > 0.5).astype(int)
         preds_tuned = (test_probs > best_thresh).astype(int)
 
-        m_def  = compute_metrics(test_labels, preds_def)
         m_tune = compute_metrics(test_labels, preds_tuned)
 
         mcfg_entry = cfg["group_a"][model_name]
@@ -385,16 +377,13 @@ def main() -> None:
             "table_group"   : mcfg_entry["table_group"],
             "interpretable" : mcfg_entry["interpretable"],
             "hipaa_safe"    : mcfg_entry["hipaa_safe"],
-            "default_0.5"   : m_def,
             "tuned"         : m_tune,
             "mean_threshold": float(best_thresh.mean()),
         }
         np.save(cache_dir / f"{model_name}_test_thresholds.npy", best_thresh)
 
-        print(
-            f"  macro_f1(default)={m_def['macro_f1']:.4f}  "
-            f"macro_f1(tuned)={m_tune['macro_f1']:.4f}"
-        )
+        print(f"  macro_f1(tuned)={m_tune['macro_f1']:.4f}  "
+              f"mean_threshold={best_thresh.mean():.3f}")
 
     # ── ShifaMind phases ────────────────────────────────────────────────────
     if "shifamind" in args.models:

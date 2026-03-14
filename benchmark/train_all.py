@@ -235,7 +235,7 @@ def train_cnn_model(
             loss = criterion(out["logits"], labs)
 
             # No grad accumulation — CNN models update every step (matches reference)
-            optimizer.zero_grad()
+            optimizer.zero_grad(set_to_none=True)
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), t["max_grad_norm"])
             optimizer.step()
@@ -252,6 +252,12 @@ def train_cnn_model(
             best_f1 = val_m["macro_f1"]
             _save_checkpoint(model, ckpt_path,
                              {"epoch": epoch, "val_macro_f1": best_f1})
+
+        # Free MPS/CUDA allocator pool between epochs
+        if device.type == "mps":
+            torch.mps.empty_cache()
+        elif device.type == "cuda":
+            torch.cuda.empty_cache()
 
 
 # ──── BERT-based models (PLM-ICD, MSMN) ────────────────────────────────────
@@ -314,7 +320,7 @@ def train_bert_model(
             if step % t["grad_accum_steps"] == 0:
                 torch.nn.utils.clip_grad_norm_(model.parameters(), t["max_grad_norm"])
                 optimizer.step()
-                optimizer.zero_grad()
+                optimizer.zero_grad(set_to_none=True)
 
             train_loss += loss.item() * t["grad_accum_steps"]
             pbar.set_postfix(loss=f"{train_loss/step:.4f}")
@@ -328,6 +334,11 @@ def train_bert_model(
             best_f1 = val_m["macro_f1"]
             _save_checkpoint(model, ckpt_path,
                              {"epoch": epoch, "val_macro_f1": best_f1})
+
+        if device.type == "mps":
+            torch.mps.empty_cache()
+        elif device.type == "cuda":
+            torch.cuda.empty_cache()
 
 
 # ──── Vanilla CBM (joint training — Koh et al. recommended mode) ─────────────
@@ -391,7 +402,7 @@ def train_vanilla_cbm(
             if step % t["grad_accum_steps"] == 0:
                 torch.nn.utils.clip_grad_norm_(model.parameters(), t["max_grad_norm"])
                 optimizer.step()
-                optimizer.zero_grad()
+                optimizer.zero_grad(set_to_none=True)
 
             train_loss += loss.item()
             pbar.set_postfix(loss=f"{train_loss/step:.4f}")
@@ -405,6 +416,11 @@ def train_vanilla_cbm(
             best_f1 = val_m["macro_f1"]
             _save_checkpoint(model, ckpt_path,
                              {"epoch": epoch, "val_macro_f1": best_f1})
+
+        if device.type == "mps":
+            torch.mps.empty_cache()
+        elif device.type == "cuda":
+            torch.cuda.empty_cache()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
