@@ -441,19 +441,25 @@ class SimpleRAG:
 
         if cache and cache.exists():
             loaded_index = faiss.read_index(str(cache))
-            # Invalidate cache if corpus grew (new prototypes_per_dx etc.)
-            if loaded_index.ntotal == len(documents):
+            expected_dim = self.encoder.get_sentence_embedding_dimension()
+            # Invalidate cache if corpus size OR embedding dimension changed.
+            # Dimension changes when the RAG encoder is upgraded (e.g. 384-dim
+            # all-MiniLM → 768-dim BioLORD); reusing the old index would cause
+            # a dimension mismatch error at query time.
+            if loaded_index.ntotal == len(documents) and loaded_index.d == expected_dim:
                 self.index = loaded_index
                 log.info(
                     f"FAISS index loaded from cache "
-                    f"({self.index.ntotal} vectors)  ← {cache.name}"
+                    f"({self.index.ntotal} vectors, {self.index.d}-dim)  ← {cache.name}"
                 )
                 return
             else:
-                log.warning(
-                    f"FAISS cache size ({loaded_index.ntotal}) != corpus size "
-                    f"({len(documents)}) — rebuilding index."
+                reason = (
+                    f"size {loaded_index.ntotal}→{len(documents)}"
+                    if loaded_index.ntotal != len(documents)
+                    else f"dim {loaded_index.d}→{expected_dim} (encoder upgrade)"
                 )
+                log.warning(f"FAISS cache invalid ({reason}) — rebuilding index.")
 
         log.info(f"Building FAISS index from {len(documents)} passages …")
         texts = [d["text"] for d in documents]

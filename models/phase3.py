@@ -4,20 +4,22 @@ models/phase3.py
 Phase 3 architecture:
   ShifaMindPhase3RAG — wraps ShifaMindPhase2GAT with a gated FAISS RAG layer.
 
-RAG behaviour (redesigned for per-sample signal):
+RAG behaviour:
   1. Phase 2 forward() runs normally → base logits + concept_scores.
-  2. Top-K activated concept names (from concept_scores) are used as a
-     focused RAG query — much better cosine similarity than full note text.
-  3. All retrieved passages for the batch are encoded in ONE encode() call
-     (no more one-by-one Python loop inside the forward pass).
-  4. A learned linear head projects the 384-dim RAG embedding to num_dx
-     logits, gated by a learnable scalar capped at RAG_GATE_MAX.
+  2. Top-8 activated concept names are used as the RAG query per sample —
+     biomedical concept-name queries score far higher against clinical KB
+     passages than full clinical note text.
+  3. All retrieved passages for the batch are encoded in ONE encode() call.
+  4. A learned linear head projects the RAG embedding (dim auto-detected from
+     encoder) to num_dx logits, gated per diagnosis by a learnable scalar
+     capped at RAG_GATE_MAX.
   5. Gated RAG boost is added PER SAMPLE to the base diagnosis logits.
 
 Key architectural decisions:
   • Phase 2 BERT runs ONCE (no double-BERT bug from v1).
   • Concept embeddings stay frozen — RAG augments logits, not concept space.
-  • RAG gate is a scalar parameter (interpretable, fast to converge).
+  • rag_dim detected from encoder at __init__ time → works with any encoder
+    (384-dim all-MiniLM or 768-dim BioLORD without code changes).
   • Empty retrievals (gate * 0) → zero boost → RAG never hurts base model.
 """
 from typing import List, Optional
@@ -32,7 +34,9 @@ from .phase2 import ShifaMindPhase2GAT
 
 
 # How many top concept names to use as the RAG query per sample.
-_RAG_QUERY_TOP_CONCEPTS = 5
+# Raised from 5 to 8 — improved concept F1 from Part 1 means top-8 concepts
+# are reliable; more concept signal → better biomedical passage retrieval.
+_RAG_QUERY_TOP_CONCEPTS = 8
 
 
 class ShifaMindPhase3RAG(nn.Module):
@@ -62,8 +66,11 @@ class ShifaMindPhase3RAG(nn.Module):
         self.num_diagnoses = num_diagnoses
         self._concepts     = concepts_list if concepts_list is not None else config.GLOBAL_CONCEPTS
 
-        # RAG encoder output dim: all-MiniLM-L6-v2 → 384
-        rag_dim = 384
+        # Detect RAG encoder output dimension at init time so this class
+        # works with any sentence-transformer (384-dim all-MiniLM, 768-dim
+        # BioLORD, etc.) without hardcoded values.
+        rag_dim = rag_retriever.encoder.get_sentence_embedding_dimension()
+        self.rag_dim = rag_dim   # stored for reference / checkpoint inspection
 
         # Project RAG passage embedding → hidden space → diagnosis logits
         self.rag_projection = nn.Linear(rag_dim, hidden_size)
@@ -141,7 +148,7 @@ class ShifaMindPhase3RAG(nn.Module):
             convert_to_numpy=True,
             show_progress_bar=False,
             batch_size=len(texts_for_encode),
-        ).astype("float32")                             # [B, 384]
+        ).astype("float32")                             # [B, rag_dim]
 
         # Zero out embeddings for samples that had no retrieval
         no_retrieval_mask = np.array([not txt.strip() for txt in retrieved], dtype=np.float32)
