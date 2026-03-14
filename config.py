@@ -35,10 +35,15 @@ _load_hf_token()
 # SOURCE DATA  (Google Drive — read-only, never modified by this project)
 # ============================================================================
 
-GDRIVE_BASE = Path(
-    "/Users/mohammedsameersyed/Library/CloudStorage/"
-    "GoogleDrive-sdmohammedsameer@gmail.com/My Drive/ShifaMind"
-)
+if os.path.exists("/content/drive/MyDrive"):
+    # Google Colab — Drive is mounted at /content/drive/MyDrive
+    GDRIVE_BASE = Path("/content/drive/MyDrive/ShifaMind")
+else:
+    # Local Mac
+    GDRIVE_BASE = Path(
+        "/Users/mohammedsameersyed/Library/CloudStorage/"
+        "GoogleDrive-sdmohammedsameer@gmail.com/My Drive/ShifaMind"
+    )
 
 # Original MIMIC run that holds the pre-processed CSV and top-50 info
 SOURCE_RUN = GDRIVE_BASE / "10_ShifaMind" / "run_20260102_203225"
