@@ -68,19 +68,16 @@ group_a:
     display_name: "CAML"
     table_group:  "CNN/Attention Baselines"
     model_class:  "CAML"
-    # Original: word2vec 100-dim, conv filter 4, 500 hidden.
-    # Here: learned embeddings over BERT WordPiece vocab (same tokenizer as
-    # ShifaMind so text preprocessing is identical).
+    # Faithful to Mullenbach et al. (2018): learned 100d embeddings, conv
+    # filter_size=4, num_filters=500, plain Adam (no weight decay), truncate
+    # input to 512 tokens — no chunking.
     embed_dim:    100
     num_filters:  500
     filter_size:  4
     dropout:      0.3
     lr:           0.001
     epochs:       10
-    weight_decay: 0.01
-    # Long-document strategy: chunk into 512-token windows, max-pool logits
-    chunk_size:   512
-    chunk_overlap: 64
+    weight_decay: 0.0
     interpretable: "Attention only"
     hipaa_safe:    true
 
@@ -88,14 +85,14 @@ group_a:
     display_name: "LAAT"
     table_group:  "CNN/Attention Baselines"
     model_class:  "LAAT"
+    # Faithful to Vu et al. (2020): learned 100d embeddings, BiLSTM 256/dir,
+    # plain Adam (no weight decay), truncate to 512 tokens.
     embed_dim:    100
     hidden_dim:   256    # BiLSTM hidden PER DIRECTION (512 total) — matches reference
     dropout:      0.3
     lr:           0.001
     epochs:       10
-    weight_decay: 0.01
-    chunk_size:   512    # kept for API compatibility (no chunking occurs at L=512)
-    chunk_overlap: 64
+    weight_decay: 0.0
     interpretable: "Attention only"
     hipaa_safe:    true
 
