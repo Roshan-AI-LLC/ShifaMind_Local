@@ -14,7 +14,12 @@ venv/
 env/
 
 # Generated outputs (large runtime artifacts — not committed)
-shifamind_local/
+shifamind_local/checkpoints
+shifamind_local/concept_store
+shifamind_local/graph
+shifamind_local/evidence_store
+shifamind_local/shared_data
+
 
 # Jupyter
 .ipynb_checkpoints/
@@ -28,3 +33,4 @@ shifamind_local/
 *.swp
 *.swo
 benchmark/checkpoints
+benchmark/results/inference_cache

@@ -1,0 +1,26 @@
+{
+  "phase": "ShifaMind Phase 3 \u2014 Final Evaluation (base: Phase 2)",
+  "base_phase": 2,
+  "checkpoint": "/Users/mohammedsameersyed/Documents/UoA/Fall 2025/Capstone Project/v2/ShifaMind_Local/shifamind_local/checkpoints/phase3_from_p2/20260310_130046/phase3_best.pth",
+  "default_0.5": {
+    "macro_f1": 0.4519632034763958,
+    "micro_f1": 0.5178919466749825,
+    "macro_p": 0.42900459141413505,
+    "macro_r": 0.4929087700148351
+  },
+  "optimal_tuned": {
+    "macro_f1": 0.462909926008673,
+    "micro_f1": 0.4949977450736763,
+    "macro_p": 0.44518199735724373,
+    "macro_r": 0.5147503504377829
+  },
+  "dataset_info": {
+    "val": 17265,
+    "test": 17266
+  },
+  "rag_config": {
+    "top_k": 5,
+    "threshold": 0.0,
+    "gate_max": 0.35
+  }
+}

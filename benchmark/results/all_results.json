@@ -1,0 +1,151 @@
+{
+  "caml": {
+    "display_name": "CAML",
+    "table_group": "CNN/Attention Baselines",
+    "interpretable": "Attention only",
+    "hipaa_safe": true,
+    "default_0.5": {
+      "macro_f1": 0.4176890571301105,
+      "micro_f1": 0.49865269665841416,
+      "precision": 0.60077202184389,
+      "recall": 0.34212894231021684
+    },
+    "tuned": {
+      "macro_f1": 0.47915956282545447,
+      "micro_f1": 0.5054405520169851,
+      "precision": 0.4750774511428193,
+      "recall": 0.5182886188434035
+    },
+    "mean_threshold": 0.262
+  },
+  "laat": {
+    "display_name": "LAAT",
+    "table_group": "CNN/Attention Baselines",
+    "interpretable": "Attention only",
+    "hipaa_safe": true,
+    "default_0.5": {
+      "macro_f1": 0.40686624302444035,
+      "micro_f1": 0.4998771523244772,
+      "precision": 0.5574281333874874,
+      "recall": 0.3398490787656831
+    },
+    "tuned": {
+      "macro_f1": 0.4635345136177371,
+      "micro_f1": 0.4918236076467609,
+      "precision": 0.4620569003084904,
+      "recall": 0.4985823194710197
+    },
+    "mean_threshold": 0.286
+  },
+  "plm_icd": {
+    "display_name": "PLM-ICD",
+    "table_group": "Transformer Baselines",
+    "interpretable": "\u00d7",
+    "hipaa_safe": true,
+    "default_0.5": {
+      "macro_f1": 0.4004158414167837,
+      "micro_f1": 0.4975008799718409,
+      "precision": 0.6455524907991114,
+      "recall": 0.3190224526612298
+    },
+    "tuned": {
+      "macro_f1": 0.4875096891736162,
+      "micro_f1": 0.5259215068801283,
+      "precision": 0.48189823792055914,
+      "recall": 0.5194560778044722
+    },
+    "mean_threshold": 0.269
+  },
+  "msmn": {
+    "display_name": "MSMN",
+    "table_group": "Transformer Baselines",
+    "interpretable": "\u2713Partial",
+    "hipaa_safe": true,
+    "default_0.5": {
+      "macro_f1": 0.2584715797445668,
+      "micro_f1": 0.3610726152510394,
+      "precision": 0.6119135801205429,
+      "recall": 0.19016297160143705
+    },
+    "tuned": {
+      "macro_f1": 0.4667643322001412,
+      "micro_f1": 0.47811071093377966,
+      "precision": 0.47565748301845723,
+      "recall": 0.5074118280578803
+    },
+    "mean_threshold": 0.21399999999999994
+  },
+  "vanilla_cbm": {
+    "display_name": "Vanilla CBM",
+    "table_group": "Ontology/Concept Baselines",
+    "interpretable": "\u2713Full",
+    "hipaa_safe": true,
+    "default_0.5": {
+      "macro_f1": 0.08525475002605237,
+      "micro_f1": 0.2344396283713763,
+      "precision": 0.3609344699079305,
+      "recall": 0.06373986438010008
+    },
+    "tuned": {
+      "macro_f1": 0.3775019147253493,
+      "micro_f1": 0.3888203715755826,
+      "precision": 0.32563033675603703,
+      "recall": 0.5225556300041068
+    },
+    "mean_threshold": 0.176
+  },
+  "shifamind_phase1": {
+    "display_name": "ShifaMind Phase 1 (CBM)",
+    "table_group": "Ontology/Concept Baselines",
+    "interpretable": "\u2713Full",
+    "hipaa_safe": true,
+    "default_0.5": {
+      "macro_f1": 0.4488446049919875,
+      "micro_f1": 0.5341652421037872,
+      "precision": 0.47787162862356675,
+      "recall": 0.4509162476940858
+    },
+    "tuned": {
+      "macro_f1": 0.47267744885145985,
+      "micro_f1": 0.505276724508284,
+      "precision": 0.46141248493714526,
+      "recall": 0.5188008187671556
+    }
+  },
+  "shifamind_phase2": {
+    "display_name": "ShifaMind Phase 2 (+GAT)",
+    "table_group": "Ontology/Concept Baselines",
+    "interpretable": "\u2713Full",
+    "hipaa_safe": true,
+    "default_0.5": {
+      "macro_f1": 0.4520505580314627,
+      "micro_f1": 0.5176397069453578,
+      "precision": 0.4126684925654925,
+      "recall": 0.5154144578587275
+    },
+    "tuned": {
+      "macro_f1": 0.46509881360605526,
+      "micro_f1": 0.49705088199416114,
+      "precision": 0.4448799557846705,
+      "recall": 0.5230820262795776
+    }
+  },
+  "shifamind_phase3": {
+    "display_name": "ShifaMind Phase 3 (+RAG)",
+    "table_group": "Ontology/Concept Baselines",
+    "interpretable": "\u2713Full",
+    "hipaa_safe": true,
+    "default_0.5": {
+      "macro_f1": 0.4519632034763958,
+      "micro_f1": 0.5178919466749825,
+      "precision": 0.42900459141413505,
+      "recall": 0.4929087700148351
+    },
+    "tuned": {
+      "macro_f1": 0.462909926008673,
+      "micro_f1": 0.4949977450736763,
+      "precision": 0.44518199735724373,
+      "recall": 0.5147503504377829
+    }
+  }
+}

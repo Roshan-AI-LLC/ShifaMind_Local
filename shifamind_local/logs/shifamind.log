@@ -1,0 +1,1422 @@
+2026-02-28 13:36:30  [INFO    ]  ========================================================================
+2026-02-28 13:36:30  [INFO    ]  ShifaMind Phase 1 — Training
+2026-02-28 13:36:30  [INFO    ]  ========================================================================
+2026-02-28 13:36:30  [INFO    ]  Device : mps
+2026-02-28 13:36:30  [INFO    ]  Loading source data …
+2026-02-28 13:36:32  [INFO    ]  Top-50 ICD-10 codes loaded: 50
+2026-02-28 13:36:32  [INFO    ]  Global concepts            : 111
+2026-02-28 13:58:05  [INFO    ]  Dataset: 115,103 samples
+2026-02-28 13:58:05  [INFO    ]  Split — train 80,572  val 17,265  test 17,266
+2026-02-28 13:58:06  [INFO    ]  Generating concept labels …
+2026-02-28 13:58:58  [INFO    ]  Concept labels: shape (80572, 111), avg 23.01 per sample
+2026-02-28 13:58:58  [INFO    ]  Loading BioClinicalBERT …
+2026-02-28 13:59:02  [INFO    ]  Phase 1 model: 116,789,153 parameters
+2026-02-28 13:59:02  [INFO    ]  Loaders — train 10072 batches  val 1080  test 1080
+2026-02-28 13:59:02  [INFO    ]  ============================================================
+2026-02-28 13:59:02  [INFO    ]  Starting Phase 1 training (7 epochs) …
+2026-02-28 13:59:02  [INFO    ]  ============================================================
+2026-02-28 13:59:05  [INFO    ]  ========================================================================
+2026-02-28 13:59:05  [INFO    ]  ShifaMind Phase 1 — Training
+2026-02-28 13:59:05  [INFO    ]  ========================================================================
+2026-02-28 13:59:05  [INFO    ]  Device : mps
+2026-02-28 13:59:05  [INFO    ]  Loading source data …
+2026-02-28 13:59:05  [INFO    ]  Top-50 ICD-10 codes loaded: 50
+2026-02-28 13:59:05  [INFO    ]  Global concepts            : 111
+2026-02-28 13:59:11  [INFO    ]  Dataset: 115,103 samples
+2026-02-28 13:59:11  [INFO    ]  Split — train 80,572  val 17,265  test 17,266
+2026-02-28 13:59:11  [INFO    ]  Generating concept labels …
+2026-02-28 14:00:04  [INFO    ]  Concept labels: shape (80572, 111), avg 23.01 per sample
+2026-02-28 14:00:04  [INFO    ]  Loading BioClinicalBERT …
+2026-02-28 14:00:06  [INFO    ]  Phase 1 model: 116,789,153 parameters
+2026-02-28 14:00:06  [INFO    ]  Loaders — train 10072 batches  val 1080  test 1080
+2026-02-28 14:00:06  [INFO    ]  ============================================================
+2026-02-28 14:00:06  [INFO    ]  Starting Phase 1 training (7 epochs) …
+2026-02-28 14:00:06  [INFO    ]  ============================================================
+2026-02-28 14:06:43  [INFO    ]  ========================================================================
+2026-02-28 14:06:43  [INFO    ]  ShifaMind Phase 1 — Training
+2026-02-28 14:06:43  [INFO    ]  ========================================================================
+2026-02-28 14:06:43  [INFO    ]  Device : mps
+2026-02-28 14:06:43  [INFO    ]  Loading source data …
+2026-02-28 14:06:43  [INFO    ]  Top-50 ICD-10 codes loaded: 50
+2026-02-28 14:06:43  [INFO    ]  Global concepts            : 111
+2026-02-28 14:06:49  [INFO    ]  Dataset: 115,103 samples
+2026-02-28 14:06:49  [INFO    ]  Split — train 80,572  val 17,265  test 17,266
+2026-02-28 14:06:49  [INFO    ]  Generating concept labels …
+2026-02-28 14:07:41  [INFO    ]  Concept labels: shape (80572, 111), avg 23.01 per sample
+2026-02-28 14:07:41  [INFO    ]  Loading BioClinicalBERT …
+2026-02-28 14:07:43  [INFO    ]  Phase 1 model: 116,789,153 parameters
+2026-02-28 14:07:43  [INFO    ]  Loaders — train 10072 batches  val 1080  test 1080
+2026-02-28 14:07:43  [INFO    ]  ============================================================
+2026-02-28 14:07:43  [INFO    ]  Starting Phase 1 training (7 epochs) …
+2026-02-28 14:07:43  [INFO    ]  ============================================================
+2026-02-28 15:10:04  [INFO    ]  Epoch 1 train loss: total=0.5233  dx=0.3421  align=0.0878  concept=0.4575
+2026-02-28 15:14:54  [INFO    ]  Epoch 1 val:   dx_f1=0.0549  concept_f1=0.0317
+2026-02-28 15:14:54  [INFO    ]  MPS memory in use : 2,068 MB
+2026-02-28 15:14:55  [INFO    ]  Epoch checkpoint saved → phase1_epoch_1.pt
+2026-02-28 15:14:57  [INFO    ]  Best checkpoint saved  → phase1_best.pt
+2026-02-28 15:14:57  [INFO    ]    New best val dx_f1 = 0.0549
+2026-02-28 16:14:17  [INFO    ]  Epoch 2 train loss: total=0.4349  dx=0.2658  align=0.0994  concept=0.3977
+2026-02-28 16:18:53  [INFO    ]  Epoch 2 val:   dx_f1=0.1723  concept_f1=0.0526
+2026-02-28 16:18:53  [INFO    ]  MPS memory in use : 2,077 MB
+2026-02-28 16:18:55  [INFO    ]  Epoch checkpoint saved → phase1_epoch_2.pt
+2026-02-28 16:18:56  [INFO    ]  Best checkpoint saved  → phase1_best.pt
+2026-02-28 16:18:56  [INFO    ]    New best val dx_f1 = 0.1723
+2026-02-28 17:18:13  [INFO    ]  Epoch 3 train loss: total=0.4202  dx=0.2506  align=0.1091  concept=0.3834
+2026-02-28 17:22:56  [INFO    ]  Epoch 3 val:   dx_f1=0.2097  concept_f1=0.0601
+2026-02-28 17:22:56  [INFO    ]  MPS memory in use : 2,077 MB
+2026-02-28 17:22:58  [INFO    ]  Epoch checkpoint saved → phase1_epoch_3.pt
+2026-02-28 17:22:59  [INFO    ]  Best checkpoint saved  → phase1_best.pt
+2026-02-28 17:22:59  [INFO    ]    New best val dx_f1 = 0.2097
+2026-02-28 18:24:27  [INFO    ]  Epoch 4 train loss: total=0.4121  dx=0.2425  align=0.1137  concept=0.3757
+2026-02-28 18:29:08  [INFO    ]  Epoch 4 val:   dx_f1=0.2350  concept_f1=0.0734
+2026-02-28 18:29:08  [INFO    ]  MPS memory in use : 2,077 MB
+2026-02-28 18:29:09  [INFO    ]  Epoch checkpoint saved → phase1_epoch_4.pt
+2026-02-28 18:29:10  [INFO    ]  Best checkpoint saved  → phase1_best.pt
+2026-02-28 18:29:10  [INFO    ]    New best val dx_f1 = 0.2350
+2026-02-28 19:31:43  [INFO    ]  Epoch 5 train loss: total=0.4059  dx=0.2362  align=0.1169  concept=0.3709
+2026-02-28 19:36:52  [INFO    ]  Epoch 5 val:   dx_f1=0.2488  concept_f1=0.0810
+2026-02-28 19:36:52  [INFO    ]  MPS memory in use : 2,077 MB
+2026-02-28 19:36:53  [INFO    ]  Epoch checkpoint saved → phase1_epoch_5.pt
+2026-02-28 19:36:54  [INFO    ]  Best checkpoint saved  → phase1_best.pt
+2026-02-28 19:36:54  [INFO    ]    New best val dx_f1 = 0.2488
+2026-02-28 20:41:38  [INFO    ]  Epoch 6 train loss: total=0.4010  dx=0.2311  align=0.1189  concept=0.3681
+2026-02-28 20:46:11  [INFO    ]  Epoch 6 val:   dx_f1=0.2590  concept_f1=0.0903
+2026-02-28 20:46:11  [INFO    ]  MPS memory in use : 2,077 MB
+2026-02-28 20:46:12  [INFO    ]  Epoch checkpoint saved → phase1_epoch_6.pt
+2026-02-28 20:46:13  [INFO    ]  Best checkpoint saved  → phase1_best.pt
+2026-02-28 20:46:13  [INFO    ]    New best val dx_f1 = 0.2590
+2026-02-28 21:59:17  [INFO    ]  Epoch 7 train loss: total=0.3976  dx=0.2276  align=0.1201  concept=0.3666
+2026-02-28 22:05:25  [INFO    ]  Epoch 7 val:   dx_f1=0.2666  concept_f1=0.0933
+2026-02-28 22:05:25  [INFO    ]  MPS memory in use : 2,077 MB
+2026-02-28 22:05:27  [INFO    ]  Epoch checkpoint saved → phase1_epoch_7.pt
+2026-02-28 22:05:27  [INFO    ]  Best checkpoint saved  → phase1_best.pt
+2026-02-28 22:05:27  [INFO    ]    New best val dx_f1 = 0.2666
+2026-02-28 22:05:27  [INFO    ]  Training done. Best val dx_f1 = 0.2666
+2026-02-28 22:05:27  [INFO    ]  Phase 1 concept embeddings → phase1_concept_embeddings.pt
+2026-02-28 22:05:27  [INFO    ]  Loading best model for test evaluation …
+2026-02-28 22:10:44  [INFO    ]  ============================================================
+2026-02-28 22:10:44  [INFO    ]  Phase 1 — Test Results (threshold = 0.5)
+2026-02-28 22:10:44  [INFO    ]    Macro F1   : 0.2663
+2026-02-28 22:10:44  [INFO    ]    Micro F1   : 0.3886
+2026-02-28 22:10:44  [INFO    ]    Precision  : 0.5727
+2026-02-28 22:10:44  [INFO    ]    Recall     : 0.1980
+2026-02-28 22:10:44  [INFO    ]    Concept F1 : 0.0946
+2026-02-28 22:10:44  [INFO    ]  ============================================================
+2026-02-28 22:10:44  [INFO    ]  Results saved → results.json
+2026-02-28 22:10:44  [INFO    ]  Per-label F1  → per_label_f1.csv
+2026-02-28 22:10:44  [INFO    ]  Phase 1 training complete.
+2026-02-28 23:37:20  [INFO    ]  ========================================================================
+2026-02-28 23:37:20  [INFO    ]  ShifaMind Phase 1 — Threshold Tuning
+2026-02-28 23:37:20  [INFO    ]  ========================================================================
+2026-02-28 23:37:20  [INFO    ]  Device : mps
+2026-02-28 23:37:20  [INFO    ]  Loading splits and concept labels …
+2026-02-28 23:37:20  [INFO    ]  Val   : 17,265 samples
+2026-02-28 23:37:20  [INFO    ]  Test  : 17,266 samples
+2026-02-28 23:37:20  [INFO    ]  Loading BioClinicalBERT …
+2026-02-28 23:37:22  [INFO    ]  Loaded checkpoint ← phase1_best.pt
+2026-02-28 23:37:22  [INFO    ]  Phase 1 best model loaded (epoch 7)
+2026-02-28 23:37:22  [INFO    ]  Running inference on validation set …
+2026-02-28 23:41:43  [INFO    ]  Sweeping 19 threshold candidates per label …
+2026-02-28 23:41:44  [INFO    ]  Threshold tuning done — mean optimal threshold: 0.218  mean val F1: 0.4463
+2026-02-28 23:41:44  [INFO    ]  Optimal thresholds saved → optimal_thresholds.json
+2026-02-28 23:41:44  [INFO    ]  Running inference on test set …
+2026-02-28 23:46:16  [INFO    ]  ============================================================
+2026-02-28 23:46:16  [INFO    ]  Phase 1 — Threshold Comparison (test set)
+2026-02-28 23:46:16  [INFO    ]    Default (0.5)  — Macro F1: 0.2663  Micro: 0.3886
+2026-02-28 23:46:16  [INFO    ]    Tuned          — Macro F1: 0.4433  Micro: 0.4627
+2026-02-28 23:46:16  [INFO    ]  ============================================================
+2026-02-28 23:46:16  [INFO    ]  Threshold results saved → threshold_tuning_results.json
+2026-02-28 23:46:16  [INFO    ]  Threshold comparison   → threshold_comparison.csv
+2026-02-28 23:46:16  [INFO    ]  Phase 1 threshold tuning complete.
+2026-03-01 11:20:59  [INFO    ]  ========================================================================
+2026-03-01 11:20:59  [INFO    ]  ShifaMind Phase 1 — Training
+2026-03-01 11:20:59  [INFO    ]  ========================================================================
+2026-03-01 11:20:59  [INFO    ]  Device : mps
+2026-03-01 11:20:59  [INFO    ]  Loading source data …
+2026-03-01 11:20:59  [INFO    ]  Top-50 ICD-10 codes loaded: 50
+2026-03-01 11:20:59  [INFO    ]  Global concepts            : 111
+2026-03-01 11:21:04  [INFO    ]  Dataset: 115,103 samples
+2026-03-01 11:21:04  [INFO    ]  Split — train 80,572  val 17,265  test 17,266
+2026-03-01 11:21:05  [INFO    ]  Generating concept labels …
+2026-03-01 11:21:59  [INFO    ]  Concept labels: shape (80572, 111), avg 23.01 per sample
+2026-03-01 11:21:59  [INFO    ]  Loading BioClinicalBERT …
+2026-03-01 11:22:00  [INFO    ]  Phase 1 model: 116,789,153 parameters
+2026-03-01 11:22:00  [INFO    ]  Loaders — train 10072 batches  val 1080  test 1080
+2026-03-01 11:22:00  [INFO    ]  Run ID 20260301_112200 — checkpoints → /Users/mohammedsameersyed/Documents/UoA/Fall 2025/Capstone Project/v2/ShifaMind_Local/shifamind_local/checkpoints/phase1/20260301_112200
+2026-03-01 11:22:00  [INFO    ]  ============================================================
+2026-03-01 11:22:00  [INFO    ]  Starting Phase 1 training (12 epochs) …
+2026-03-01 11:22:00  [INFO    ]    Loss   : FocalLoss(γ=2.0, α=0.75)
+2026-03-01 11:22:00  [INFO    ]    λ_dx=1.0  λ_align=0.1  λ_concept=0.05
+2026-03-01 11:22:00  [INFO    ]    MAX_LENGTH=512  GRAD_ACCUM=4
+2026-03-01 11:22:00  [INFO    ]  ============================================================
+2026-03-01 13:08:41  [INFO    ]  Epoch 1 train loss: total=0.0776  dx=0.0422  align=0.0870  concept=0.5348
+2026-03-01 13:14:56  [INFO    ]  Epoch 1 val:   dx_f1=0.2414  concept_f1=0.0392
+2026-03-01 13:14:56  [INFO    ]  MPS memory in use : 2,518 MB
+2026-03-01 13:14:58  [INFO    ]  Best checkpoint saved  → phase1_best.pt
+2026-03-01 13:14:58  [INFO    ]    New best val dx_f1 = 0.2414
+2026-03-01 14:36:22  [INFO    ]  Epoch 2 train loss: total=0.0672  dx=0.0345  align=0.0918  concept=0.4714
+2026-03-01 14:42:43  [INFO    ]  Epoch 2 val:   dx_f1=0.3612  concept_f1=0.0541
+2026-03-01 14:42:43  [INFO    ]  MPS memory in use : 2,526 MB
+2026-03-01 14:42:44  [INFO    ]  Best checkpoint saved  → phase1_best.pt
+2026-03-01 14:42:44  [INFO    ]    New best val dx_f1 = 0.3612
+2026-03-01 16:10:39  [INFO    ]  Epoch 3 train loss: total=0.0644  dx=0.0322  align=0.0894  concept=0.4646
+2026-03-01 16:18:16  [INFO    ]  Epoch 3 val:   dx_f1=0.3909  concept_f1=0.0425
+2026-03-01 16:18:16  [INFO    ]  MPS memory in use : 2,526 MB
+2026-03-01 16:18:17  [INFO    ]  Best checkpoint saved  → phase1_best.pt
+2026-03-01 16:18:17  [INFO    ]    New best val dx_f1 = 0.3909
+2026-03-01 17:50:41  [INFO    ]  Epoch 4 train loss: total=0.0625  dx=0.0308  align=0.0844  concept=0.4637
+2026-03-01 17:57:38  [INFO    ]  Epoch 4 val:   dx_f1=0.4112  concept_f1=0.0477
+2026-03-01 17:57:38  [INFO    ]  MPS memory in use : 2,526 MB
+2026-03-01 17:57:39  [INFO    ]  Best checkpoint saved  → phase1_best.pt
+2026-03-01 17:57:39  [INFO    ]    New best val dx_f1 = 0.4112
+2026-03-01 19:28:32  [INFO    ]  Epoch 5 train loss: total=0.0612  dx=0.0297  align=0.0850  concept=0.4591
+2026-03-01 19:35:23  [INFO    ]  Epoch 5 val:   dx_f1=0.4226  concept_f1=0.0496
+2026-03-01 19:35:23  [INFO    ]  MPS memory in use : 2,526 MB
+2026-03-01 19:35:25  [INFO    ]  Best checkpoint saved  → phase1_best.pt
+2026-03-01 19:35:25  [INFO    ]    New best val dx_f1 = 0.4226
+2026-03-01 21:04:13  [INFO    ]  Epoch 6 train loss: total=0.0601  dx=0.0287  align=0.0871  concept=0.4536
+2026-03-01 21:11:49  [INFO    ]  Epoch 6 val:   dx_f1=0.4307  concept_f1=0.0605
+2026-03-01 21:11:49  [INFO    ]  MPS memory in use : 2,526 MB
+2026-03-01 21:11:50  [INFO    ]  Best checkpoint saved  → phase1_best.pt
+2026-03-01 21:11:50  [INFO    ]    New best val dx_f1 = 0.4307
+2026-03-01 22:41:47  [INFO    ]  Epoch 7 train loss: total=0.0591  dx=0.0277  align=0.0896  concept=0.4484
+2026-03-01 22:48:29  [INFO    ]  Epoch 7 val:   dx_f1=0.4388  concept_f1=0.0668
+2026-03-01 22:48:29  [INFO    ]  MPS memory in use : 2,526 MB
+2026-03-01 22:48:30  [INFO    ]  Best checkpoint saved  → phase1_best.pt
+2026-03-01 22:48:30  [INFO    ]    New best val dx_f1 = 0.4388
+2026-03-02 00:16:58  [INFO    ]  Epoch 8 train loss: total=0.0582  dx=0.0268  align=0.0921  concept=0.4439
+2026-03-02 00:23:23  [INFO    ]  Epoch 8 val:   dx_f1=0.4432  concept_f1=0.0623
+2026-03-02 00:23:23  [INFO    ]  MPS memory in use : 2,526 MB
+2026-03-02 00:23:24  [INFO    ]  Best checkpoint saved  → phase1_best.pt
+2026-03-02 00:23:24  [INFO    ]    New best val dx_f1 = 0.4432
+2026-03-02 01:47:16  [INFO    ]  Epoch 9 train loss: total=0.0574  dx=0.0259  align=0.0946  concept=0.4393
+2026-03-02 01:53:40  [INFO    ]  Epoch 9 val:   dx_f1=0.4464  concept_f1=0.0675
+2026-03-02 01:53:40  [INFO    ]  MPS memory in use : 2,526 MB
+2026-03-02 01:53:42  [INFO    ]  Best checkpoint saved  → phase1_best.pt
+2026-03-02 01:53:42  [INFO    ]    New best val dx_f1 = 0.4464
+2026-03-02 03:16:23  [INFO    ]  Epoch 10 train loss: total=0.0567  dx=0.0252  align=0.0968  concept=0.4357
+2026-03-02 03:22:42  [INFO    ]  Epoch 10 val:   dx_f1=0.4486  concept_f1=0.0713
+2026-03-02 03:22:42  [INFO    ]  MPS memory in use : 2,526 MB
+2026-03-02 03:22:43  [INFO    ]  Best checkpoint saved  → phase1_best.pt
+2026-03-02 03:22:43  [INFO    ]    New best val dx_f1 = 0.4486
+2026-03-02 04:44:14  [INFO    ]  Epoch 11 train loss: total=0.0561  dx=0.0246  align=0.0984  concept=0.4330
+2026-03-02 04:50:29  [INFO    ]  Epoch 11 val:   dx_f1=0.4512  concept_f1=0.0751
+2026-03-02 04:50:29  [INFO    ]  MPS memory in use : 2,526 MB
+2026-03-02 04:50:30  [INFO    ]  Best checkpoint saved  → phase1_best.pt
+2026-03-02 04:50:30  [INFO    ]    New best val dx_f1 = 0.4512
+2026-03-02 06:11:14  [INFO    ]  Epoch 12 train loss: total=0.0557  dx=0.0242  align=0.0995  concept=0.4312
+2026-03-02 06:17:29  [INFO    ]  Epoch 12 val:   dx_f1=0.4510  concept_f1=0.0740
+2026-03-02 06:17:29  [INFO    ]  MPS memory in use : 2,526 MB
+2026-03-02 06:17:29  [INFO    ]  Training done. Best val dx_f1 = 0.4512
+2026-03-02 06:17:29  [INFO    ]  Phase 1 concept embeddings → phase1_concept_embeddings.pt
+2026-03-02 06:17:29  [INFO    ]  Loading best model for test evaluation …
+2026-03-02 06:23:28  [INFO    ]  ============================================================
+2026-03-02 06:23:28  [INFO    ]  Phase 1 — Test Results (threshold = 0.5)
+2026-03-02 06:23:28  [INFO    ]    Macro F1   : 0.4488
+2026-03-02 06:23:28  [INFO    ]    Micro F1   : 0.5342
+2026-03-02 06:23:28  [INFO    ]    Precision  : 0.4779
+2026-03-02 06:23:28  [INFO    ]    Recall     : 0.4509
+2026-03-02 06:23:28  [INFO    ]    Concept F1 : 0.0750
+2026-03-02 06:23:28  [INFO    ]  ============================================================
+2026-03-02 06:23:28  [INFO    ]  Results saved → results.json
+2026-03-02 06:23:28  [INFO    ]  Per-label F1  → per_label_f1.csv
+2026-03-02 06:23:28  [INFO    ]  Phase 1 training complete.
+2026-03-02 11:53:55  [INFO    ]  ========================================================================
+2026-03-02 11:53:55  [INFO    ]  ShifaMind Phase 1 — Threshold Tuning
+2026-03-02 11:53:55  [INFO    ]  ========================================================================
+2026-03-02 11:53:55  [INFO    ]  Device : mps
+2026-03-02 11:53:55  [INFO    ]  Loading splits and concept labels …
+2026-03-02 11:53:55  [INFO    ]  Found checkpoint ← phase1/20260301_112200/phase1_best.pt
+2026-03-02 11:53:55  [INFO    ]  Val   : 17,265 samples
+2026-03-02 11:53:55  [INFO    ]  Test  : 17,266 samples
+2026-03-02 11:53:55  [INFO    ]  Loading BioClinicalBERT …
+2026-03-02 11:53:56  [INFO    ]  Loaded checkpoint ← phase1_best.pt
+2026-03-02 11:53:56  [INFO    ]  Phase 1 best model loaded (epoch 11)
+2026-03-02 11:53:56  [INFO    ]  Running inference on validation set …
+2026-03-02 12:00:19  [INFO    ]  Sweeping 19 threshold candidates per label …
+2026-03-02 12:00:20  [INFO    ]  Threshold tuning done — mean optimal threshold: 0.482  mean val F1: 0.4761
+2026-03-02 12:00:20  [INFO    ]  Optimal thresholds saved → optimal_thresholds.json
+2026-03-02 12:00:20  [INFO    ]  Running inference on test set …
+2026-03-02 12:06:58  [INFO    ]  ============================================================
+2026-03-02 12:06:58  [INFO    ]  Phase 1 — Threshold Comparison (test set)
+2026-03-02 12:06:58  [INFO    ]    Default (0.5)  — Macro F1: 0.4488  Micro: 0.5342
+2026-03-02 12:06:58  [INFO    ]    Tuned          — Macro F1: 0.4727  Micro: 0.5053
+2026-03-02 12:06:58  [INFO    ]  ============================================================
+2026-03-02 12:06:58  [INFO    ]  Threshold results saved → threshold_tuning_results.json
+2026-03-02 12:06:58  [INFO    ]  Threshold comparison   → threshold_comparison.csv
+2026-03-02 12:06:58  [INFO    ]  Phase 1 threshold tuning complete.
+2026-03-03 16:15:03  [INFO    ]  ========================================================================
+2026-03-03 16:15:03  [INFO    ]  ShifaMind Phase 2 — Training (BioClinicalBERT + UMLS GAT)
+2026-03-03 16:15:03  [INFO    ]  ========================================================================
+2026-03-03 16:15:03  [INFO    ]  Device : mps
+2026-03-03 16:15:03  [INFO    ]  Loading splits and concept labels from Phase 1 …
+2026-03-03 16:15:03  [INFO    ]  Dataset — train 80,572  val 17,265  test 17,266
+2026-03-03 16:15:03  [INFO    ]  Labels: 50   Concepts: 111
+2026-03-03 16:15:03  [INFO    ]  Loading BioClinicalBERT …
+2026-03-03 16:15:05  [INFO    ]  Warm-starting BERT from Phase 1 checkpoint: phase1_best.pt
+2026-03-03 16:15:05  [INFO    ]    Phase 1 BERT weights loaded — macro_f1 at transfer: 0.266631045392127
+2026-03-03 16:15:05  [INFO    ]  Loading Phase 1 concept embeddings as warm-start …
+2026-03-03 16:15:05  [INFO    ]  Phase 1 concept embeddings loaded: shape (111, 768)
+2026-03-03 16:15:05  [INFO    ]  Building multi-source knowledge graph (or loading from cache) …
+2026-03-03 16:15:05  [INFO    ]  ============================================================
+2026-03-03 16:15:05  [INFO    ]  Multi-Source KG Build
+2026-03-03 16:15:05  [INFO    ]  ============================================================
+2026-03-03 16:15:06  [INFO    ]  ============================================================
+2026-03-03 16:15:06  [INFO    ]  Building Multi-Source Clinical Knowledge Graph
+2026-03-03 16:15:06  [INFO    ]  ============================================================
+2026-03-03 16:15:06  [INFO    ]  Nodes added: 111 concepts + 50 diagnoses = 161 total
+2026-03-03 16:15:06  [ERROR   ]  MRCONSO.RRF not found at /Users/mohammedsameersyed/Library/CloudStorage/GoogleDrive-sdmohammedsameer@gmail.com/My Drive/ShifaMind/01_Raw_Datasets/Extracted/umls-2025AA-metathesaurus-full/2025AA/META/MRCONSO.RRF
+2026-03-03 16:15:07  [ERROR   ]  MRREL.RRF not found at /Users/mohammedsameersyed/Library/CloudStorage/GoogleDrive-sdmohammedsameer@gmail.com/My Drive/ShifaMind/01_Raw_Datasets/Extracted/umls-2025AA-metathesaurus-full/2025AA/META/MRREL.RRF
+2026-03-03 16:15:07  [INFO    ]  Co-coding edges added: 1,572
+2026-03-03 16:15:07  [INFO    ]  Competitive edges added: 2,450
+2026-03-03 16:15:38  [INFO    ]  Fetched 2,557 PubMed abstract paragraphs → cached
+2026-03-03 16:15:38  [INFO    ]  Computing co-mention NPMI over 2,557 abstracts …
+2026-03-03 16:15:38  [INFO    ]  PubMed co-mention edges added: 418
+2026-03-03 16:15:38  [INFO    ]  ============================================================
+2026-03-03 16:15:38  [INFO    ]  Multi-Source KG Summary
+2026-03-03 16:15:38  [INFO    ]  ============================================================
+2026-03-03 16:15:38  [INFO    ]    Nodes        :    161  (111 concepts + 50 diagnoses)
+2026-03-03 16:15:38  [INFO    ]    competitive           :  2,450
+2026-03-03 16:15:38  [INFO    ]    co_coding             :  1,572
+2026-03-03 16:15:38  [INFO    ]    pubmed                :    418
+2026-03-03 16:15:38  [INFO    ]    Total edges           :  4,440
+2026-03-03 16:15:38  [INFO    ]  ============================================================
+2026-03-03 16:15:38  [INFO    ]  NetworkX graph saved → umls_knowledge_graph.gpickle
+2026-03-03 16:15:38  [INFO    ]  Computing BioClinicalBERT embeddings for 161 nodes …
+2026-03-03 16:15:40  [INFO    ]  PyG Data: 161 nodes × 768-dim, 4440 edges
+2026-03-03 16:15:40  [INFO    ]  PyG graph saved      → graph_data.pt
+2026-03-03 16:15:40  [INFO    ]  Loading graph from graph_data.pt …
+2026-03-03 16:15:40  [INFO    ]  Graph loaded: 161 nodes  4440 edges
+2026-03-03 16:15:40  [INFO    ]  Building Phase 2 model …
+2026-03-03 16:15:40  [INFO    ]  Phase 2 model: 114,297,249 parameters (including concept_embs_p2)
+2026-03-03 16:15:40  [INFO    ]  Loaders — train 10072 batches  val 1080  test 1080
+2026-03-03 16:15:40  [INFO    ]  Run ID 20260303_161540 — checkpoints → /Users/mohammedsameersyed/Documents/UoA/Fall 2025/Capstone Project/v2/ShifaMind_Local/shifamind_local/checkpoints/phase2/20260303_161540
+2026-03-03 16:15:40  [INFO    ]  ============================================================
+2026-03-03 16:15:40  [INFO    ]  Starting Phase 2 training (7 epochs) …
+2026-03-03 16:15:40  [INFO    ]  ============================================================
+2026-03-03 17:49:25  [INFO    ]  Epoch 1 train loss: total=0.0683  dx=0.0355  align=0.0816  concept=0.4918
+2026-03-03 17:57:15  [INFO    ]  Epoch 1 val:   dx_f1=0.1457  concept_f1=0.0875
+2026-03-03 17:57:15  [INFO    ]  MPS memory in use : 3,944 MB
+2026-03-03 17:57:17  [INFO    ]  Best checkpoint saved  → phase2_best.pt
+2026-03-03 17:57:17  [INFO    ]    New best val dx_f1 = 0.1457
+2026-03-03 19:24:43  [INFO    ]  Epoch 2 train loss: total=0.0615  dx=0.0299  align=0.0923  concept=0.4471
+2026-03-03 19:30:36  [INFO    ]  Epoch 2 val:   dx_f1=0.2954  concept_f1=0.1048
+2026-03-03 19:30:36  [INFO    ]  MPS memory in use : 3,944 MB
+2026-03-03 19:30:37  [INFO    ]  Best checkpoint saved  → phase2_best.pt
+2026-03-03 19:30:37  [INFO    ]    New best val dx_f1 = 0.2954
+2026-03-03 20:59:05  [INFO    ]  Epoch 3 train loss: total=0.0598  dx=0.0283  align=0.0954  concept=0.4383
+2026-03-03 21:06:39  [INFO    ]  Epoch 3 val:   dx_f1=0.3299  concept_f1=0.1161
+2026-03-03 21:06:39  [INFO    ]  MPS memory in use : 3,944 MB
+2026-03-03 21:06:40  [INFO    ]  Best checkpoint saved  → phase2_best.pt
+2026-03-03 21:06:40  [INFO    ]    New best val dx_f1 = 0.3299
+2026-03-03 22:41:12  [INFO    ]  Epoch 4 train loss: total=0.0585  dx=0.0271  align=0.0981  concept=0.4316
+2026-03-03 22:47:10  [INFO    ]  Epoch 4 val:   dx_f1=0.3555  concept_f1=0.1195
+2026-03-03 22:47:10  [INFO    ]  MPS memory in use : 3,944 MB
+2026-03-03 22:47:12  [INFO    ]  Best checkpoint saved  → phase2_best.pt
+2026-03-03 22:47:12  [INFO    ]    New best val dx_f1 = 0.3555
+2026-03-04 00:09:11  [INFO    ]  Epoch 5 train loss: total=0.0573  dx=0.0259  align=0.1010  concept=0.4256
+2026-03-04 00:15:27  [INFO    ]  Epoch 5 val:   dx_f1=0.3785  concept_f1=0.1329
+2026-03-04 00:15:27  [INFO    ]  MPS memory in use : 3,944 MB
+2026-03-04 00:15:29  [INFO    ]  Best checkpoint saved  → phase2_best.pt
+2026-03-04 00:15:29  [INFO    ]    New best val dx_f1 = 0.3785
+2026-03-04 20:15:27  [INFO    ]  ========================================================================
+2026-03-04 20:15:27  [INFO    ]  ShifaMind Phase 2 — Training (BioClinicalBERT + UMLS GAT)
+2026-03-04 20:15:27  [INFO    ]  ========================================================================
+2026-03-04 20:15:27  [INFO    ]  Device : mps
+2026-03-04 20:15:27  [INFO    ]  Loading splits and concept labels from Phase 1 …
+2026-03-04 20:15:28  [INFO    ]  Dataset — train 80,572  val 17,265  test 17,266
+2026-03-04 20:15:28  [INFO    ]  Labels: 50   Concepts: 111
+2026-03-04 20:15:28  [INFO    ]  Loading BioClinicalBERT …
+2026-03-04 20:15:29  [INFO    ]  Warm-starting BERT from Phase 1 checkpoint: phase1_best.pt
+2026-03-04 20:15:29  [INFO    ]    Phase 1 BERT weights loaded — macro_f1 at transfer: 0.266631045392127
+2026-03-04 20:15:29  [INFO    ]  Loading Phase 1 concept embeddings as warm-start …
+2026-03-04 20:15:29  [INFO    ]  Phase 1 concept embeddings loaded: shape (111, 768)
+2026-03-04 20:15:29  [INFO    ]  Building multi-source knowledge graph (or loading from cache) …
+2026-03-04 20:15:30  [INFO    ]  ============================================================
+2026-03-04 20:15:30  [INFO    ]  Multi-Source KG Build
+2026-03-04 20:15:30  [INFO    ]  ============================================================
+2026-03-04 20:15:30  [INFO    ]  ============================================================
+2026-03-04 20:15:30  [INFO    ]  Building Multi-Source Clinical Knowledge Graph
+2026-03-04 20:15:30  [INFO    ]  ============================================================
+2026-03-04 20:15:30  [INFO    ]  Nodes added: 111 concepts + 50 diagnoses = 161 total
+2026-03-04 20:15:30  [INFO    ]    MRCONSO: 500,000 entries scanned …
+2026-03-04 20:15:31  [INFO    ]    MRCONSO: 1,000,000 entries scanned …
+2026-03-04 20:15:32  [INFO    ]    MRCONSO: 1,500,000 entries scanned …
+2026-03-04 20:15:32  [INFO    ]    MRCONSO: 2,000,000 entries scanned …
+2026-03-04 20:15:33  [INFO    ]    MRCONSO: 2,500,000 entries scanned …
+2026-03-04 20:15:33  [INFO    ]    MRCONSO: 3,000,000 entries scanned …
+2026-03-04 20:15:34  [INFO    ]    MRCONSO: 3,500,000 entries scanned …
+2026-03-04 20:15:35  [INFO    ]    MRCONSO: 4,000,000 entries scanned …
+2026-03-04 20:15:35  [INFO    ]    MRCONSO: 4,500,000 entries scanned …
+2026-03-04 20:15:35  [INFO    ]    MRCONSO: 5,000,000 entries scanned …
+2026-03-04 20:15:36  [INFO    ]    MRCONSO: 5,500,000 entries scanned …
+2026-03-04 20:15:36  [INFO    ]    MRCONSO: 6,000,000 entries scanned …
+2026-03-04 20:15:36  [INFO    ]    MRCONSO: 6,500,000 entries scanned …
+2026-03-04 20:15:37  [INFO    ]    MRCONSO: 7,000,000 entries scanned …
+2026-03-04 20:15:37  [INFO    ]    MRCONSO: 7,500,000 entries scanned …
+2026-03-04 20:15:38  [INFO    ]    MRCONSO: 8,000,000 entries scanned …
+2026-03-04 20:15:38  [INFO    ]    MRCONSO: 8,500,000 entries scanned …
+2026-03-04 20:15:38  [INFO    ]    MRCONSO: 9,000,000 entries scanned …
+2026-03-04 20:15:39  [INFO    ]    MRCONSO: 9,500,000 entries scanned …
+2026-03-04 20:15:39  [INFO    ]    MRCONSO: 10,000,000 entries scanned …
+2026-03-04 20:15:39  [INFO    ]  MRCONSO done in 10s — concepts 111/111, ICD codes 50/50
+2026-03-04 20:15:40  [INFO    ]    MRREL: 1,000,000 entries scanned …
+2026-03-04 20:15:40  [INFO    ]    MRREL: 2,000,000 entries scanned …
+2026-03-04 20:15:41  [INFO    ]    MRREL: 3,000,000 entries scanned …
+2026-03-04 20:15:41  [INFO    ]    MRREL: 4,000,000 entries scanned …
+2026-03-04 20:15:41  [INFO    ]    MRREL: 5,000,000 entries scanned …
+2026-03-04 20:15:42  [INFO    ]    MRREL: 6,000,000 entries scanned …
+2026-03-04 20:15:42  [INFO    ]    MRREL: 7,000,000 entries scanned …
+2026-03-04 20:15:42  [INFO    ]    MRREL: 8,000,000 entries scanned …
+2026-03-04 20:15:43  [INFO    ]    MRREL: 9,000,000 entries scanned …
+2026-03-04 20:15:43  [INFO    ]    MRREL: 10,000,000 entries scanned …
+2026-03-04 20:15:43  [INFO    ]    MRREL: 11,000,000 entries scanned …
+2026-03-04 20:15:44  [INFO    ]    MRREL: 12,000,000 entries scanned …
+2026-03-04 20:15:44  [INFO    ]    MRREL: 13,000,000 entries scanned …
+2026-03-04 20:15:44  [INFO    ]    MRREL: 14,000,000 entries scanned …
+2026-03-04 20:15:45  [INFO    ]    MRREL: 15,000,000 entries scanned …
+2026-03-04 20:15:45  [INFO    ]    MRREL: 16,000,000 entries scanned …
+2026-03-04 20:15:45  [INFO    ]    MRREL: 17,000,000 entries scanned …
+2026-03-04 20:15:46  [INFO    ]    MRREL: 18,000,000 entries scanned …
+2026-03-04 20:15:46  [INFO    ]    MRREL: 19,000,000 entries scanned …
+2026-03-04 20:15:47  [INFO    ]    MRREL: 20,000,000 entries scanned …
+2026-03-04 20:15:47  [INFO    ]    MRREL: 21,000,000 entries scanned …
+2026-03-04 20:15:47  [INFO    ]    MRREL: 22,000,000 entries scanned …
+2026-03-04 20:15:48  [INFO    ]    MRREL: 23,000,000 entries scanned …
+2026-03-04 20:15:48  [INFO    ]    MRREL: 24,000,000 entries scanned …
+2026-03-04 20:15:48  [INFO    ]    MRREL: 25,000,000 entries scanned …
+2026-03-04 20:15:49  [INFO    ]    MRREL: 26,000,000 entries scanned …
+2026-03-04 20:15:49  [INFO    ]    MRREL: 27,000,000 entries scanned …
+2026-03-04 20:15:49  [INFO    ]    MRREL: 28,000,000 entries scanned …
+2026-03-04 20:15:50  [INFO    ]    MRREL: 29,000,000 entries scanned …
+2026-03-04 20:15:50  [INFO    ]    MRREL: 30,000,000 entries scanned …
+2026-03-04 20:15:50  [INFO    ]    MRREL: 31,000,000 entries scanned …
+2026-03-04 20:15:51  [INFO    ]    MRREL: 32,000,000 entries scanned …
+2026-03-04 20:15:51  [INFO    ]    MRREL: 33,000,000 entries scanned …
+2026-03-04 20:15:51  [INFO    ]    MRREL: 34,000,000 entries scanned …
+2026-03-04 20:15:52  [INFO    ]    MRREL: 35,000,000 entries scanned …
+2026-03-04 20:15:52  [INFO    ]    MRREL: 36,000,000 entries scanned …
+2026-03-04 20:15:53  [INFO    ]    MRREL: 37,000,000 entries scanned …
+2026-03-04 20:15:53  [INFO    ]    MRREL: 38,000,000 entries scanned …
+2026-03-04 20:15:53  [INFO    ]    MRREL: 39,000,000 entries scanned …
+2026-03-04 20:15:54  [INFO    ]    MRREL: 40,000,000 entries scanned …
+2026-03-04 20:15:54  [INFO    ]    MRREL: 41,000,000 entries scanned …
+2026-03-04 20:15:54  [INFO    ]    MRREL: 42,000,000 entries scanned …
+2026-03-04 20:15:55  [INFO    ]    MRREL: 43,000,000 entries scanned …
+2026-03-04 20:15:55  [INFO    ]    MRREL: 44,000,000 entries scanned …
+2026-03-04 20:15:55  [INFO    ]    MRREL: 45,000,000 entries scanned …
+2026-03-04 20:15:56  [INFO    ]    MRREL: 46,000,000 entries scanned …
+2026-03-04 20:15:56  [INFO    ]    MRREL: 47,000,000 entries scanned …
+2026-03-04 20:15:56  [INFO    ]    MRREL: 48,000,000 entries scanned …
+2026-03-04 20:15:57  [INFO    ]    MRREL: 49,000,000 entries scanned …
+2026-03-04 20:15:57  [INFO    ]    MRREL: 50,000,000 entries scanned …
+2026-03-04 20:15:57  [INFO    ]    MRREL: 51,000,000 entries scanned …
+2026-03-04 20:15:58  [INFO    ]    MRREL: 52,000,000 entries scanned …
+2026-03-04 20:15:58  [INFO    ]    MRREL: 53,000,000 entries scanned …
+2026-03-04 20:15:59  [INFO    ]    MRREL: 54,000,000 entries scanned …
+2026-03-04 20:15:59  [INFO    ]    MRREL: 55,000,000 entries scanned …
+2026-03-04 20:15:59  [INFO    ]    MRREL: 56,000,000 entries scanned …
+2026-03-04 20:16:00  [INFO    ]    MRREL: 57,000,000 entries scanned …
+2026-03-04 20:16:00  [INFO    ]    MRREL: 58,000,000 entries scanned …
+2026-03-04 20:16:00  [INFO    ]    MRREL: 59,000,000 entries scanned …
+2026-03-04 20:16:01  [INFO    ]    MRREL: 60,000,000 entries scanned …
+2026-03-04 20:16:01  [INFO    ]    MRREL: 61,000,000 entries scanned …
+2026-03-04 20:16:01  [INFO    ]    MRREL: 62,000,000 entries scanned …
+2026-03-04 20:16:02  [INFO    ]  MRREL done — 31,340 relevant triples
+2026-03-04 20:16:02  [INFO    ]  UMLS edges added: 202
+2026-03-04 20:16:02  [INFO    ]  Co-coding edges added: 1,554
+2026-03-04 20:16:02  [INFO    ]  Competitive edges added: 2,450
+2026-03-04 20:16:02  [INFO    ]  Loaded 2,557 PubMed abstracts from cache (pubmed_abstracts_cache.json)
+2026-03-04 20:16:02  [INFO    ]  Computing co-mention NPMI over 2,557 abstracts …
+2026-03-04 20:16:02  [INFO    ]  PubMed co-mention edges added: 400
+2026-03-04 20:16:02  [INFO    ]  ============================================================
+2026-03-04 20:16:02  [INFO    ]  Multi-Source KG Summary
+2026-03-04 20:16:02  [INFO    ]  ============================================================
+2026-03-04 20:16:02  [INFO    ]    Nodes        :    161  (111 concepts + 50 diagnoses)
+2026-03-04 20:16:02  [INFO    ]    competitive           :  2,450
+2026-03-04 20:16:02  [INFO    ]    co_coding             :  1,554
+2026-03-04 20:16:02  [INFO    ]    pubmed                :    400
+2026-03-04 20:16:02  [INFO    ]    umls_PAR              :     85
+2026-03-04 20:16:02  [INFO    ]    umls_CHD              :     85
+2026-03-04 20:16:02  [INFO    ]    umls_SY               :     10
+2026-03-04 20:16:02  [INFO    ]    umls_RB               :      7
+2026-03-04 20:16:02  [INFO    ]    umls_RN               :      7
+2026-03-04 20:16:02  [INFO    ]    Total edges           :  4,598
+2026-03-04 20:16:02  [INFO    ]  ============================================================
+2026-03-04 20:16:02  [INFO    ]  NetworkX graph saved → umls_knowledge_graph.gpickle
+2026-03-04 20:16:02  [INFO    ]  Computing BioClinicalBERT embeddings for 161 nodes …
+2026-03-04 20:16:03  [INFO    ]  PyG Data: 161 nodes × 768-dim, 4598 edges
+2026-03-04 20:16:03  [INFO    ]  PyG graph saved      → graph_data.pt
+2026-03-04 20:16:03  [INFO    ]  Loading graph from graph_data.pt …
+2026-03-04 20:16:03  [INFO    ]  Graph loaded: 161 nodes  4598 edges
+2026-03-04 20:16:03  [INFO    ]  Building Phase 2 model …
+2026-03-04 20:16:03  [INFO    ]  Phase 2 model: 114,297,249 parameters (including concept_embs_p2)
+2026-03-04 20:16:03  [INFO    ]  Loaders — train 10072 batches  val 1080  test 1080
+2026-03-04 20:16:03  [INFO    ]  Run ID 20260304_201603 — checkpoints → /Users/mohammedsameersyed/Documents/UoA/Fall 2025/Capstone Project/v2/ShifaMind_Local/shifamind_local/checkpoints/phase2/20260304_201603
+2026-03-04 20:16:03  [INFO    ]  ============================================================
+2026-03-04 20:16:03  [INFO    ]  Starting Phase 2 training (10 epochs) …
+2026-03-04 20:16:03  [INFO    ]  ============================================================
+2026-03-04 21:43:17  [INFO    ]  Epoch 1 train loss: total=0.0610  dx=0.0357  align=0.1627  concept=0.4068
+2026-03-04 21:49:13  [INFO    ]  Epoch 1 val:   dx_f1=0.1473  concept_f1=0.2598
+2026-03-04 21:49:13  [INFO    ]  MPS memory in use : 4,483 MB
+2026-03-04 21:49:15  [INFO    ]  Best checkpoint saved  → phase2_best.pt
+2026-03-04 21:49:15  [INFO    ]    New best val dx_f1 = 0.1473
+2026-03-04 23:13:39  [INFO    ]  Epoch 2 train loss: total=0.0518  dx=0.0295  align=0.2142  concept=0.3181
+2026-03-04 23:19:36  [INFO    ]  Epoch 2 val:   dx_f1=0.3724  concept_f1=0.2887
+2026-03-04 23:19:36  [INFO    ]  MPS memory in use : 4,483 MB
+2026-03-04 23:19:38  [INFO    ]  Best checkpoint saved  → phase2_best.pt
+2026-03-04 23:19:38  [INFO    ]    New best val dx_f1 = 0.3724
+2026-03-05 00:44:57  [INFO    ]  Epoch 3 train loss: total=0.0497  dx=0.0278  align=0.2214  concept=0.3048
+2026-03-05 00:51:12  [INFO    ]  Epoch 3 val:   dx_f1=0.4137  concept_f1=0.3143
+2026-03-05 00:51:12  [INFO    ]  MPS memory in use : 4,483 MB
+2026-03-05 00:51:14  [INFO    ]  Best checkpoint saved  → phase2_best.pt
+2026-03-05 00:51:14  [INFO    ]    New best val dx_f1 = 0.4137
+2026-03-05 02:15:46  [INFO    ]  Epoch 4 train loss: total=0.0480  dx=0.0264  align=0.2241  concept=0.2979
+2026-03-05 02:21:45  [INFO    ]  Epoch 4 val:   dx_f1=0.4253  concept_f1=0.3336
+2026-03-05 02:21:45  [INFO    ]  MPS memory in use : 4,483 MB
+2026-03-05 02:21:46  [INFO    ]  Best checkpoint saved  → phase2_best.pt
+2026-03-05 02:21:46  [INFO    ]    New best val dx_f1 = 0.4253
+2026-03-05 03:45:07  [INFO    ]  Epoch 5 train loss: total=0.0465  dx=0.0251  align=0.2254  concept=0.2931
+2026-03-05 03:51:04  [INFO    ]  Epoch 5 val:   dx_f1=0.4372  concept_f1=0.3406
+2026-03-05 03:51:04  [INFO    ]  MPS memory in use : 4,483 MB
+2026-03-05 03:51:05  [INFO    ]  Best checkpoint saved  → phase2_best.pt
+2026-03-05 03:51:05  [INFO    ]    New best val dx_f1 = 0.4372
+2026-03-05 05:13:38  [INFO    ]  Epoch 6 train loss: total=0.0451  dx=0.0239  align=0.2260  concept=0.2893
+2026-03-05 05:19:32  [INFO    ]  Epoch 6 val:   dx_f1=0.4401  concept_f1=0.3491
+2026-03-05 05:19:32  [INFO    ]  MPS memory in use : 4,483 MB
+2026-03-05 05:19:33  [INFO    ]  Best checkpoint saved  → phase2_best.pt
+2026-03-05 05:19:33  [INFO    ]    New best val dx_f1 = 0.4401
+2026-03-05 06:45:39  [INFO    ]  Epoch 7 train loss: total=0.0439  dx=0.0228  align=0.2264  concept=0.2864
+2026-03-05 06:51:54  [INFO    ]  Epoch 7 val:   dx_f1=0.4374  concept_f1=0.3487
+2026-03-05 06:51:54  [INFO    ]  MPS memory in use : 4,483 MB
+2026-03-05 08:17:59  [INFO    ]  Epoch 8 train loss: total=0.0428  dx=0.0218  align=0.2264  concept=0.2843
+2026-03-05 08:24:10  [INFO    ]  Epoch 8 val:   dx_f1=0.4404  concept_f1=0.3542
+2026-03-05 08:24:10  [INFO    ]  MPS memory in use : 4,483 MB
+2026-03-05 08:24:12  [INFO    ]  Best checkpoint saved  → phase2_best.pt
+2026-03-05 08:24:12  [INFO    ]    New best val dx_f1 = 0.4404
+2026-03-05 09:50:37  [INFO    ]  Epoch 9 train loss: total=0.0420  dx=0.0210  align=0.2264  concept=0.2827
+2026-03-05 09:56:52  [INFO    ]  Epoch 9 val:   dx_f1=0.4379  concept_f1=0.3483
+2026-03-05 09:56:52  [INFO    ]  MPS memory in use : 4,483 MB
+2026-03-05 11:24:30  [INFO    ]  Epoch 10 train loss: total=0.0413  dx=0.0204  align=0.2262  concept=0.2818
+2026-03-05 11:30:49  [INFO    ]  Epoch 10 val:   dx_f1=0.4404  concept_f1=0.3519
+2026-03-05 11:30:49  [INFO    ]  MPS memory in use : 4,483 MB
+2026-03-05 11:30:49  [INFO    ]  Training done. Best val dx_f1 = 0.4404
+2026-03-05 11:30:49  [INFO    ]  Phase 2 concept embeddings → phase2_concept_embeddings.pt
+2026-03-05 11:30:49  [INFO    ]  Training history → training_history.json
+2026-03-05 11:30:49  [INFO    ]  Loading best model for test evaluation …
+2026-03-05 11:30:50  [INFO    ]  Loaded checkpoint ← phase2_best.pt
+2026-03-05 11:37:09  [INFO    ]  ============================================================
+2026-03-05 11:37:09  [INFO    ]  Phase 2 — Test Results (threshold = 0.5)
+2026-03-05 11:37:09  [INFO    ]    Macro F1   : 0.4380
+2026-03-05 11:37:09  [INFO    ]    Micro F1   : 0.5130
+2026-03-05 11:37:09  [INFO    ]    Precision  : 0.4215
+2026-03-05 11:37:09  [INFO    ]    Recall     : 0.4883
+2026-03-05 11:37:09  [INFO    ]    Concept F1 : 0.3531
+2026-03-05 11:37:09  [INFO    ]  ============================================================
+2026-03-05 11:37:09  [INFO    ]  Results saved → results.json
+2026-03-05 11:37:09  [INFO    ]  Per-label F1  → per_label_f1.csv
+2026-03-05 11:37:09  [INFO    ]  Phase 2 training complete.
+2026-03-05 12:03:05  [INFO    ]  ========================================================================
+2026-03-05 12:03:05  [INFO    ]  ShifaMind Phase 2 — Threshold Tuning
+2026-03-05 12:03:05  [INFO    ]  ========================================================================
+2026-03-05 12:03:05  [INFO    ]  Device : mps
+2026-03-05 12:03:05  [INFO    ]  Loading splits …
+2026-03-05 12:03:05  [INFO    ]  Found checkpoint ← phase2/20260304_201603/phase2_best.pt
+2026-03-05 12:03:05  [INFO    ]  Val: 17,265  Test: 17,266
+2026-03-05 12:03:05  [INFO    ]  Loading BioClinicalBERT …
+2026-03-05 12:03:07  [INFO    ]  Loading graph data …
+2026-03-05 12:03:07  [INFO    ]  Loaded checkpoint ← phase2_best.pt
+2026-03-05 12:03:07  [INFO    ]  Phase 2 best model loaded (epoch 8)
+2026-03-05 12:03:07  [INFO    ]  Phase 2 concept embeddings loaded: shape (111, 768)
+2026-03-05 12:03:07  [INFO    ]  Running inference on validation set …
+2026-03-05 12:09:04  [INFO    ]  Sweeping 19 threshold candidates per label …
+2026-03-05 12:09:05  [INFO    ]  Threshold tuning done — mean optimal threshold: 0.493  mean val F1: 0.4582
+2026-03-05 12:09:05  [INFO    ]  Optimal thresholds saved → optimal_thresholds.json
+2026-03-05 12:09:05  [INFO    ]  Running inference on test set …
+2026-03-05 12:15:17  [INFO    ]  ============================================================
+2026-03-05 12:15:17  [INFO    ]  Phase 2 — Threshold Comparison (test set)
+2026-03-05 12:15:17  [INFO    ]    Default (0.5)  — Macro F1: 0.4380  Micro: 0.5130
+2026-03-05 12:15:17  [INFO    ]    Tuned          — Macro F1: 0.4565  Micro: 0.4847
+2026-03-05 12:15:17  [INFO    ]  ============================================================
+2026-03-05 12:15:17  [INFO    ]  Threshold results saved → threshold_tuning_results.json
+2026-03-05 12:15:17  [INFO    ]  Threshold comparison   → threshold_comparison.csv
+2026-03-05 12:15:17  [INFO    ]  Phase 2 threshold tuning complete.
+2026-03-07 20:18:07  [INFO    ]  ========================================================================
+2026-03-07 20:18:07  [INFO    ]  ShifaMind Phase 2 — Training (BioClinicalBERT + UMLS GAT)
+2026-03-07 20:18:07  [INFO    ]  ========================================================================
+2026-03-07 20:18:07  [INFO    ]  Device : mps
+2026-03-07 20:18:07  [INFO    ]  Loading splits and concept labels from Phase 1 …
+2026-03-07 20:18:07  [INFO    ]  Dataset — train 80,572  val 17,265  test 17,266
+2026-03-07 20:18:07  [INFO    ]  Labels: 50   Concepts: 111
+2026-03-07 20:18:07  [INFO    ]  Loading BioClinicalBERT …
+2026-03-07 20:18:09  [INFO    ]  Warm-starting BERT from Phase 1 checkpoint: phase1_best.pt
+2026-03-07 20:18:09  [INFO    ]    Phase 1 BERT weights loaded — macro_f1 at transfer: 0.266631045392127
+2026-03-07 20:18:09  [INFO    ]  Loading Phase 1 concept embeddings as warm-start …
+2026-03-07 20:18:09  [INFO    ]  Phase 1 concept embeddings loaded: shape (111, 768)
+2026-03-07 20:18:09  [INFO    ]  Building multi-source knowledge graph (or loading from cache) …
+2026-03-07 20:18:09  [INFO    ]  Graph cached (graph_data.pt) — skipping build.
+2026-03-07 20:18:09  [INFO    ]  Loading graph from graph_data.pt …
+2026-03-07 20:18:09  [INFO    ]  Graph loaded: 161 nodes  4598 edges
+2026-03-07 20:18:09  [INFO    ]  Building Phase 2 model …
+2026-03-07 20:18:09  [INFO    ]  Phase 2 model: 114,297,250 parameters (including concept_embs_p2)
+2026-03-07 20:18:10  [INFO    ]  Loaders — train 10072 batches  val 1080  test 1080
+2026-03-07 20:18:10  [INFO    ]  BERT FROZEN for first 3 epochs (GAT warm-up, lr=0.0002)
+2026-03-07 20:18:10  [INFO    ]  Run ID 20260307_201810 — checkpoints → /Users/mohammedsameersyed/Documents/UoA/Fall 2025/Capstone Project/v2/ShifaMind_Local/shifamind_local/checkpoints/phase2/20260307_201810
+2026-03-07 20:18:10  [INFO    ]  ============================================================
+2026-03-07 20:18:10  [INFO    ]  Starting Phase 2 training (12 epochs) …
+2026-03-07 20:18:10  [INFO    ]    Stage 1 (frozen BERT)  : epochs 1-3  lr=0.0002
+2026-03-07 20:18:10  [INFO    ]    Stage 2 (unfrozen BERT): epochs 4-12  BERT lr=5e-06  GAT lr=0.0002
+2026-03-07 20:18:10  [INFO    ]    Residual graph_scale   : starts at sigmoid(-5)≈0.007 → grows as GAT improves
+2026-03-07 20:18:10  [INFO    ]  ============================================================
+2026-03-07 20:57:04  [INFO    ]  Epoch 1 train loss: total=0.0583  dx=0.0336  align=0.1888  concept=0.3808
+2026-03-07 21:03:05  [INFO    ]  Epoch 1 val:   dx_f1=0.4296  concept_f1=0.2955
+2026-03-07 21:03:05  [INFO    ]  MPS memory in use : 1,881 MB
+2026-03-07 21:03:06  [INFO    ]  Best checkpoint saved  → phase2_best.pt
+2026-03-07 21:03:06  [INFO    ]    New best val dx_f1 = 0.4296
+2026-03-07 21:37:48  [INFO    ]  Epoch 2 train loss: total=0.0509  dx=0.0287  align=0.2245  concept=0.3091
+2026-03-07 21:43:31  [INFO    ]  Epoch 2 val:   dx_f1=0.4311  concept_f1=0.3023
+2026-03-07 21:43:31  [INFO    ]  MPS memory in use : 1,881 MB
+2026-03-07 21:43:31  [INFO    ]  Best checkpoint saved  → phase2_best.pt
+2026-03-07 21:43:31  [INFO    ]    New best val dx_f1 = 0.4311
+2026-03-07 22:17:33  [INFO    ]  Epoch 3 train loss: total=0.0504  dx=0.0283  align=0.2250  concept=0.3067
+2026-03-07 22:23:12  [INFO    ]  Epoch 3 val:   dx_f1=0.4322  concept_f1=0.3054
+2026-03-07 22:23:12  [INFO    ]  MPS memory in use : 1,881 MB
+2026-03-07 22:23:13  [INFO    ]  Best checkpoint saved  → phase2_best.pt
+2026-03-07 22:23:13  [INFO    ]    New best val dx_f1 = 0.4322
+2026-03-07 22:23:13  [INFO    ]  BERT UNFROZEN at epoch 4 — BERT lr=5e-06  GAT lr=0.0002
+2026-03-07 23:41:30  [INFO    ]  Epoch 4 train loss: total=0.0501  dx=0.0282  align=0.2259  concept=0.3037
+2026-03-07 23:47:15  [INFO    ]  Epoch 4 val:   dx_f1=0.4357  concept_f1=0.3209
+2026-03-07 23:47:15  [INFO    ]  MPS memory in use : 4,095 MB
+2026-03-07 23:47:16  [INFO    ]  Best checkpoint saved  → phase2_best.pt
+2026-03-07 23:47:16  [INFO    ]    New best val dx_f1 = 0.4357
+2026-03-08 01:06:52  [INFO    ]  Epoch 5 train loss: total=0.0495  dx=0.0277  align=0.2265  concept=0.2996
+2026-03-08 01:12:22  [INFO    ]  Epoch 5 val:   dx_f1=0.4415  concept_f1=0.3159
+2026-03-08 01:12:22  [INFO    ]  MPS memory in use : 3,983 MB
+2026-03-08 01:12:24  [INFO    ]  Best checkpoint saved  → phase2_best.pt
+2026-03-08 01:12:24  [INFO    ]    New best val dx_f1 = 0.4415
+2026-03-08 02:28:25  [INFO    ]  Epoch 6 train loss: total=0.0486  dx=0.0270  align=0.2275  concept=0.2955
+2026-03-08 02:33:52  [INFO    ]  Epoch 6 val:   dx_f1=0.4464  concept_f1=0.3328
+2026-03-08 02:33:52  [INFO    ]  MPS memory in use : 3,983 MB
+2026-03-08 02:33:53  [INFO    ]  Best checkpoint saved  → phase2_best.pt
+2026-03-08 02:33:53  [INFO    ]    New best val dx_f1 = 0.4464
+2026-03-08 03:49:03  [INFO    ]  Epoch 7 train loss: total=0.0479  dx=0.0264  align=0.2285  concept=0.2924
+2026-03-08 03:54:27  [INFO    ]  Epoch 7 val:   dx_f1=0.4493  concept_f1=0.3380
+2026-03-08 03:54:27  [INFO    ]  MPS memory in use : 3,983 MB
+2026-03-08 03:54:28  [INFO    ]  Best checkpoint saved  → phase2_best.pt
+2026-03-08 03:54:28  [INFO    ]    New best val dx_f1 = 0.4493
+2026-03-08 05:08:40  [INFO    ]  Epoch 8 train loss: total=0.0472  dx=0.0259  align=0.2291  concept=0.2901
+2026-03-08 05:14:02  [INFO    ]  Epoch 8 val:   dx_f1=0.4507  concept_f1=0.3433
+2026-03-08 05:14:02  [INFO    ]  MPS memory in use : 3,983 MB
+2026-03-08 05:14:04  [INFO    ]  Best checkpoint saved  → phase2_best.pt
+2026-03-08 05:14:04  [INFO    ]    New best val dx_f1 = 0.4507
+2026-03-08 06:28:29  [INFO    ]  Epoch 9 train loss: total=0.0467  dx=0.0254  align=0.2296  concept=0.2882
+2026-03-08 06:33:52  [INFO    ]  Epoch 9 val:   dx_f1=0.4497  concept_f1=0.3405
+2026-03-08 06:33:52  [INFO    ]  MPS memory in use : 3,983 MB
+2026-03-08 07:48:19  [INFO    ]  Epoch 10 train loss: total=0.0462  dx=0.0250  align=0.2299  concept=0.2869
+2026-03-08 07:53:42  [INFO    ]  Epoch 10 val:   dx_f1=0.4513  concept_f1=0.3493
+2026-03-08 07:53:42  [INFO    ]  MPS memory in use : 3,983 MB
+2026-03-08 07:53:44  [INFO    ]  Best checkpoint saved  → phase2_best.pt
+2026-03-08 07:53:44  [INFO    ]    New best val dx_f1 = 0.4513
+2026-03-08 09:08:22  [INFO    ]  Epoch 11 train loss: total=0.0459  dx=0.0247  align=0.2301  concept=0.2858
+2026-03-08 09:13:47  [INFO    ]  Epoch 11 val:   dx_f1=0.4536  concept_f1=0.3524
+2026-03-08 09:13:47  [INFO    ]  MPS memory in use : 3,983 MB
+2026-03-08 09:13:48  [INFO    ]  Best checkpoint saved  → phase2_best.pt
+2026-03-08 09:13:48  [INFO    ]    New best val dx_f1 = 0.4536
+2026-03-08 10:29:01  [INFO    ]  Epoch 12 train loss: total=0.0456  dx=0.0244  align=0.2302  concept=0.2852
+2026-03-08 10:34:29  [INFO    ]  Epoch 12 val:   dx_f1=0.4528  concept_f1=0.3519
+2026-03-08 10:34:29  [INFO    ]  MPS memory in use : 3,983 MB
+2026-03-08 10:34:29  [INFO    ]  Training done. Best val dx_f1 = 0.4536
+2026-03-08 10:34:29  [INFO    ]  Phase 2 concept embeddings → phase2_concept_embeddings.pt
+2026-03-08 10:34:29  [INFO    ]  Training history → training_history.json
+2026-03-08 10:34:29  [INFO    ]  Loading best model for test evaluation …
+2026-03-08 10:34:30  [INFO    ]  Loaded checkpoint ← phase2_best.pt
+2026-03-08 10:39:57  [INFO    ]  ============================================================
+2026-03-08 10:39:57  [INFO    ]  Phase 2 — Test Results (threshold = 0.5)
+2026-03-08 10:39:57  [INFO    ]    Macro F1   : 0.4511
+2026-03-08 10:39:57  [INFO    ]    Micro F1   : 0.5301
+2026-03-08 10:39:57  [INFO    ]    Precision  : 0.4545
+2026-03-08 10:39:57  [INFO    ]    Recall     : 0.4690
+2026-03-08 10:39:57  [INFO    ]    Concept F1 : 0.3518
+2026-03-08 10:39:57  [INFO    ]  ============================================================
+2026-03-08 10:39:57  [INFO    ]  Results saved → results.json
+2026-03-08 10:39:57  [INFO    ]  Per-label F1  → per_label_f1.csv
+2026-03-08 10:39:57  [INFO    ]  Phase 2 training complete.
+2026-03-08 11:23:44  [INFO    ]  ========================================================================
+2026-03-08 11:23:44  [INFO    ]  ShifaMind Phase 2 — Threshold Tuning
+2026-03-08 11:23:44  [INFO    ]  ========================================================================
+2026-03-08 11:23:44  [INFO    ]  Device : mps
+2026-03-08 11:23:44  [INFO    ]  Loading splits …
+2026-03-08 11:23:44  [INFO    ]  Found checkpoint ← phase2/20260307_201810/phase2_best.pt
+2026-03-08 11:23:44  [INFO    ]  Val: 17,265  Test: 17,266
+2026-03-08 11:23:44  [INFO    ]  Loading BioClinicalBERT …
+2026-03-08 11:23:45  [INFO    ]  Loading graph data …
+2026-03-08 11:23:46  [INFO    ]  Loaded checkpoint ← phase2_best.pt
+2026-03-08 11:23:46  [INFO    ]  Phase 2 best model loaded (epoch 11)
+2026-03-08 11:23:46  [INFO    ]  Phase 2 concept embeddings loaded: shape (111, 768)
+2026-03-08 11:23:46  [INFO    ]  Running inference on validation set …
+2026-03-08 11:28:57  [INFO    ]  Sweeping 19 threshold candidates per label …
+2026-03-08 11:28:58  [INFO    ]  Threshold tuning done — mean optimal threshold: 0.488  mean val F1: 0.4730
+2026-03-08 11:28:58  [INFO    ]  Optimal thresholds saved → optimal_thresholds.json
+2026-03-08 11:28:58  [INFO    ]  Running inference on test set …
+2026-03-08 11:34:31  [INFO    ]  ============================================================
+2026-03-08 11:34:31  [INFO    ]  Phase 2 — Threshold Comparison (test set)
+2026-03-08 11:34:31  [INFO    ]    Default (0.5)  — Macro F1: 0.4511  Micro: 0.5301
+2026-03-08 11:34:31  [INFO    ]    Tuned          — Macro F1: 0.4705  Micro: 0.5004
+2026-03-08 11:34:31  [INFO    ]  ============================================================
+2026-03-08 11:34:31  [INFO    ]  Threshold results saved → threshold_tuning_results.json
+2026-03-08 11:34:31  [INFO    ]  Threshold comparison   → threshold_comparison.csv
+2026-03-08 11:34:31  [INFO    ]  Phase 2 threshold tuning complete.
+2026-03-08 12:00:03  [INFO    ]  ========================================================================
+2026-03-08 12:00:03  [INFO    ]  ShifaMind Phase 2 — Training (BioClinicalBERT + UMLS GAT)
+2026-03-08 12:00:03  [INFO    ]  ========================================================================
+2026-03-08 12:00:03  [INFO    ]  Device : mps
+2026-03-08 12:00:03  [INFO    ]  Loading splits and concept labels from Phase 1 …
+2026-03-08 12:00:03  [INFO    ]  Dataset — train 80,572  val 17,265  test 17,266
+2026-03-08 12:00:03  [INFO    ]  Labels: 50   Concepts: 111
+2026-03-08 12:00:03  [INFO    ]  Loading BioClinicalBERT …
+2026-03-08 12:00:05  [INFO    ]  Found checkpoint ← phase1/20260301_112200/phase1_best.pt
+2026-03-08 12:00:05  [INFO    ]    Phase 1 BERT weights loaded — macro_f1 at transfer: 0.4511536520638476
+2026-03-08 12:00:05  [INFO    ]  Loading Phase 1 concept embeddings as warm-start …
+2026-03-08 12:00:05  [INFO    ]  Phase 1 concept embeddings loaded: shape (111, 768)
+2026-03-08 12:00:05  [INFO    ]  Building multi-source knowledge graph (or loading from cache) …
+2026-03-08 12:00:05  [INFO    ]  Graph cached (graph_data.pt) — skipping build.
+2026-03-08 12:00:05  [INFO    ]  Loading graph from graph_data.pt …
+2026-03-08 12:00:05  [INFO    ]  Graph loaded: 161 nodes  4598 edges
+2026-03-08 12:00:05  [INFO    ]  Building Phase 2 model …
+2026-03-08 12:00:05  [INFO    ]  Phase 2 model: 114,297,250 parameters (including concept_embs_p2)
+2026-03-08 12:00:05  [INFO    ]  Loaders — train 10072 batches  val 1080  test 1080
+2026-03-08 12:00:05  [INFO    ]  BERT FROZEN for first 3 epochs (GAT warm-up, lr=0.0002)
+2026-03-08 12:00:05  [INFO    ]  Run ID 20260308_120005 — checkpoints → /Users/mohammedsameersyed/Documents/UoA/Fall 2025/Capstone Project/v2/ShifaMind_Local/shifamind_local/checkpoints/phase2/20260308_120005
+2026-03-08 12:00:05  [INFO    ]  ============================================================
+2026-03-08 12:00:05  [INFO    ]  Starting Phase 2 training (12 epochs) …
+2026-03-08 12:00:05  [INFO    ]    Stage 1 (frozen BERT)  : epochs 1-3  lr=0.0002
+2026-03-08 12:00:05  [INFO    ]    Stage 2 (unfrozen BERT): epochs 4-12  BERT lr=5e-06  GAT lr=0.0002
+2026-03-08 12:00:05  [INFO    ]    Residual graph_scale   : starts at sigmoid(-5)≈0.007 → grows as GAT improves
+2026-03-08 12:00:05  [INFO    ]  ============================================================
+2026-03-08 12:47:23  [INFO    ]  Epoch 1 train loss: total=0.0493  dx=0.0305  align=0.2163  concept=0.3770
+2026-03-08 12:53:58  [INFO    ]  Epoch 1 val:   dx_f1=0.4515  concept_f1=0.2900
+2026-03-08 12:53:58  [INFO    ]  MPS memory in use : 1,881 MB
+2026-03-08 12:53:59  [INFO    ]  Best checkpoint saved  → phase2_best.pt
+2026-03-08 12:53:59  [INFO    ]    New best val dx_f1 = 0.4515
+2026-03-08 13:34:39  [INFO    ]  Epoch 2 train loss: total=0.0396  dx=0.0241  align=0.2510  concept=0.3091
+2026-03-08 13:40:27  [INFO    ]  Epoch 2 val:   dx_f1=0.4527  concept_f1=0.3090
+2026-03-08 13:40:27  [INFO    ]  MPS memory in use : 1,881 MB
+2026-03-08 13:40:27  [INFO    ]  Best checkpoint saved  → phase2_best.pt
+2026-03-08 13:40:27  [INFO    ]    New best val dx_f1 = 0.4527
+2026-03-08 14:15:02  [INFO    ]  Epoch 3 train loss: total=0.0390  dx=0.0237  align=0.2513  concept=0.3064
+2026-03-08 14:20:44  [INFO    ]  Epoch 3 val:   dx_f1=0.4538  concept_f1=0.3112
+2026-03-08 14:20:44  [INFO    ]  MPS memory in use : 1,881 MB
+2026-03-08 14:20:44  [INFO    ]  Best checkpoint saved  → phase2_best.pt
+2026-03-08 14:20:44  [INFO    ]    New best val dx_f1 = 0.4538
+2026-03-08 14:20:44  [INFO    ]  BERT UNFROZEN at epoch 4 — BERT lr=5e-06  GAT lr=0.0002
+2026-03-08 15:42:51  [INFO    ]  Epoch 4 train loss: total=0.0389  dx=0.0237  align=0.2525  concept=0.3025
+2026-03-08 15:48:41  [INFO    ]  Epoch 4 val:   dx_f1=0.4524  concept_f1=0.3353
+2026-03-08 15:48:41  [INFO    ]  MPS memory in use : 4,095 MB
+2026-03-08 17:10:14  [INFO    ]  Epoch 5 train loss: total=0.0382  dx=0.0234  align=0.2533  concept=0.2961
+2026-03-08 17:16:11  [INFO    ]  Epoch 5 val:   dx_f1=0.4548  concept_f1=0.3472
+2026-03-08 17:16:11  [INFO    ]  MPS memory in use : 3,983 MB
+2026-03-08 17:16:12  [INFO    ]  Best checkpoint saved  → phase2_best.pt
+2026-03-08 17:16:12  [INFO    ]    New best val dx_f1 = 0.4548
+2026-03-08 18:39:49  [INFO    ]  Epoch 6 train loss: total=0.0371  dx=0.0225  align=0.2534  concept=0.2916
+2026-03-08 18:45:42  [INFO    ]  Epoch 6 val:   dx_f1=0.4558  concept_f1=0.3575
+2026-03-08 18:45:42  [INFO    ]  MPS memory in use : 3,983 MB
+2026-03-08 18:45:43  [INFO    ]  Best checkpoint saved  → phase2_best.pt
+2026-03-08 18:45:43  [INFO    ]    New best val dx_f1 = 0.4558
+2026-03-08 20:09:13  [INFO    ]  Epoch 7 train loss: total=0.0363  dx=0.0218  align=0.2534  concept=0.2888
+2026-03-08 20:15:18  [INFO    ]  Epoch 7 val:   dx_f1=0.4527  concept_f1=0.3626
+2026-03-08 20:15:18  [INFO    ]  MPS memory in use : 3,983 MB
+2026-03-08 21:39:52  [INFO    ]  Epoch 8 train loss: total=0.0355  dx=0.0212  align=0.2531  concept=0.2867
+2026-03-08 21:45:45  [INFO    ]  Epoch 8 val:   dx_f1=0.4533  concept_f1=0.3670
+2026-03-08 21:45:45  [INFO    ]  MPS memory in use : 3,983 MB
+2026-03-08 23:08:05  [INFO    ]  Epoch 9 train loss: total=0.0349  dx=0.0207  align=0.2528  concept=0.2851
+2026-03-08 23:13:58  [INFO    ]  Epoch 9 val:   dx_f1=0.4535  concept_f1=0.3708
+2026-03-08 23:13:58  [INFO    ]  MPS memory in use : 3,983 MB
+2026-03-09 00:35:36  [INFO    ]  Epoch 10 train loss: total=0.0344  dx=0.0202  align=0.2525  concept=0.2841
+2026-03-09 00:41:26  [INFO    ]  Epoch 10 val:   dx_f1=0.4510  concept_f1=0.3720
+2026-03-09 00:41:26  [INFO    ]  MPS memory in use : 3,983 MB
+2026-03-09 02:03:50  [INFO    ]  Epoch 11 train loss: total=0.0340  dx=0.0198  align=0.2523  concept=0.2831
+2026-03-09 02:09:57  [INFO    ]  Epoch 11 val:   dx_f1=0.4527  concept_f1=0.3756
+2026-03-09 02:09:57  [INFO    ]  MPS memory in use : 3,983 MB
+2026-03-09 03:31:54  [INFO    ]  Epoch 12 train loss: total=0.0337  dx=0.0196  align=0.2521  concept=0.2826
+2026-03-09 03:37:48  [INFO    ]  Epoch 12 val:   dx_f1=0.4517  concept_f1=0.3758
+2026-03-09 03:37:48  [INFO    ]  MPS memory in use : 3,983 MB
+2026-03-09 03:37:48  [INFO    ]  Training done. Best val dx_f1 = 0.4558
+2026-03-09 03:37:48  [INFO    ]  Phase 2 concept embeddings → phase2_concept_embeddings.pt
+2026-03-09 03:37:48  [INFO    ]  Training history → training_history.json
+2026-03-09 03:37:48  [INFO    ]  Loading best model for test evaluation …
+2026-03-09 03:37:49  [INFO    ]  Loaded checkpoint ← phase2_best.pt
+2026-03-09 03:43:41  [INFO    ]  ============================================================
+2026-03-09 03:43:41  [INFO    ]  Phase 2 — Test Results (threshold = 0.5)
+2026-03-09 03:43:41  [INFO    ]    Macro F1   : 0.4521
+2026-03-09 03:43:41  [INFO    ]    Micro F1   : 0.5176
+2026-03-09 03:43:41  [INFO    ]    Precision  : 0.4127
+2026-03-09 03:43:41  [INFO    ]    Recall     : 0.5154
+2026-03-09 03:43:41  [INFO    ]    Concept F1 : 0.3563
+2026-03-09 03:43:41  [INFO    ]  ============================================================
+2026-03-09 03:43:41  [INFO    ]  Results saved → results.json
+2026-03-09 03:43:41  [INFO    ]  Per-label F1  → per_label_f1.csv
+2026-03-09 03:43:41  [INFO    ]  Phase 2 training complete.
+2026-03-09 03:43:57  [INFO    ]  ========================================================================
+2026-03-09 03:43:57  [INFO    ]  ShifaMind Phase 2 — Threshold Tuning
+2026-03-09 03:43:57  [INFO    ]  ========================================================================
+2026-03-09 03:43:57  [INFO    ]  Device : mps
+2026-03-09 03:43:57  [INFO    ]  Loading splits …
+2026-03-09 03:43:57  [INFO    ]  Found checkpoint ← phase2/20260308_120005/phase2_best.pt
+2026-03-09 03:43:57  [INFO    ]  Val: 17,265  Test: 17,266
+2026-03-09 03:43:57  [INFO    ]  Loading BioClinicalBERT …
+2026-03-09 03:43:58  [INFO    ]  Loading graph data …
+2026-03-09 03:43:58  [INFO    ]  Loaded checkpoint ← phase2_best.pt
+2026-03-09 03:43:58  [INFO    ]  Phase 2 best model loaded (epoch 6)
+2026-03-09 03:43:58  [INFO    ]  Phase 2 concept embeddings loaded: shape (111, 768)
+2026-03-09 03:43:58  [INFO    ]  Running inference on validation set …
+2026-03-09 03:49:42  [INFO    ]  Sweeping 19 threshold candidates per label …
+2026-03-09 03:49:43  [INFO    ]  Threshold tuning done — mean optimal threshold: 0.516  mean val F1: 0.4700
+2026-03-09 03:49:43  [INFO    ]  Optimal thresholds saved → optimal_thresholds.json
+2026-03-09 03:49:43  [INFO    ]  Running inference on test set …
+2026-03-09 03:55:29  [INFO    ]  ============================================================
+2026-03-09 03:55:29  [INFO    ]  Phase 2 — Threshold Comparison (test set)
+2026-03-09 03:55:29  [INFO    ]    Default (0.5)  — Macro F1: 0.4521  Micro: 0.5176
+2026-03-09 03:55:29  [INFO    ]    Tuned          — Macro F1: 0.4651  Micro: 0.4971
+2026-03-09 03:55:29  [INFO    ]  ============================================================
+2026-03-09 03:55:29  [INFO    ]  Threshold results saved → threshold_tuning_results.json
+2026-03-09 03:55:29  [INFO    ]  Threshold comparison   → threshold_comparison.csv
+2026-03-09 03:55:29  [INFO    ]  Phase 2 threshold tuning complete.
+2026-03-09 04:48:53  [INFO    ]  ========================================================================
+2026-03-09 04:48:53  [INFO    ]  ShifaMind Phase 3 — Training (base: Phase 2)
+2026-03-09 04:48:53  [INFO    ]  ========================================================================
+2026-03-09 04:48:53  [INFO    ]  Device     : mps
+2026-03-09 04:48:53  [INFO    ]  Base phase : 2
+2026-03-09 04:48:53  [INFO    ]  Loading splits and concept labels …
+2026-03-09 04:48:53  [INFO    ]  Dataset — train 80,572  val 17,265  test 17,266  labels 50  concepts 111
+2026-03-09 04:48:53  [INFO    ]  Loading BioClinicalBERT …
+2026-03-09 04:48:54  [INFO    ]  Loading graph data …
+2026-03-09 04:48:54  [INFO    ]  Constructing Phase 2 model architecture …
+2026-03-09 04:48:54  [INFO    ]  Found checkpoint ← phase2/20260308_120005/phase2_best.pt
+2026-03-09 04:48:55  [INFO    ]  Loaded checkpoint ← phase2_best.pt
+2026-03-09 04:48:55  [INFO    ]  Phase 2 weights loaded (epoch 6)  ← phase2_best.pt
+2026-03-09 04:48:55  [INFO    ]  Phase 2 concept embeddings loaded (frozen): (111, 768)  ← phase2_concept_embeddings.pt
+2026-03-09 04:48:55  [INFO    ]  Building evidence corpus …
+2026-03-09 04:48:55  [INFO    ]  Clinical knowledge passages: 50
+2026-03-09 04:48:55  [INFO    ]  Evidence corpus: 2550 passages  (50 clinical KB + 2500 MIMIC prototypes, 50 per dx)
+2026-03-09 04:48:55  [INFO    ]  Evidence corpus saved → evidence_corpus.json
+2026-03-09 04:48:55  [INFO    ]  Evidence corpus: 2550 passages
+2026-03-09 04:48:55  [INFO    ]  Loading RAG encoder: sentence-transformers/all-MiniLM-L6-v2
+2026-03-09 04:48:57  [INFO    ]  Building FAISS index from 2550 passages …
+2026-03-09 04:49:01  [INFO    ]  FAISS index built: 384-dim, 2550 vectors
+2026-03-09 04:49:01  [INFO    ]  FAISS index saved → faiss.index
+2026-03-09 04:49:01  [INFO    ]  Building Phase 3 RAG model …
+2026-03-09 04:49:01  [INFO    ]  Phase 3 model: 114,546,133 parameters total (concept_embs frozen separately)
+2026-03-09 04:49:01  [INFO    ]  Loaders — train 10072 batches  val 1080  test 1080
+2026-03-09 04:49:01  [INFO    ]  Phase 3 trainable parameters: 113,166,804  (GAT encoder + graph_scale frozen)
+2026-03-09 04:49:01  [INFO    ]  Run ID : 20260309_044901
+2026-03-09 04:49:01  [INFO    ]  Checkpoints → /Users/mohammedsameersyed/Documents/UoA/Fall 2025/Capstone Project/v2/ShifaMind_Local/shifamind_local/checkpoints/phase3_from_p2/20260309_044901
+2026-03-09 04:49:01  [INFO    ]  Results     → /Users/mohammedsameersyed/Documents/UoA/Fall 2025/Capstone Project/v2/ShifaMind_Local/shifamind_local/results/phase3_from_p2
+2026-03-09 04:49:01  [INFO    ]  ============================================================
+2026-03-09 04:49:01  [INFO    ]  Starting Phase 3 training (8 epochs) …
+2026-03-09 04:49:01  [INFO    ]  ============================================================
+2026-03-09 06:33:05  [INFO    ]  Epoch 1 train: total=0.0667  dx=0.0224  align=0.2329  concept=0.2965
+2026-03-09 06:40:36  [INFO    ]  Epoch 1 val:   macro_f1=0.4491  micro_f1=0.5155  precision=0.4111  recall=0.5130  loss=0.0877
+2026-03-09 06:40:36  [INFO    ]  MPS memory in use : 3,990 MB
+2026-03-09 06:40:39  [INFO    ]  Best checkpoint saved  → phase3_best.pth
+2026-03-09 06:40:39  [INFO    ]    *** New best val macro_f1 = 0.4491 (epoch 1)
+2026-03-09 08:08:55  [INFO    ]  Epoch 2 train: total=0.0665  dx=0.0224  align=0.2229  concept=0.3010
+2026-03-09 08:16:21  [INFO    ]  Epoch 2 val:   macro_f1=0.4493  micro_f1=0.5171  precision=0.4135  recall=0.5124  loss=0.0879
+2026-03-09 08:16:21  [INFO    ]  MPS memory in use : 3,990 MB
+2026-03-09 08:16:24  [INFO    ]  Best checkpoint saved  → phase3_best.pth
+2026-03-09 08:16:24  [INFO    ]    *** New best val macro_f1 = 0.4493 (epoch 2)
+2026-03-09 09:45:15  [INFO    ]  Epoch 3 train: total=0.0628  dx=0.0206  align=0.2228  concept=0.2984
+2026-03-09 09:52:38  [INFO    ]  Epoch 3 val:   macro_f1=0.4539  micro_f1=0.5181  precision=0.4300  recall=0.4960  loss=0.0935
+2026-03-09 09:52:38  [INFO    ]  MPS memory in use : 3,990 MB
+2026-03-09 09:52:41  [INFO    ]  Best checkpoint saved  → phase3_best.pth
+2026-03-09 09:52:41  [INFO    ]    *** New best val macro_f1 = 0.4539 (epoch 3)
+2026-03-09 11:19:31  [INFO    ]  Epoch 4 train: total=0.0591  dx=0.0188  align=0.2228  concept=0.2963
+2026-03-09 11:26:56  [INFO    ]  Epoch 4 val:   macro_f1=0.4519  micro_f1=0.5133  precision=0.4189  recall=0.5015  loss=0.0975
+2026-03-09 11:26:56  [INFO    ]  MPS memory in use : 3,990 MB
+2026-03-09 12:55:41  [INFO    ]  Epoch 5 train: total=0.0557  dx=0.0172  align=0.2225  concept=0.2947
+2026-03-09 13:03:30  [INFO    ]  Epoch 5 val:   macro_f1=0.4499  micro_f1=0.5115  precision=0.4157  recall=0.4994  loss=0.1018
+2026-03-09 13:03:30  [INFO    ]  MPS memory in use : 3,990 MB
+2026-03-09 14:45:23  [INFO    ]  Epoch 6 train: total=0.0527  dx=0.0157  align=0.2218  concept=0.2937
+2026-03-09 14:55:10  [INFO    ]  Epoch 6 val:   macro_f1=0.4496  micro_f1=0.5093  precision=0.4155  recall=0.4965  loss=0.1065
+2026-03-09 14:55:10  [INFO    ]  MPS memory in use : 3,990 MB
+2026-03-09 16:29:09  [INFO    ]  Epoch 7 train: total=0.0503  dx=0.0145  align=0.2212  concept=0.2929
+2026-03-09 16:36:41  [INFO    ]  Epoch 7 val:   macro_f1=0.4490  micro_f1=0.5076  precision=0.4196  recall=0.4893  loss=0.1103
+2026-03-09 16:36:41  [INFO    ]  MPS memory in use : 3,990 MB
+2026-03-09 18:08:12  [INFO    ]  Epoch 8 train: total=0.0484  dx=0.0136  align=0.2205  concept=0.2925
+2026-03-09 18:16:12  [INFO    ]  Epoch 8 val:   macro_f1=0.4494  micro_f1=0.5080  precision=0.4215  recall=0.4865  loss=0.1121
+2026-03-09 18:16:12  [INFO    ]  MPS memory in use : 3,990 MB
+2026-03-09 18:16:14  [INFO    ]  Training done. Best val macro_f1 = 0.4539
+2026-03-09 18:16:14  [INFO    ]  Loading best Phase 3 model for test evaluation …
+2026-03-09 18:16:14  [INFO    ]  Loaded checkpoint ← phase3_best.pth
+2026-03-09 18:24:00  [INFO    ]  ============================================================
+2026-03-09 18:24:00  [INFO    ]  Phase 3 (base: Phase 2) — Test Results (threshold = 0.5)
+2026-03-09 18:24:00  [INFO    ]    Macro F1   : 0.4522
+2026-03-09 18:24:00  [INFO    ]    Micro F1   : 0.5180
+2026-03-09 18:24:00  [INFO    ]    Precision  : 0.4287
+2026-03-09 18:24:00  [INFO    ]    Recall     : 0.4939
+2026-03-09 18:24:00  [INFO    ]  ============================================================
+2026-03-09 18:24:00  [INFO    ]  Results saved         → /Users/mohammedsameersyed/Documents/UoA/Fall 2025/Capstone Project/v2/ShifaMind_Local/shifamind_local/results/phase3_from_p2/results.json
+2026-03-09 18:24:00  [INFO    ]  Test probabilities    → /Users/mohammedsameersyed/Documents/UoA/Fall 2025/Capstone Project/v2/ShifaMind_Local/shifamind_local/results/phase3_from_p2/test_probabilities.npy
+2026-03-09 18:24:00  [INFO    ]  Test predictions      → /Users/mohammedsameersyed/Documents/UoA/Fall 2025/Capstone Project/v2/ShifaMind_Local/shifamind_local/results/phase3_from_p2/test_predictions.npy
+2026-03-09 18:24:00  [INFO    ]  Test labels           → /Users/mohammedsameersyed/Documents/UoA/Fall 2025/Capstone Project/v2/ShifaMind_Local/shifamind_local/results/phase3_from_p2/test_labels.npy
+2026-03-09 18:24:00  [INFO    ]  Best checkpoint       → /Users/mohammedsameersyed/Documents/UoA/Fall 2025/Capstone Project/v2/ShifaMind_Local/shifamind_local/checkpoints/phase3_from_p2/20260309_044901/phase3_best.pth
+2026-03-09 18:24:00  [INFO    ]  Phase 3 training complete  (base: Phase 2)
+2026-03-09 18:58:03  [INFO    ]  ========================================================================
+2026-03-09 18:58:03  [INFO    ]  ShifaMind Phase 3 — Threshold Tuning & Final Evaluation (base: Phase 2)
+2026-03-09 18:58:03  [INFO    ]  ========================================================================
+2026-03-09 18:58:03  [INFO    ]  Device     : mps
+2026-03-09 18:58:03  [INFO    ]  Base phase : 2
+2026-03-09 18:58:03  [INFO    ]  Loading splits …
+2026-03-09 18:58:03  [INFO    ]  Val: 17,265  Test: 17,266
+2026-03-09 18:58:03  [INFO    ]  Loading BioClinicalBERT …
+2026-03-09 18:58:04  [INFO    ]  Loading graph data …
+2026-03-09 18:58:04  [INFO    ]  Loading evidence corpus and FAISS index …
+2026-03-09 18:58:04  [INFO    ]  Loading RAG encoder: sentence-transformers/all-MiniLM-L6-v2
+2026-03-09 18:58:06  [INFO    ]  FAISS index loaded from cache (2550 vectors)  ← faiss.index
+2026-03-09 18:58:06  [INFO    ]  Found checkpoint ← phase3_from_p2/20260309_044901/phase3_best.pth
+2026-03-09 18:58:06  [INFO    ]  Loaded checkpoint ← phase3_best.pth
+2026-03-09 18:58:06  [INFO    ]  Phase 3 best model loaded (epoch 3)
+2026-03-09 18:58:06  [INFO    ]  Phase 2 concept embeddings loaded (frozen): (111, 768)
+2026-03-09 18:58:06  [INFO    ]  Running inference on validation set (with RAG) …
+2026-03-09 19:05:21  [INFO    ]  Sweeping 19 threshold candidates per label …
+2026-03-09 19:05:22  [INFO    ]  Threshold tuning done — mean optimal threshold: 0.499  mean val F1: 0.4667
+2026-03-09 19:05:22  [INFO    ]  Threshold tuning saved → threshold_tuning.json
+2026-03-09 19:05:22  [INFO    ]  Running inference on test set (with RAG) …
+2026-03-09 19:12:43  [INFO    ]  ============================================================
+2026-03-09 19:12:43  [INFO    ]  Phase 3 (base: Phase 2) — Final Test Results
+2026-03-09 19:12:43  [INFO    ]    Default (0.5)  — Macro F1: 0.4522  Micro: 0.5180
+2026-03-09 19:12:43  [INFO    ]    Tuned          — Macro F1: 0.4633  Micro: 0.4912
+2026-03-09 19:12:43  [INFO    ]    Precision (tuned): 0.4379  Recall (tuned): 0.5270
+2026-03-09 19:12:43  [INFO    ]  ============================================================
+2026-03-09 19:12:43  [INFO    ]  Top 5 diagnoses by F1:
+2026-03-09 19:12:43  [INFO    ]    Z951        F1=0.8135  support=956
+2026-03-09 19:12:43  [INFO    ]    I2510       F1=0.7356  support=3349
+2026-03-09 19:12:43  [INFO    ]    I10         F1=0.7162  support=6522
+2026-03-09 19:12:43  [INFO    ]    E785        F1=0.7002  support=6654
+2026-03-09 19:12:43  [INFO    ]    Z955        F1=0.6764  support=1158
+2026-03-09 19:12:43  [INFO    ]  Bottom 5 diagnoses by F1:
+2026-03-09 19:12:43  [INFO    ]    K5900       F1=0.2121  support=970
+2026-03-09 19:12:43  [INFO    ]    Y92230      F1=0.2041  support=854
+2026-03-09 19:12:43  [INFO    ]    G4700       F1=0.1784  support=950
+2026-03-09 19:12:43  [INFO    ]    Y92239      F1=0.1773  support=884
+2026-03-09 19:12:43  [INFO    ]    Z23         F1=0.1115  support=874
+2026-03-09 19:12:43  [INFO    ]  Final results saved  → final_test_results.json
+2026-03-09 19:12:43  [INFO    ]  Per-diagnosis JSON   → per_diagnosis_metrics.json
+2026-03-09 19:12:43  [INFO    ]  Per-diagnosis CSV    → per_diagnosis_metrics.csv
+2026-03-09 19:12:43  [INFO    ]  Results directory    → /Users/mohammedsameersyed/Documents/UoA/Fall 2025/Capstone Project/v2/ShifaMind_Local/shifamind_local/results/phase3_from_p2
+2026-03-09 19:12:43  [INFO    ]  Phase 3 threshold tuning and final evaluation complete  (base: Phase 2)
+2026-03-09 22:00:52  [INFO    ]  Downloading PubMed abstracts for 50 ICD-10 codes …
+2026-03-09 22:00:52  [INFO    ]  Max per code: 30
+2026-03-09 22:00:52  [INFO    ]  NCBI email: shifamind@research.com
+2026-03-09 22:00:52  [INFO    ]    E785       → "hyperlipidaemia dyslipidaemia statin LDL cholesterol managem"
+2026-03-09 22:00:58  [INFO    ]      Downloaded 27 abstracts  (total so far: 27)
+2026-03-09 22:00:58  [INFO    ]    I10        → "hypertension essential diagnosis clinical criteria"
+2026-03-09 22:01:01  [INFO    ]      Downloaded 30 abstracts  (total so far: 57)
+2026-03-09 22:01:01  [INFO    ]    Z87891     → "preventive care follow-up clinical encounter"
+2026-03-09 22:01:03  [INFO    ]      Downloaded 29 abstracts  (total so far: 86)
+2026-03-09 22:01:03  [INFO    ]    K219       → "gastroesophageal reflux GERD diagnosis PPI treatment"
+2026-03-09 22:01:09  [INFO    ]      Downloaded 30 abstracts  (total so far: 116)
+2026-03-09 22:01:09  [INFO    ]    F329       → "major depressive disorder diagnosis PHQ treatment antidepres"
+2026-03-09 22:01:13  [INFO    ]      Downloaded 30 abstracts  (total so far: 146)
+2026-03-09 22:01:13  [INFO    ]    I2510      → "atherosclerotic heart disease coronary artery disease native"
+2026-03-09 22:01:15  [INFO    ]      Downloaded 25 abstracts  (total so far: 171)
+2026-03-09 22:01:15  [INFO    ]    N179       → "acute kidney injury AKI diagnosis KDIGO creatinine"
+2026-03-09 22:01:18  [INFO    ]      Downloaded 30 abstracts  (total so far: 201)
+2026-03-09 22:01:18  [INFO    ]    F419       → "anxiety disorder panic attack diagnosis treatment SSRI"
+2026-03-09 22:01:20  [INFO    ]      Downloaded 30 abstracts  (total so far: 231)
+2026-03-09 22:01:20  [INFO    ]    Z7901      → "preventive care follow-up clinical encounter"
+2026-03-09 22:01:23  [INFO    ]      Downloaded 29 abstracts  (total so far: 260)
+2026-03-09 22:01:23  [INFO    ]    Z794       → "preventive care follow-up clinical encounter"
+2026-03-09 22:01:29  [INFO    ]      Downloaded 29 abstracts  (total so far: 289)
+2026-03-09 22:01:29  [INFO    ]    E039       → "metabolic endocrine disorder management"
+2026-03-09 22:01:37  [INFO    ]      Downloaded 29 abstracts  (total so far: 318)
+2026-03-09 22:01:37  [INFO    ]    E119       → "type 2 diabetes mellitus HbA1c hyperglycemia management"
+2026-03-09 22:01:49  [INFO    ]      Downloaded 28 abstracts  (total so far: 346)
+2026-03-09 22:01:49  [INFO    ]    G4733      → "neurological disease brain diagnosis"
+2026-03-09 22:02:03  [INFO    ]      Downloaded 28 abstracts  (total so far: 374)
+2026-03-09 22:02:03  [INFO    ]    D649       → "anemia diagnosis CBC reticulocyte iron B12 transfusion"
+2026-03-09 22:02:07  [INFO    ]      Downloaded 10 abstracts  (total so far: 384)
+2026-03-09 22:02:07  [INFO    ]    E669       → "obesity metabolic syndrome clinical management bariatric"
+2026-03-09 22:02:14  [INFO    ]      Downloaded 29 abstracts  (total so far: 413)
+2026-03-09 22:02:14  [INFO    ]    I4891      → "atrial fibrillation diagnosis management anticoagulation"
+2026-03-09 22:02:17  [INFO    ]      Downloaded 30 abstracts  (total so far: 443)
+2026-03-09 22:02:17  [INFO    ]    F17210     → "psychiatric mental health disorder"
+2026-03-09 22:02:19  [INFO    ]      Downloaded 27 abstracts  (total so far: 470)
+2026-03-09 22:02:19  [INFO    ]    Y929       → "external cause injury encounter"
+2026-03-09 22:02:22  [INFO    ]      Downloaded 28 abstracts  (total so far: 498)
+2026-03-09 22:02:22  [INFO    ]    Z66        → "preventive care follow-up clinical encounter"
+2026-03-09 22:02:25  [INFO    ]      Downloaded 29 abstracts  (total so far: 527)
+2026-03-09 22:02:25  [INFO    ]    J45909     → "asthma exacerbation management bronchospasm treatment"
+2026-03-09 22:02:31  [INFO    ]      Downloaded 29 abstracts  (total so far: 556)
+2026-03-09 22:02:31  [INFO    ]    Z7902      → "preventive care follow-up clinical encounter"
+2026-03-09 22:02:33  [INFO    ]      Downloaded 29 abstracts  (total so far: 585)
+2026-03-09 22:02:33  [INFO    ]    J449       → "COPD chronic obstructive pulmonary disease exacerbation"
+2026-03-09 22:02:39  [INFO    ]      Downloaded 30 abstracts  (total so far: 615)
+2026-03-09 22:02:39  [INFO    ]    D62        → "hematological disorder blood count management"
+2026-03-09 22:02:42  [INFO    ]      Downloaded 30 abstracts  (total so far: 645)
+2026-03-09 22:02:42  [INFO    ]    N390       → "urinary tract infection UTI diagnosis treatment antibiotics"
+2026-03-09 22:02:46  [INFO    ]      Downloaded 30 abstracts  (total so far: 675)
+2026-03-09 22:02:46  [INFO    ]    I129       → "cardiovascular disease cardiac management"
+2026-03-09 22:02:52  [INFO    ]      Downloaded 26 abstracts  (total so far: 701)
+2026-03-09 22:02:52  [INFO    ]    E1122      → "type 2 diabetes mellitus HbA1c hyperglycemia management"
+2026-03-09 22:02:56  [INFO    ]      Downloaded 28 abstracts  (total so far: 729)
+2026-03-09 22:02:56  [INFO    ]    E871       → "electrolyte disorder hyponatremia hyperkalemia management"
+2026-03-09 22:02:59  [INFO    ]      Downloaded 30 abstracts  (total so far: 759)
+2026-03-09 22:02:59  [INFO    ]    I252       → "chronic ischemic heart disease coronary artery disease"
+2026-03-09 22:03:06  [INFO    ]      Downloaded 22 abstracts  (total so far: 781)
+2026-03-09 22:03:06  [INFO    ]    N189       → "chronic kidney disease CKD GFR diagnosis management"
+2026-03-09 22:03:08  [INFO    ]      Downloaded 30 abstracts  (total so far: 811)
+2026-03-09 22:03:08  [INFO    ]    E872       → "electrolyte disorder hyponatremia hyperkalemia management"
+2026-03-09 22:03:10  [INFO    ]      Downloaded 30 abstracts  (total so far: 841)
+2026-03-09 22:03:10  [INFO    ]    Z8673      → "preventive care follow-up clinical encounter"
+2026-03-09 22:03:15  [INFO    ]      Downloaded 29 abstracts  (total so far: 870)
+2026-03-09 22:03:15  [INFO    ]    Z955       → "coronary angioplasty stent history prior PCI"
+2026-03-09 22:03:21  [INFO    ]      Downloaded 30 abstracts  (total so far: 900)
+2026-03-09 22:03:21  [INFO    ]    Z86718     → "preventive care follow-up clinical encounter"
+2026-03-09 22:03:28  [INFO    ]      Downloaded 29 abstracts  (total so far: 929)
+2026-03-09 22:03:28  [INFO    ]    G8929      → "chronic pain management multimodal analgesia opioid neuropat"
+2026-03-09 22:03:30  [INFO    ]      Downloaded 30 abstracts  (total so far: 959)
+2026-03-09 22:03:30  [INFO    ]    I110       → "cardiovascular disease cardiac management"
+2026-03-09 22:03:33  [INFO    ]      Downloaded 26 abstracts  (total so far: 985)
+2026-03-09 22:03:33  [INFO    ]    K5900      → "gastrointestinal disease abdominal management"
+2026-03-09 22:03:40  [INFO    ]      Downloaded 30 abstracts  (total so far: 1015)
+2026-03-09 22:03:40  [INFO    ]    N400       → "benign prostatic hyperplasia BPH urinary retention treatment"
+2026-03-09 22:03:42  [INFO    ]      Downloaded 29 abstracts  (total so far: 1044)
+2026-03-09 22:03:42  [INFO    ]    N183       → "chronic kidney disease CKD GFR diagnosis management"
+2026-03-09 22:03:47  [INFO    ]      Downloaded 30 abstracts  (total so far: 1074)
+2026-03-09 22:03:47  [INFO    ]    I480       → "atrial fibrillation diagnosis management anticoagulation"
+2026-03-09 22:03:53  [INFO    ]      Downloaded 30 abstracts  (total so far: 1104)
+2026-03-09 22:03:53  [INFO    ]    I130       → "cardiovascular disease cardiac management"
+2026-03-09 22:03:56  [INFO    ]      Downloaded 26 abstracts  (total so far: 1130)
+2026-03-09 22:03:56  [INFO    ]    G4700      → "neurological disease brain diagnosis"
+2026-03-09 22:03:59  [INFO    ]      Downloaded 28 abstracts  (total so far: 1158)
+2026-03-09 22:03:59  [INFO    ]    D696       → "thrombocytopenia ITP HIT TTP platelet diagnosis management"
+2026-03-09 22:04:00  [INFO    ]      Downloaded 3 abstracts  (total so far: 1161)
+2026-03-09 22:04:00  [INFO    ]    Z951       → "coronary artery bypass history cardiac history"
+2026-03-09 22:04:03  [INFO    ]      Downloaded 26 abstracts  (total so far: 1187)
+2026-03-09 22:04:03  [INFO    ]    M109       → "musculoskeletal pain rheumatological"
+2026-03-09 22:04:08  [INFO    ]      Downloaded 29 abstracts  (total so far: 1216)
+2026-03-09 22:04:08  [INFO    ]    Y92239     → "hospital inpatient encounter setting"
+2026-03-09 22:04:11  [INFO    ]      Downloaded 30 abstracts  (total so far: 1246)
+2026-03-09 22:04:11  [INFO    ]    J9601      → "respiratory failure acute hypoxemic hypercapnic intubation"
+2026-03-09 22:04:13  [INFO    ]      Downloaded 29 abstracts  (total so far: 1275)
+2026-03-09 22:04:13  [INFO    ]    J189       → "pneumonia community-acquired diagnosis treatment antibiotics"
+2026-03-09 22:04:16  [INFO    ]      Downloaded 28 abstracts  (total so far: 1303)
+2026-03-09 22:04:16  [INFO    ]    Z23        → "vaccination immunization preventive encounter"
+2026-03-09 22:04:21  [INFO    ]      Downloaded 30 abstracts  (total so far: 1333)
+2026-03-09 22:04:21  [INFO    ]    Y92230     → "healthcare facility encounter location"
+2026-03-09 22:04:24  [INFO    ]      Downloaded 30 abstracts  (total so far: 1363)
+2026-03-09 22:04:24  [INFO    ]    I5032      → "heart failure diagnosis BNP ejection fraction treatment"
+2026-03-09 22:04:27  [INFO    ]      Downloaded 30 abstracts  (total so far: 1393)
+2026-03-09 22:04:27  [INFO    ]  
+PubMed abstracts downloaded: 1393 total
+2026-03-09 22:04:27  [INFO    ]  Saved → /Users/mohammedsameersyed/Documents/UoA/Fall 2025/Capstone Project/v2/ShifaMind_Local/shifamind_local/evidence_store/pubmed_abstracts.json
+2026-03-09 22:04:27  [INFO    ]  Per-code breakdown:
+2026-03-09 22:04:27  [INFO    ]    D696      :   3 abstracts
+2026-03-09 22:04:27  [INFO    ]    D649      :  10 abstracts
+2026-03-09 22:04:27  [INFO    ]    I252      :  22 abstracts
+2026-03-09 22:04:27  [INFO    ]    I2510     :  25 abstracts
+2026-03-09 22:04:27  [INFO    ]    I129      :  26 abstracts
+2026-03-09 22:04:27  [INFO    ]    I110      :  26 abstracts
+2026-03-09 22:04:27  [INFO    ]    I130      :  26 abstracts
+2026-03-09 22:04:27  [INFO    ]    Z951      :  26 abstracts
+2026-03-09 22:04:27  [INFO    ]    E785      :  27 abstracts
+2026-03-09 22:04:27  [INFO    ]    F17210    :  27 abstracts
+2026-03-09 22:04:27  [INFO    ]    E119      :  28 abstracts
+2026-03-09 22:04:27  [INFO    ]    G4733     :  28 abstracts
+2026-03-09 22:04:27  [INFO    ]    Y929      :  28 abstracts
+2026-03-09 22:04:27  [INFO    ]    E1122     :  28 abstracts
+2026-03-09 22:04:27  [INFO    ]    G4700     :  28 abstracts
+2026-03-09 22:04:27  [INFO    ]    J189      :  28 abstracts
+2026-03-09 22:04:27  [INFO    ]    Z87891    :  29 abstracts
+2026-03-09 22:04:27  [INFO    ]    Z7901     :  29 abstracts
+2026-03-09 22:04:27  [INFO    ]    Z794      :  29 abstracts
+2026-03-09 22:04:27  [INFO    ]    E039      :  29 abstracts
+2026-03-09 22:04:27  [INFO    ]    E669      :  29 abstracts
+2026-03-09 22:04:27  [INFO    ]    Z66       :  29 abstracts
+2026-03-09 22:04:27  [INFO    ]    J45909    :  29 abstracts
+2026-03-09 22:04:27  [INFO    ]    Z7902     :  29 abstracts
+2026-03-09 22:04:27  [INFO    ]    Z8673     :  29 abstracts
+2026-03-09 22:04:27  [INFO    ]    Z86718    :  29 abstracts
+2026-03-09 22:04:27  [INFO    ]    N400      :  29 abstracts
+2026-03-09 22:04:27  [INFO    ]    M109      :  29 abstracts
+2026-03-09 22:04:27  [INFO    ]    J9601     :  29 abstracts
+2026-03-09 22:04:27  [INFO    ]    I10       :  30 abstracts
+2026-03-09 22:04:27  [INFO    ]    K219      :  30 abstracts
+2026-03-09 22:04:27  [INFO    ]    F329      :  30 abstracts
+2026-03-09 22:04:27  [INFO    ]    N179      :  30 abstracts
+2026-03-09 22:04:27  [INFO    ]    F419      :  30 abstracts
+2026-03-09 22:04:27  [INFO    ]    I4891     :  30 abstracts
+2026-03-09 22:04:27  [INFO    ]    J449      :  30 abstracts
+2026-03-09 22:04:27  [INFO    ]    D62       :  30 abstracts
+2026-03-09 22:04:27  [INFO    ]    N390      :  30 abstracts
+2026-03-09 22:04:27  [INFO    ]    E871      :  30 abstracts
+2026-03-09 22:04:27  [INFO    ]    N189      :  30 abstracts
+2026-03-09 22:04:27  [INFO    ]    E872      :  30 abstracts
+2026-03-09 22:04:27  [INFO    ]    Z955      :  30 abstracts
+2026-03-09 22:04:27  [INFO    ]    G8929     :  30 abstracts
+2026-03-09 22:04:27  [INFO    ]    K5900     :  30 abstracts
+2026-03-09 22:04:27  [INFO    ]    N183      :  30 abstracts
+2026-03-09 22:04:27  [INFO    ]    I480      :  30 abstracts
+2026-03-09 22:04:27  [INFO    ]    Y92239    :  30 abstracts
+2026-03-09 22:04:27  [INFO    ]    Z23       :  30 abstracts
+2026-03-09 22:04:27  [INFO    ]    Y92230    :  30 abstracts
+2026-03-09 22:04:27  [INFO    ]    I5032     :  30 abstracts
+2026-03-09 22:04:27  [INFO    ]  
+Done. Now run:
+2026-03-09 22:04:27  [INFO    ]    python scripts/phase3_train.py --base-phase 1 --rebuild-corpus
+2026-03-09 22:04:27  [INFO    ]    python scripts/phase3_train.py --base-phase 2 --rebuild-corpus
+2026-03-09 22:51:50  [INFO    ]  ========================================================================
+2026-03-09 22:51:50  [INFO    ]  ShifaMind Phase 3 — Training (base: Phase 2)
+2026-03-09 22:51:50  [INFO    ]  ========================================================================
+2026-03-09 22:51:50  [INFO    ]  Device     : mps
+2026-03-09 22:51:50  [INFO    ]  Base phase : 2
+2026-03-09 22:51:50  [INFO    ]  Loading splits and concept labels …
+2026-03-09 22:51:51  [INFO    ]  Dataset — train 80,572  val 17,265  test 17,266  labels 50  concepts 111
+2026-03-09 22:51:51  [INFO    ]  Loading BioClinicalBERT …
+2026-03-09 22:51:52  [INFO    ]  Loading graph data …
+2026-03-09 22:51:52  [INFO    ]  Constructing Phase 2 model architecture …
+2026-03-09 22:51:52  [INFO    ]  Found checkpoint ← phase2/20260308_120005/phase2_best.pt
+2026-03-09 22:51:52  [INFO    ]  Loaded checkpoint ← phase2_best.pt
+2026-03-09 22:51:52  [INFO    ]  Phase 2 weights loaded (epoch 6)  ← phase2_best.pt
+2026-03-09 22:51:52  [INFO    ]  Phase 2 concept embeddings loaded (frozen): (111, 768)  ← phase2_concept_embeddings.pt
+2026-03-09 22:51:52  [INFO    ]  --rebuild-corpus: removing cached corpus and index.
+2026-03-09 22:51:52  [INFO    ]  Building evidence corpus …
+2026-03-09 22:51:52  [INFO    ]  Clinical knowledge passages: 50
+2026-03-09 22:51:52  [INFO    ]  PubMed abstracts added: 1393  ← pubmed_abstracts.json
+2026-03-09 22:51:52  [INFO    ]  Evidence corpus: 3943 passages  (50 clinical KB + 2500 MIMIC prototypes + 1393 PubMed)
+2026-03-09 22:51:52  [INFO    ]  Evidence corpus saved → evidence_corpus.json
+2026-03-09 22:51:52  [INFO    ]  Evidence corpus: 3943 passages
+2026-03-09 22:51:52  [INFO    ]  Loading RAG encoder: sentence-transformers/all-MiniLM-L6-v2
+2026-03-09 22:51:54  [INFO    ]  Building FAISS index from 3943 passages …
+2026-03-09 22:52:01  [INFO    ]  FAISS index built: 384-dim, 3943 vectors
+2026-03-09 22:52:01  [INFO    ]  FAISS index saved → faiss.index
+2026-03-09 22:52:01  [INFO    ]  Building Phase 3 RAG model …
+2026-03-09 22:52:01  [INFO    ]  Phase 3 model: 114,546,182 parameters total (concept_embs frozen separately)
+2026-03-09 22:52:01  [INFO    ]  Loaders — train 10072 batches  val 1080  test 1080
+2026-03-09 22:52:01  [INFO    ]  Phase 3 trainable parameters: 113,166,853  (frozen: GAT encoder + graph_scale)
+2026-03-09 22:52:01  [INFO    ]  Run ID : 20260309_225201
+2026-03-09 22:52:01  [INFO    ]  Checkpoints → /Users/mohammedsameersyed/Documents/UoA/Fall 2025/Capstone Project/v2/ShifaMind_Local/shifamind_local/checkpoints/phase3_from_p2/20260309_225201
+2026-03-09 22:52:01  [INFO    ]  Results     → /Users/mohammedsameersyed/Documents/UoA/Fall 2025/Capstone Project/v2/ShifaMind_Local/shifamind_local/results/phase3_from_p2
+2026-03-09 22:52:01  [INFO    ]  ============================================================
+2026-03-09 22:52:01  [INFO    ]  Starting Phase 3 training (8 epochs) …
+2026-03-09 22:52:01  [INFO    ]  ============================================================
+2026-03-10 00:20:08  [INFO    ]  Epoch 1 train: total=0.0667  dx=0.0224  align=0.2329  concept=0.2965
+2026-03-10 00:27:35  [INFO    ]  Epoch 1 val:   macro_f1=0.4490  micro_f1=0.5157  precision=0.4115  recall=0.5127  loss=0.0877
+2026-03-10 00:27:35  [INFO    ]  MPS memory in use : 3,990 MB
+2026-03-10 00:27:38  [INFO    ]  Best checkpoint saved  → phase3_best.pth
+2026-03-10 00:27:38  [INFO    ]    *** New best val macro_f1 = 0.4490 (epoch 1)
+2026-03-10 01:55:40  [INFO    ]  Epoch 2 train: total=0.0665  dx=0.0224  align=0.2229  concept=0.3010
+2026-03-10 02:03:09  [INFO    ]  Epoch 2 val:   macro_f1=0.4492  micro_f1=0.5170  precision=0.4129  recall=0.5130  loss=0.0879
+2026-03-10 02:03:09  [INFO    ]  MPS memory in use : 3,990 MB
+2026-03-10 02:03:11  [INFO    ]  Best checkpoint saved  → phase3_best.pth
+2026-03-10 02:03:11  [INFO    ]    *** New best val macro_f1 = 0.4492 (epoch 2)
+2026-03-10 03:31:16  [INFO    ]  Epoch 3 train: total=0.0628  dx=0.0206  align=0.2228  concept=0.2984
+2026-03-10 03:38:45  [INFO    ]  Epoch 3 val:   macro_f1=0.4539  micro_f1=0.5183  precision=0.4308  recall=0.4951  loss=0.0936
+2026-03-10 03:38:45  [INFO    ]  MPS memory in use : 3,990 MB
+2026-03-10 03:38:47  [INFO    ]  Best checkpoint saved  → phase3_best.pth
+2026-03-10 03:38:47  [INFO    ]    *** New best val macro_f1 = 0.4539 (epoch 3)
+2026-03-10 05:06:44  [INFO    ]  Epoch 4 train: total=0.0591  dx=0.0188  align=0.2228  concept=0.2963
+2026-03-10 05:14:12  [INFO    ]  Epoch 4 val:   macro_f1=0.4522  micro_f1=0.5135  precision=0.4191  recall=0.5020  loss=0.0975
+2026-03-10 05:14:12  [INFO    ]  MPS memory in use : 3,990 MB
+2026-03-10 06:50:09  [INFO    ]  ========================================================================
+2026-03-10 06:50:09  [INFO    ]  ShifaMind Phase 3 — Training (base: Phase 2)
+2026-03-10 06:50:09  [INFO    ]  ========================================================================
+2026-03-10 06:50:09  [INFO    ]  Device     : mps
+2026-03-10 06:50:09  [INFO    ]  Base phase : 2
+2026-03-10 06:50:09  [INFO    ]  Loading splits and concept labels …
+2026-03-10 06:50:09  [INFO    ]  Dataset — train 80,572  val 17,265  test 17,266  labels 50  concepts 111
+2026-03-10 06:50:09  [INFO    ]  Loading BioClinicalBERT …
+2026-03-10 06:50:10  [INFO    ]  Loading graph data …
+2026-03-10 06:50:10  [INFO    ]  Constructing Phase 2 model architecture …
+2026-03-10 06:50:10  [INFO    ]  Found checkpoint ← phase2/20260308_120005/phase2_best.pt
+2026-03-10 06:50:11  [INFO    ]  Loaded checkpoint ← phase2_best.pt
+2026-03-10 06:50:11  [INFO    ]  Phase 2 weights loaded (epoch 6)  ← phase2_best.pt
+2026-03-10 06:50:11  [INFO    ]  Phase 2 concept embeddings loaded (frozen): (111, 768)  ← phase2_concept_embeddings.pt
+2026-03-10 06:50:11  [INFO    ]  Loading cached evidence corpus ← evidence_corpus.json …
+2026-03-10 06:50:11  [INFO    ]  Evidence corpus: 3943 passages
+2026-03-10 06:50:11  [INFO    ]  Loading RAG encoder: sentence-transformers/all-MiniLM-L6-v2
+2026-03-10 06:50:12  [INFO    ]  FAISS index loaded from cache (3943 vectors)  ← faiss.index
+2026-03-10 06:50:12  [INFO    ]  Building Phase 3 RAG model …
+2026-03-10 06:50:12  [INFO    ]  Phase 3 model: 114,546,182 parameters total (concept_embs frozen separately)
+2026-03-10 06:50:12  [INFO    ]  Loaders — train 10072 batches  val 1080  test 1080
+2026-03-10 06:50:12  [INFO    ]  Phase 3 trainable parameters: 113,166,853  (frozen: GAT encoder + graph_scale)
+2026-03-10 06:50:12  [INFO    ]  Run ID : 20260310_065012
+2026-03-10 06:50:12  [INFO    ]  Checkpoints → /Users/mohammedsameersyed/Documents/UoA/Fall 2025/Capstone Project/v2/ShifaMind_Local/shifamind_local/checkpoints/phase3_from_p2/20260310_065012
+2026-03-10 06:50:12  [INFO    ]  Results     → /Users/mohammedsameersyed/Documents/UoA/Fall 2025/Capstone Project/v2/ShifaMind_Local/shifamind_local/results/phase3_from_p2
+2026-03-10 06:50:12  [INFO    ]  ============================================================
+2026-03-10 06:50:12  [INFO    ]  Starting Phase 3 training (8 epochs) …
+2026-03-10 06:50:12  [INFO    ]  ============================================================
+2026-03-10 08:15:47  [INFO    ]  Epoch 1 train: total=0.0667  dx=0.0224  align=0.2329  concept=0.2965
+2026-03-10 08:23:11  [INFO    ]  Epoch 1 val:   macro_f1=0.4490  micro_f1=0.5159  precision=0.4117  recall=0.5122  loss=0.0877
+2026-03-10 08:23:11  [INFO    ]  MPS memory in use : 3,990 MB
+2026-03-10 08:23:14  [INFO    ]  Best checkpoint saved  → phase3_best.pth
+2026-03-10 08:23:14  [INFO    ]    *** New best val macro_f1 = 0.4490 (epoch 1)
+2026-03-10 09:49:31  [INFO    ]  Epoch 2 train: total=0.0665  dx=0.0224  align=0.2228  concept=0.3010
+2026-03-10 09:56:57  [INFO    ]  Epoch 2 val:   macro_f1=0.4489  micro_f1=0.5168  precision=0.4119  recall=0.5131  loss=0.0879
+2026-03-10 09:56:57  [INFO    ]  MPS memory in use : 3,990 MB
+2026-03-10 11:23:25  [INFO    ]  Epoch 3 train: total=0.0628  dx=0.0206  align=0.2228  concept=0.2984
+2026-03-10 11:30:51  [INFO    ]  Epoch 3 val:   macro_f1=0.4537  micro_f1=0.5182  precision=0.4309  recall=0.4947  loss=0.0937
+2026-03-10 11:30:51  [INFO    ]  MPS memory in use : 3,990 MB
+2026-03-10 11:30:54  [INFO    ]  Best checkpoint saved  → phase3_best.pth
+2026-03-10 11:30:54  [INFO    ]    *** New best val macro_f1 = 0.4537 (epoch 3)
+2026-03-10 13:00:41  [INFO    ]  ========================================================================
+2026-03-10 13:00:41  [INFO    ]  ShifaMind Phase 3 — Training (base: Phase 2)
+2026-03-10 13:00:41  [INFO    ]  ========================================================================
+2026-03-10 13:00:41  [INFO    ]  Device     : mps
+2026-03-10 13:00:41  [INFO    ]  Base phase : 2
+2026-03-10 13:00:41  [INFO    ]  Loading splits and concept labels …
+2026-03-10 13:00:41  [INFO    ]  Dataset — train 80,572  val 17,265  test 17,266  labels 50  concepts 111
+2026-03-10 13:00:41  [INFO    ]  Loading BioClinicalBERT …
+2026-03-10 13:00:42  [INFO    ]  Loading graph data …
+2026-03-10 13:00:42  [INFO    ]  Constructing Phase 2 model architecture …
+2026-03-10 13:00:42  [INFO    ]  Found checkpoint ← phase2/20260308_120005/phase2_best.pt
+2026-03-10 13:00:43  [INFO    ]  Loaded checkpoint ← phase2_best.pt
+2026-03-10 13:00:43  [INFO    ]  Phase 2 weights loaded (epoch 6)  ← phase2_best.pt
+2026-03-10 13:00:43  [INFO    ]  Phase 2 concept embeddings loaded (frozen): (111, 768)  ← phase2_concept_embeddings.pt
+2026-03-10 13:00:43  [INFO    ]  Loading cached evidence corpus ← evidence_corpus.json …
+2026-03-10 13:00:43  [INFO    ]  Evidence corpus: 3943 passages
+2026-03-10 13:00:43  [INFO    ]  Loading RAG encoder: sentence-transformers/all-MiniLM-L6-v2
+2026-03-10 13:00:45  [INFO    ]  FAISS index loaded from cache (3943 vectors)  ← faiss.index
+2026-03-10 13:00:45  [INFO    ]  Building Phase 3 RAG model …
+2026-03-10 13:00:45  [INFO    ]  Phase 3 model: 114,546,182 parameters total (concept_embs frozen separately)
+2026-03-10 13:00:45  [INFO    ]  Warm-starting rag_to_logits from corpus mean embeddings …
+2026-03-10 13:00:46  [INFO    ]    rag_to_logits warm-started  weight_norm: mean=0.5000  min=0.5000  max=0.5000
+2026-03-10 13:00:46  [INFO    ]  Loaders — train 10072 batches  val 1080  test 1080
+2026-03-10 13:00:46  [INFO    ]  Phase 3 trainable parameters: 113,166,853  (frozen: GAT encoder + graph_scale)
+2026-03-10 13:00:46  [INFO    ]  Optimizer: BERT+heads LR=2e-05  RAG head LR=5e-04
+2026-03-10 13:00:46  [INFO    ]  Run ID : 20260310_130046
+2026-03-10 13:00:46  [INFO    ]  Checkpoints → /Users/mohammedsameersyed/Documents/UoA/Fall 2025/Capstone Project/v2/ShifaMind_Local/shifamind_local/checkpoints/phase3_from_p2/20260310_130046
+2026-03-10 13:00:46  [INFO    ]  Results     → /Users/mohammedsameersyed/Documents/UoA/Fall 2025/Capstone Project/v2/ShifaMind_Local/shifamind_local/results/phase3_from_p2
+2026-03-10 13:00:46  [INFO    ]  ============================================================
+2026-03-10 13:00:46  [INFO    ]  Starting Phase 3 training (8 epochs) …
+2026-03-10 13:00:46  [INFO    ]  ============================================================
+2026-03-10 14:41:20  [INFO    ]  Epoch 1 train: total=0.0667  dx=0.0224  align=0.2332  concept=0.2965
+2026-03-10 14:48:46  [INFO    ]  Epoch 1 val:   macro_f1=0.4486  micro_f1=0.5154  precision=0.4111  recall=0.5126  loss=0.0877
+2026-03-10 14:48:46  [INFO    ]  Epoch 1 gate:  mean=0.2555  std=0.0002  min=0.2551  max=0.2561  (target: std>0 means per-dx differentiation is happening)
+2026-03-10 14:48:46  [INFO    ]  MPS memory in use : 3,992 MB
+2026-03-10 14:48:49  [INFO    ]  Best checkpoint saved  → phase3_best.pth
+2026-03-10 14:48:49  [INFO    ]    *** New best val macro_f1 = 0.4486 (epoch 1)
+2026-03-10 16:17:27  [INFO    ]  Epoch 2 train: total=0.0665  dx=0.0224  align=0.2228  concept=0.3010
+2026-03-10 16:25:08  [INFO    ]  Epoch 2 val:   macro_f1=0.4496  micro_f1=0.5175  precision=0.4138  recall=0.5128  loss=0.0880
+2026-03-10 16:25:08  [INFO    ]  Epoch 2 gate:  mean=0.2548  std=0.0007  min=0.2536  max=0.2564  (target: std>0 means per-dx differentiation is happening)
+2026-03-10 16:25:08  [INFO    ]  MPS memory in use : 3,992 MB
+2026-03-10 16:25:10  [INFO    ]  Best checkpoint saved  → phase3_best.pth
+2026-03-10 16:25:10  [INFO    ]    *** New best val macro_f1 = 0.4496 (epoch 2)
+2026-03-10 18:00:55  [INFO    ]  Epoch 3 train: total=0.0628  dx=0.0206  align=0.2228  concept=0.2984
+2026-03-10 18:08:33  [INFO    ]  Epoch 3 val:   macro_f1=0.4536  micro_f1=0.5181  precision=0.4304  recall=0.4952  loss=0.0936
+2026-03-10 18:08:33  [INFO    ]  Epoch 3 gate:  mean=0.2544  std=0.0013  min=0.2521  max=0.2569  (target: std>0 means per-dx differentiation is happening)
+2026-03-10 18:08:33  [INFO    ]  MPS memory in use : 3,992 MB
+2026-03-10 18:08:36  [INFO    ]  Best checkpoint saved  → phase3_best.pth
+2026-03-10 18:08:36  [INFO    ]    *** New best val macro_f1 = 0.4536 (epoch 3)
+2026-03-10 19:36:35  [INFO    ]  Epoch 4 train: total=0.0591  dx=0.0188  align=0.2227  concept=0.2963
+2026-03-10 19:44:02  [INFO    ]  Epoch 4 val:   macro_f1=0.4522  micro_f1=0.5136  precision=0.4202  recall=0.5007  loss=0.0975
+2026-03-10 19:44:02  [INFO    ]  Epoch 4 gate:  mean=0.2543  std=0.0020  min=0.2486  max=0.2584  (target: std>0 means per-dx differentiation is happening)
+2026-03-10 19:44:02  [INFO    ]  MPS memory in use : 3,992 MB
+2026-03-10 21:11:43  [INFO    ]  Epoch 5 train: total=0.0557  dx=0.0172  align=0.2224  concept=0.2948
+2026-03-10 21:19:08  [INFO    ]  Epoch 5 val:   macro_f1=0.4505  micro_f1=0.5124  precision=0.4174  recall=0.4987  loss=0.1019
+2026-03-10 21:19:08  [INFO    ]  Epoch 5 gate:  mean=0.2545  std=0.0023  min=0.2476  max=0.2589  (target: std>0 means per-dx differentiation is happening)
+2026-03-10 21:19:08  [INFO    ]  MPS memory in use : 3,992 MB
+2026-03-10 22:46:19  [INFO    ]  Epoch 6 train: total=0.0527  dx=0.0157  align=0.2216  concept=0.2938
+2026-03-10 22:54:00  [INFO    ]  Epoch 6 val:   macro_f1=0.4496  micro_f1=0.5097  precision=0.4167  recall=0.4947  loss=0.1066
+2026-03-10 22:54:00  [INFO    ]  Epoch 6 gate:  mean=0.2547  std=0.0026  min=0.2472  max=0.2597  (target: std>0 means per-dx differentiation is happening)
+2026-03-10 22:54:00  [INFO    ]  MPS memory in use : 3,992 MB
+2026-03-11 00:24:07  [INFO    ]  Epoch 7 train: total=0.0502  dx=0.0145  align=0.2208  concept=0.2930
+2026-03-11 00:31:54  [INFO    ]  Epoch 7 val:   macro_f1=0.4491  micro_f1=0.5081  precision=0.4207  recall=0.4882  loss=0.1106
+2026-03-11 00:31:54  [INFO    ]  Epoch 7 gate:  mean=0.2549  std=0.0027  min=0.2466  max=0.2600  (target: std>0 means per-dx differentiation is happening)
+2026-03-11 00:31:54  [INFO    ]  MPS memory in use : 3,992 MB
+2026-03-11 01:59:16  [INFO    ]  Epoch 8 train: total=0.0484  dx=0.0136  align=0.2201  concept=0.2926
+2026-03-11 02:06:37  [INFO    ]  Epoch 8 val:   macro_f1=0.4494  micro_f1=0.5083  precision=0.4228  recall=0.4851  loss=0.1125
+2026-03-11 02:06:37  [INFO    ]  Epoch 8 gate:  mean=0.2550  std=0.0027  min=0.2465  max=0.2601  (target: std>0 means per-dx differentiation is happening)
+2026-03-11 02:06:37  [INFO    ]  MPS memory in use : 3,992 MB
+2026-03-11 02:06:39  [INFO    ]  Training done. Best val macro_f1 = 0.4536
+2026-03-11 02:06:39  [INFO    ]  Loading best Phase 3 model for test evaluation …
+2026-03-11 02:06:39  [INFO    ]  Loaded checkpoint ← phase3_best.pth
+2026-03-11 02:13:59  [INFO    ]  ============================================================
+2026-03-11 02:13:59  [INFO    ]  Phase 3 (base: Phase 2) — Test Results (threshold = 0.5)
+2026-03-11 02:13:59  [INFO    ]    Macro F1   : 0.4520
+2026-03-11 02:13:59  [INFO    ]    Micro F1   : 0.5179
+2026-03-11 02:13:59  [INFO    ]    Precision  : 0.4290
+2026-03-11 02:13:59  [INFO    ]    Recall     : 0.4929
+2026-03-11 02:13:59  [INFO    ]  ============================================================
+2026-03-11 02:13:59  [INFO    ]  Results saved         → /Users/mohammedsameersyed/Documents/UoA/Fall 2025/Capstone Project/v2/ShifaMind_Local/shifamind_local/results/phase3_from_p2/results.json
+2026-03-11 02:13:59  [INFO    ]  Test probabilities    → /Users/mohammedsameersyed/Documents/UoA/Fall 2025/Capstone Project/v2/ShifaMind_Local/shifamind_local/results/phase3_from_p2/test_probabilities.npy
+2026-03-11 02:13:59  [INFO    ]  Test predictions      → /Users/mohammedsameersyed/Documents/UoA/Fall 2025/Capstone Project/v2/ShifaMind_Local/shifamind_local/results/phase3_from_p2/test_predictions.npy
+2026-03-11 02:13:59  [INFO    ]  Test labels           → /Users/mohammedsameersyed/Documents/UoA/Fall 2025/Capstone Project/v2/ShifaMind_Local/shifamind_local/results/phase3_from_p2/test_labels.npy
+2026-03-11 02:13:59  [INFO    ]  Best checkpoint       → /Users/mohammedsameersyed/Documents/UoA/Fall 2025/Capstone Project/v2/ShifaMind_Local/shifamind_local/checkpoints/phase3_from_p2/20260310_130046/phase3_best.pth
+2026-03-11 02:13:59  [INFO    ]  Phase 3 training complete  (base: Phase 2)
+2026-03-11 02:28:39  [INFO    ]  ========================================================================
+2026-03-11 02:28:39  [INFO    ]  ShifaMind Phase 3 — Threshold Tuning & Final Evaluation (base: Phase 2)
+2026-03-11 02:28:39  [INFO    ]  ========================================================================
+2026-03-11 02:28:39  [INFO    ]  Device     : mps
+2026-03-11 02:28:39  [INFO    ]  Base phase : 2
+2026-03-11 02:28:39  [INFO    ]  Loading splits …
+2026-03-11 02:28:40  [INFO    ]  Val: 17,265  Test: 17,266
+2026-03-11 02:28:40  [INFO    ]  Loading BioClinicalBERT …
+2026-03-11 02:28:41  [INFO    ]  Loading graph data …
+2026-03-11 02:28:41  [INFO    ]  Loading evidence corpus and FAISS index …
+2026-03-11 02:28:41  [INFO    ]  Loading RAG encoder: sentence-transformers/all-MiniLM-L6-v2
+2026-03-11 02:28:44  [INFO    ]  FAISS index loaded from cache (3943 vectors)  ← faiss.index
+2026-03-11 02:28:44  [INFO    ]  Found checkpoint ← phase3_from_p2/20260310_130046/phase3_best.pth
+2026-03-11 02:28:44  [INFO    ]  Loaded checkpoint ← phase3_best.pth
+2026-03-11 02:28:44  [INFO    ]  Phase 3 best model loaded (epoch 3)
+2026-03-11 02:28:44  [INFO    ]  Phase 2 concept embeddings loaded (frozen): (111, 768)
+2026-03-11 02:28:44  [INFO    ]  Running inference on validation set (with RAG) …
+2026-03-11 02:35:56  [INFO    ]  Sweeping 19 threshold candidates per label …
+2026-03-11 02:35:57  [INFO    ]  Threshold tuning done — mean optimal threshold: 0.506  mean val F1: 0.4666
+2026-03-11 02:35:57  [INFO    ]  Threshold tuning saved → threshold_tuning.json
+2026-03-11 02:35:57  [INFO    ]  Running inference on test set (with RAG) …
+2026-03-11 02:43:13  [INFO    ]  ============================================================
+2026-03-11 02:43:13  [INFO    ]  Phase 3 (base: Phase 2) — Final Test Results
+2026-03-11 02:43:13  [INFO    ]    Default (0.5)  — Macro F1: 0.4520  Micro: 0.5179
+2026-03-11 02:43:13  [INFO    ]    Tuned          — Macro F1: 0.4629  Micro: 0.4950
+2026-03-11 02:43:13  [INFO    ]    Precision (tuned): 0.4452  Recall (tuned): 0.5148
+2026-03-11 02:43:13  [INFO    ]  ============================================================
+2026-03-11 02:43:13  [INFO    ]  Top 5 diagnoses by F1:
+2026-03-11 02:43:13  [INFO    ]    Z951        F1=0.8115  support=956
+2026-03-11 02:43:13  [INFO    ]    I2510       F1=0.7349  support=3349
+2026-03-11 02:43:13  [INFO    ]    I10         F1=0.7153  support=6522
+2026-03-11 02:43:13  [INFO    ]    E785        F1=0.7012  support=6654
+2026-03-11 02:43:13  [INFO    ]    Z955        F1=0.6735  support=1158
+2026-03-11 02:43:13  [INFO    ]  Bottom 5 diagnoses by F1:
+2026-03-11 02:43:13  [INFO    ]    K5900       F1=0.2121  support=970
+2026-03-11 02:43:13  [INFO    ]    Y92230      F1=0.2026  support=854
+2026-03-11 02:43:13  [INFO    ]    Y92239      F1=0.1778  support=884
+2026-03-11 02:43:13  [INFO    ]    G4700       F1=0.1770  support=950
+2026-03-11 02:43:13  [INFO    ]    Z23         F1=0.1102  support=874
+2026-03-11 02:43:13  [INFO    ]  Final results saved  → final_test_results.json
+2026-03-11 02:43:13  [INFO    ]  Per-diagnosis JSON   → per_diagnosis_metrics.json
+2026-03-11 02:43:13  [INFO    ]  Per-diagnosis CSV    → per_diagnosis_metrics.csv
+2026-03-11 02:43:13  [INFO    ]  Results directory    → /Users/mohammedsameersyed/Documents/UoA/Fall 2025/Capstone Project/v2/ShifaMind_Local/shifamind_local/results/phase3_from_p2
+2026-03-11 02:43:13  [INFO    ]  Phase 3 threshold tuning and final evaluation complete  (base: Phase 2)
+2026-03-13 01:03:22  [INFO    ]  ========================================================================
+2026-03-13 01:03:22  [INFO    ]  ShifaMind Phase 2 — Training (BioClinicalBERT + UMLS GAT)
+2026-03-13 01:03:22  [INFO    ]  ========================================================================
+2026-03-13 01:03:22  [INFO    ]  Device : mps
+2026-03-13 01:03:22  [INFO    ]  Loading splits and concept labels from Phase 1 …
+2026-03-13 01:03:22  [INFO    ]  Dataset — train 80,572  val 17,265  test 17,266
+2026-03-13 01:03:22  [INFO    ]  Labels: 50   Concepts: 111
+2026-03-13 01:03:22  [INFO    ]  Loading BioClinicalBERT …
+2026-03-13 01:03:23  [INFO    ]  Found checkpoint ← phase1/20260301_112200/phase1_best.pt
+2026-03-13 01:03:24  [INFO    ]    Phase 1 BERT weights loaded — macro_f1 at transfer: 0.4511536520638476
+2026-03-13 01:03:24  [INFO    ]  Loading Phase 1 concept embeddings as warm-start …
+2026-03-13 01:03:24  [INFO    ]  Phase 1 concept embeddings loaded: shape (111, 768)
+2026-03-13 01:03:24  [INFO    ]  Building multi-source knowledge graph (or loading from cache) …
+2026-03-13 01:03:24  [INFO    ]  Graph cached (graph_data.pt) — skipping build.
+2026-03-13 01:03:24  [INFO    ]  Loading graph from graph_data.pt …
+2026-03-13 01:03:24  [INFO    ]  Graph loaded: 161 nodes  4598 edges
+2026-03-13 01:03:24  [INFO    ]  Building Phase 2 model …
+2026-03-13 01:03:24  [INFO    ]  Phase 1 diagnosis_head + concept_head warm-started into Phase 2 ✓
+2026-03-13 01:18:43  [INFO    ]  ========================================================================
+2026-03-13 01:18:43  [INFO    ]  ShifaMind Phase 2 — Training (BioClinicalBERT + UMLS GAT)
+2026-03-13 01:18:43  [INFO    ]  ========================================================================
+2026-03-13 01:18:43  [INFO    ]  Device : mps
+2026-03-13 01:18:43  [INFO    ]  Loading splits and concept labels from Phase 1 …
+2026-03-13 01:18:44  [INFO    ]  Dataset — train 80,572  val 17,265  test 17,266
+2026-03-13 01:18:44  [INFO    ]  Labels: 50   Concepts: 111
+2026-03-13 01:18:44  [INFO    ]  Loading BioClinicalBERT …
+2026-03-13 01:18:45  [INFO    ]  Found checkpoint ← phase1/20260301_112200/phase1_best.pt
+2026-03-13 01:18:45  [INFO    ]    Phase 1 BERT weights loaded — macro_f1 at transfer: 0.4511536520638476
+2026-03-13 01:18:45  [INFO    ]  Loading Phase 1 concept embeddings as warm-start …
+2026-03-13 01:18:45  [INFO    ]  Phase 1 concept embeddings loaded: shape (111, 768)
+2026-03-13 01:18:45  [INFO    ]  Building multi-source knowledge graph (or loading from cache) …
+2026-03-13 01:18:45  [INFO    ]  Graph cached (graph_data.pt) — skipping build.
+2026-03-13 01:18:45  [INFO    ]  Loading graph from graph_data.pt …
+2026-03-13 01:18:45  [INFO    ]  Graph loaded: 161 nodes  4598 edges
+2026-03-13 01:18:45  [INFO    ]  Building Phase 2 model …
+2026-03-13 01:18:45  [INFO    ]  Phase 1 diagnosis_head + concept_head warm-started into Phase 2 ✓
+2026-03-13 01:18:45  [INFO    ]  Phase 2 model: 114,212,002 parameters (including concept_embs_p2)
+2026-03-13 01:18:45  [INFO    ]  Loaders — train 10072 batches  val 1080  test 1080
+2026-03-13 01:18:45  [INFO    ]  BERT FROZEN for first 3 epochs (GAT warm-up, lr=0.0002)
+2026-03-13 01:18:45  [INFO    ]  Run ID 20260313_011845 — checkpoints → /Users/mohammedsameersyed/Documents/UoA/Fall 2025/Capstone Project/v2/ShifaMind_Local/shifamind_local/checkpoints/phase2/20260313_011845
+2026-03-13 01:18:45  [INFO    ]  ============================================================
+2026-03-13 01:18:45  [INFO    ]  Starting Phase 2 training (12 epochs) …
+2026-03-13 01:18:45  [INFO    ]    Stage 1 (frozen BERT)  : epochs 1-3  lr=0.0002
+2026-03-13 01:18:45  [INFO    ]    Stage 2 (unfrozen BERT): epochs 4-12  BERT lr=5e-06  GAT lr=0.0002
+2026-03-13 01:18:45  [INFO    ]    Residual graph_scale   : starts at sigmoid(-5)≈0.007 → grows as GAT improves
+2026-03-13 01:18:45  [INFO    ]  ============================================================
+2026-03-13 02:00:08  [INFO    ]  Epoch 1 train loss: total=0.0499  dx=0.0311  align=0.2161  concept=0.3758
+2026-03-13 02:06:38  [INFO    ]  Epoch 1 val:   dx_f1=0.4518  concept_f1=0.2834
+2026-03-13 02:06:38  [INFO    ]  MPS memory in use : 1,882 MB
+2026-03-13 02:06:38  [INFO    ]  Best checkpoint saved  → phase2_best.pt
+2026-03-13 02:06:38  [INFO    ]    New best val dx_f1 = 0.4518
+2026-03-13 02:43:18  [INFO    ]  Epoch 2 train loss: total=0.0402  dx=0.0246  align=0.2511  concept=0.3113
+2026-03-13 02:49:06  [INFO    ]  Epoch 2 val:   dx_f1=0.4543  concept_f1=0.3017
+2026-03-13 02:49:06  [INFO    ]  MPS memory in use : 1,882 MB
+2026-03-13 02:49:06  [INFO    ]  Best checkpoint saved  → phase2_best.pt
+2026-03-13 02:49:06  [INFO    ]    New best val dx_f1 = 0.4543
+2026-03-13 03:24:12  [INFO    ]  Epoch 3 train loss: total=0.0396  dx=0.0242  align=0.2516  concept=0.3089
+2026-03-13 03:30:02  [INFO    ]  Epoch 3 val:   dx_f1=0.4548  concept_f1=0.3043
+2026-03-13 03:30:02  [INFO    ]  MPS memory in use : 1,882 MB
+2026-03-13 03:30:02  [INFO    ]  Best checkpoint saved  → phase2_best.pt
+2026-03-13 03:30:02  [INFO    ]    New best val dx_f1 = 0.4548
+2026-03-13 03:30:02  [INFO    ]  BERT UNFROZEN at epoch 4 — BERT lr=5e-06  GAT lr=0.0002
+2026-03-13 04:52:23  [INFO    ]  Epoch 4 train loss: total=0.0393  dx=0.0241  align=0.2520  concept=0.3047
+2026-03-13 04:58:15  [INFO    ]  Epoch 4 val:   dx_f1=0.4534  concept_f1=0.3283
+2026-03-13 04:58:15  [INFO    ]  MPS memory in use : 4,095 MB
+2026-03-13 06:19:24  [INFO    ]  Epoch 5 train loss: total=0.0385  dx=0.0236  align=0.2528  concept=0.2981
+2026-03-13 06:25:13  [INFO    ]  Epoch 5 val:   dx_f1=0.4544  concept_f1=0.3383
+2026-03-13 06:25:13  [INFO    ]  MPS memory in use : 3,983 MB
+2026-03-13 07:45:30  [INFO    ]  Epoch 6 train loss: total=0.0376  dx=0.0229  align=0.2532  concept=0.2937
+2026-03-13 07:51:17  [INFO    ]  Epoch 6 val:   dx_f1=0.4570  concept_f1=0.3530
+2026-03-13 07:51:17  [INFO    ]  MPS memory in use : 3,983 MB
+2026-03-13 07:51:18  [INFO    ]  Best checkpoint saved  → phase2_best.pt
+2026-03-13 07:51:18  [INFO    ]    New best val dx_f1 = 0.4570
+2026-03-13 09:11:30  [INFO    ]  Epoch 7 train loss: total=0.0368  dx=0.0222  align=0.2533  concept=0.2910
+2026-03-13 09:17:18  [INFO    ]  Epoch 7 val:   dx_f1=0.4545  concept_f1=0.3565
+2026-03-13 09:17:18  [INFO    ]  MPS memory in use : 3,983 MB
+2026-03-13 10:38:01  [INFO    ]  Epoch 8 train loss: total=0.0361  dx=0.0217  align=0.2530  concept=0.2891
+2026-03-13 10:43:51  [INFO    ]  Epoch 8 val:   dx_f1=0.4554  concept_f1=0.3612
+2026-03-13 10:43:51  [INFO    ]  MPS memory in use : 3,983 MB
+2026-03-13 12:05:33  [INFO    ]  Epoch 9 train loss: total=0.0356  dx=0.0212  align=0.2528  concept=0.2876
+2026-03-13 12:11:58  [INFO    ]  Epoch 9 val:   dx_f1=0.4555  concept_f1=0.3628
+2026-03-13 12:11:58  [INFO    ]  MPS memory in use : 3,983 MB
+2026-03-13 13:35:42  [INFO    ]  Epoch 10 train loss: total=0.0351  dx=0.0208  align=0.2525  concept=0.2866
+2026-03-13 13:41:48  [INFO    ]  Epoch 10 val:   dx_f1=0.4528  concept_f1=0.3642
+2026-03-13 13:41:48  [INFO    ]  MPS memory in use : 3,983 MB
+2026-03-13 15:08:06  [INFO    ]  Epoch 11 train loss: total=0.0347  dx=0.0205  align=0.2523  concept=0.2857
+2026-03-13 15:14:15  [INFO    ]  Epoch 11 val:   dx_f1=0.4544  concept_f1=0.3682
+2026-03-13 15:14:15  [INFO    ]  MPS memory in use : 3,983 MB
+2026-03-13 16:42:10  [INFO    ]  Epoch 12 train loss: total=0.0345  dx=0.0202  align=0.2521  concept=0.2853
+2026-03-13 16:48:26  [INFO    ]  Epoch 12 val:   dx_f1=0.4535  concept_f1=0.3681
+2026-03-13 16:48:26  [INFO    ]  MPS memory in use : 3,983 MB
+2026-03-13 16:48:26  [INFO    ]  Training done. Best val dx_f1 = 0.4570
+2026-03-13 16:48:26  [INFO    ]  Phase 2 concept embeddings → phase2_concept_embeddings.pt
+2026-03-13 16:48:26  [INFO    ]  Training history → training_history.json
+2026-03-13 16:48:26  [INFO    ]  Loading best model for test evaluation …
+2026-03-13 16:48:27  [INFO    ]  Loaded checkpoint ← phase2_best.pt
+2026-03-13 16:54:46  [INFO    ]  ============================================================
+2026-03-13 16:54:46  [INFO    ]  Phase 2 — Test Results (threshold = 0.5)
+2026-03-13 16:54:46  [INFO    ]    Macro F1   : 0.4530
+2026-03-13 16:54:46  [INFO    ]    Micro F1   : 0.5209
+2026-03-13 16:54:46  [INFO    ]    Precision  : 0.4171
+2026-03-13 16:54:46  [INFO    ]    Recall     : 0.5143
+2026-03-13 16:54:46  [INFO    ]    Concept F1 : 0.3520
+2026-03-13 16:54:46  [INFO    ]  ============================================================
+2026-03-13 16:54:46  [INFO    ]  Results saved → results.json
+2026-03-13 16:54:46  [INFO    ]  Per-label F1  → per_label_f1.csv
+2026-03-13 16:54:46  [INFO    ]  Phase 2 training complete.
+2026-03-13 17:07:27  [INFO    ]  ========================================================================
+2026-03-13 17:07:27  [INFO    ]  ShifaMind Phase 2 — Threshold Tuning
+2026-03-13 17:07:27  [INFO    ]  ========================================================================
+2026-03-13 17:07:27  [INFO    ]  Device : mps
+2026-03-13 17:07:27  [INFO    ]  Loading splits …
+2026-03-13 17:07:27  [INFO    ]  Found checkpoint ← phase2/20260313_011845/phase2_best.pt
+2026-03-13 17:07:27  [INFO    ]  Val: 17,265  Test: 17,266
+2026-03-13 17:07:27  [INFO    ]  Loading BioClinicalBERT …
+2026-03-13 17:07:28  [INFO    ]  Loading graph data …
+2026-03-13 17:07:29  [INFO    ]  Loaded checkpoint ← phase2_best.pt
+2026-03-13 17:07:29  [INFO    ]  Phase 2 best model loaded (epoch 6)
+2026-03-13 17:07:29  [INFO    ]  Phase 2 concept embeddings loaded: shape (111, 768)
+2026-03-13 17:07:29  [INFO    ]  Running inference on validation set …
+2026-03-13 17:13:58  [INFO    ]  Sweeping 19 threshold candidates per label …
+2026-03-13 17:13:59  [INFO    ]  Threshold tuning done — mean optimal threshold: 0.515  mean val F1: 0.4723
+2026-03-13 17:13:59  [INFO    ]  Optimal thresholds saved → optimal_thresholds.json
+2026-03-13 17:13:59  [INFO    ]  Running inference on test set …
+2026-03-13 17:20:25  [INFO    ]  ============================================================
+2026-03-13 17:20:25  [INFO    ]  Phase 2 — Threshold Comparison (test set)
+2026-03-13 17:20:25  [INFO    ]    Default (0.5)  — Macro F1: 0.4530  Micro: 0.5209
+2026-03-13 17:20:25  [INFO    ]    Tuned          — Macro F1: 0.4666  Micro: 0.5034
+2026-03-13 17:20:25  [INFO    ]  ============================================================
+2026-03-13 17:20:25  [INFO    ]  Threshold results saved → threshold_tuning_results.json
+2026-03-13 17:20:25  [INFO    ]  Threshold comparison   → threshold_comparison.csv
+2026-03-13 17:20:25  [INFO    ]  Phase 2 threshold tuning complete.
