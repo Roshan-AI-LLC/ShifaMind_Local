@@ -192,11 +192,16 @@ def load_baseline_model(
             device       = device,
         )
         model = MSMN(
-            bert_model_name   = mcfg["bert_model"],
+            vocab_size        = vocab_size,
             num_labels        = num_labels,
             num_synonyms      = mcfg["num_synonyms"],
-            hidden_size       = mcfg["hidden_size"],
+            embed_dim         = mcfg["embed_dim"],
+            hidden_dim        = mcfg["hidden_dim"],
+            attention_dim     = mcfg["attention_dim"],
+            attention_head    = mcfg["attention_head"],
             dropout           = mcfg["dropout"],
+            lstm_dropout      = mcfg["lstm_dropout"],
+            pad_token_id      = tokenizer.pad_token_id or 0,
             synonym_input_ids = syn_ids,
             synonym_attn_mask = syn_mask,
         )
