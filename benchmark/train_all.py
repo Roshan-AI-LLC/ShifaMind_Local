@@ -130,6 +130,54 @@ class BaselineDataset(Dataset):
         }
 
 
+class CAMLDataset(Dataset):
+    """
+    Tokenises clinical notes for CAML WITHOUT truncation.
+    Full token sequences are returned; chunking happens inside the model.
+    Use with caml_collate_fn for dynamic padding.
+    """
+    def __init__(self, texts, labels, concept_labels, tokenizer):
+        self.texts          = texts
+        self.labels         = labels
+        self.concept_labels = concept_labels
+        self.tokenizer      = tokenizer
+
+    def __len__(self):
+        return len(self.texts)
+
+    def __getitem__(self, idx):
+        enc = self.tokenizer(
+            str(self.texts[idx]),
+            padding        = False,
+            truncation     = False,
+            return_tensors = "pt",
+        )
+        return {
+            "input_ids"     : enc["input_ids"].squeeze(0),       # variable length
+            "attention_mask": enc["attention_mask"].squeeze(0),
+            "labels"        : torch.FloatTensor(self.labels[idx]),
+            "concept_labels": torch.FloatTensor(self.concept_labels[idx]),
+        }
+
+
+def caml_collate_fn(batch):
+    """Dynamic padding: pads input_ids and attention_mask to the longest sequence in the batch."""
+    max_len = max(item["input_ids"].size(0) for item in batch)
+    B       = len(batch)
+    input_ids_padded = torch.zeros(B, max_len, dtype=torch.long)
+    attn_mask_padded = torch.zeros(B, max_len, dtype=torch.long)
+    for i, item in enumerate(batch):
+        L = item["input_ids"].size(0)
+        input_ids_padded[i, :L] = item["input_ids"]
+        attn_mask_padded[i, :L] = item["attention_mask"]
+    return {
+        "input_ids"     : input_ids_padded,
+        "attention_mask": attn_mask_padded,
+        "labels"        : torch.stack([item["labels"]         for item in batch]),
+        "concept_labels": torch.stack([item["concept_labels"] for item in batch]),
+    }
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Metrics helper (val loop)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -178,13 +226,14 @@ def compute_val_loss(model, loader, criterion, device, model_name: str) -> dict:
 # Per-model training routines
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _make_loaders(train_ds, val_ds, cfg):
-    t = cfg["training"]
+def _make_loaders(train_ds, val_ds, cfg, collate_fn=None):
+    t  = cfg["training"]
+    kw = {"collate_fn": collate_fn} if collate_fn is not None else {}
     return (
         DataLoader(train_ds, batch_size=t["train_batch_size"],
-                   shuffle=True,  num_workers=t["num_workers"]),
+                   shuffle=True,  num_workers=t["num_workers"], **kw),
         DataLoader(val_ds,   batch_size=t["val_batch_size"],
-                   shuffle=False, num_workers=t["num_workers"]),
+                   shuffle=False, num_workers=t["num_workers"], **kw),
     )
 
 
@@ -204,6 +253,7 @@ def train_cnn_model(
     cfg:        dict,
     device:     torch.device,
     ckpt_dir:   Path,
+    collate_fn  = None,
 ) -> None:
     mcfg    = cfg["group_a"][model_name]
     t       = cfg["training"]
@@ -211,7 +261,7 @@ def train_cnn_model(
     lr      = mcfg["lr"]
     wd      = float(mcfg.get("weight_decay", 0.01))
 
-    train_loader, val_loader = _make_loaders(train_ds, val_ds, cfg)
+    train_loader, val_loader = _make_loaders(train_ds, val_ds, cfg, collate_fn=collate_fn)
     # AdamW with weight_decay=0.01 matches reference training (Colab p6/p7)
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=wd)
     criterion = nn.BCEWithLogitsLoss()
@@ -483,7 +533,11 @@ def main() -> None:
                 dropout      = mcfg["dropout"],
                 pad_token_id = tokenizer.pad_token_id or 0,
             ).to(device)
-            train_cnn_model("caml", model, train_ds, val_ds, cfg, device, ckpt_dir)
+            # CAML gets full (non-truncated) documents; chunking happens inside the model
+            caml_train_ds = CAMLDataset(train_texts, train_labels, train_con, tokenizer)
+            caml_val_ds   = CAMLDataset(val_texts,   val_labels,   val_con,   tokenizer)
+            train_cnn_model("caml", model, caml_train_ds, caml_val_ds, cfg, device, ckpt_dir,
+                            collate_fn=caml_collate_fn)
 
         elif model_name == "laat":
             mcfg  = cfg["group_a"]["laat"]
