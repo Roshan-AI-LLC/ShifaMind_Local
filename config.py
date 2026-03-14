@@ -213,14 +213,16 @@ LR_GAT_P2          = 2e-4  # GAT / heads / concept-embs LR (fast convergence fro
 
 # ── Loss weights ───────────────────────────────────────────────────────────────
 LAMBDA_DX         = 1.0
-# Phase 2: LAMBDA_ALIGN = 0.0 — the residual GAT path deliberately diverges
+# Phase 1: LAMBDA_ALIGN uses co-occurrence-masked alignment (concept_sc vs expected
+# concept activation derived from dx_probs × co_occ). Mathematically sound now.
+# Phase 2: set to 0.0 — the residual GAT path deliberately diverges
 # diagnosis scores from concept-only scores; penalising that divergence fights
 # the graph. Concept coherence is preserved by LAMBDA_CONCEPT alone.
 # Phase 3: restored to 0.03 via LAMBDA_ALIGN_P3 to re-enforce interpretability
 # once the graph signal is learned and stabilised.
-LAMBDA_ALIGN      = 0.0
+LAMBDA_ALIGN      = 0.05  # Phase 1: enabled — alignment loss is now correct (co_occ masked)
 LAMBDA_ALIGN_P3   = 0.03  # re-enabled for Phase 3 (RAG + frozen concept embeddings)
-LAMBDA_CONCEPT    = 0.05  # reduced from 0.3 — keyword concept F1 (~0.09) is too noisy
+LAMBDA_CONCEPT    = 0.20  # raised from 0.05 — concept labels now use whole-word regex + synonyms
 LAMBDA_DX_P3      = 2.0   # Phase 3 emphasises diagnosis loss
 
 # ── Focal loss (diagnosis head) ────────────────────────────────────────────────
@@ -228,6 +230,10 @@ FOCAL_GAMMA       = 2.0   # focusing exponent; 0 = weighted BCE, 2 = standard fo
 FOCAL_ALPHA       = 0.75  # positive-class weight; addresses severe label imbalance
 
 # ── Graph (Phase 2) — GNN architecture ────────────────────────────────────────
+# graph_scale is a learned scalar gate (sigmoid) controlling how much GAT signal
+# blends into the diagnosis head.  sigmoid(-2) ≈ 0.12 — small but nonzero so
+# GAT gradients flow from epoch 1, not after burn-in at near-zero.
+GRAPH_SCALE_INIT  = -2.0   # sigmoid(-2) ≈ 0.12; was -5 (≈ 0.007 — effectively off)
 GRAPH_HIDDEN_DIM  = 256
 GAT_HEADS         = 4       # 256 // 4 = 64 per head
 GAT_LAYERS        = 2
@@ -275,6 +281,47 @@ THRESHOLD_CANDIDATES = [round(t, 2) for t in [x / 100 for x in range(5, 96, 5)]]
 # GLOBAL CONCEPT SPACE  (111 unique clinical concepts)
 # Duplicates ('fever', 'edema') that existed in the original were removed.
 # ============================================================================
+
+# ── Concept synonym expansion ──────────────────────────────────────────────────
+# For concept label generation: each primary concept key maps to a list of
+# additional phrases that count as the same concept.  The primary term is always
+# included (via the base GLOBAL_CONCEPTS regex loop); synonyms are extras.
+# Used in scripts/phase1_train.py::generate_concept_labels().
+CONCEPT_SYNONYMS: dict = {
+    "dyspnea"          : ["shortness of breath", "dyspnoea", "respiratory distress",
+                           r"\bsob\b"],
+    "uti"              : ["urinary tract infection", "urinary tract infect"],
+    "ekg"              : [r"\becg\b", "electrocardiogram", "electrocardiograph"],
+    "xray"             : [r"x[\-\s]ray", r"\bcxr\b", "chest radiograph", "chest film",
+                          "plain film"],
+    "hemoptysis"       : ["coughing blood", "cough(?:ing)? up blood", "blood(?:y)? sputum"],
+    "hematuria"        : ["blood in (?:the )?urine", "bloody urine", "blood(?:y)? urine"],
+    "chest"            : [r"\bchest\b"],        # already exact via \b; kept for clarity
+    "altered"          : ["altered mental status", r"\bams\b", "change in mental status"],
+    "syncope"          : ["faint(?:ing)?", "loss of consciousness", r"\bloc\b",
+                          "blacked? out"],
+    "sepsis"           : ["septic(?:aemia)?", "septicemia", "bacteremia", "bacteraemia"],
+    "pneumonia"        : ["pneumonitis", r"\bcap\b", "community.acquired pneumonia",
+                          "hospital.acquired pneumonia"],
+    "infarction"       : ["heart attack", "myocardial infarction", r"\bmi\b(?! ?x)",
+                          "stemi", "nstemi"],
+    "thrombosis"       : ["clot", "blood clot", "deep vein thrombosis", r"\bdvt\b",
+                          "thrombus"],
+    "embolism"         : ["pulmonary embolism", r"\bpe\b", "thromboembolism"],
+    "tachycardia"      : [r"\btach\b", "rapid heart rate", "rapid pulse",
+                          "heart rate.{0,10}(?:elevated|increased|high)"],
+    "hypoxia"          : ["low oxygen", "oxygen saturation.{0,20}(?:low|decreas|drop)",
+                          r"\bdesaturat"],
+    "hyperglycemia"    : ["high blood sugar", "high glucose", "elevated glucose",
+                          "elevated blood sugar"],
+    "hypoglycemia"     : ["low blood sugar", "low glucose"],
+    "anticoagulation"  : ["anticoagulant", "blood thinner", "heparin", "warfarin",
+                          "rivaroxaban", "apixaban"],
+    "ventilation"      : ["mechanical ventilation", "intubat", "ventilat", r"\bett\b",
+                          "endotracheal"],
+    "dialysis"         : ["hemodialysis", "haemodialysis", "renal replacement",
+                          r"\bcrrt\b", r"\bsled\b"],
+}
 
 GLOBAL_CONCEPTS = [
     # Symptoms
