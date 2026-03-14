@@ -77,7 +77,7 @@ group_a:
     filter_size:  10
     dropout:      0.2
     lr:           0.0001
-    epochs:       10
+    epochs:       8
     weight_decay: 0.01
     chunk_size:   512
     chunk_overlap: 64
@@ -92,7 +92,7 @@ group_a:
     hidden_dim:   512    # BiLSTM hidden PER DIRECTION (1024 total) — paper value (Vu et al. 2020)
     dropout:      0.3
     lr:           0.001
-    epochs:       10
+    epochs:       8
     weight_decay: 0.01
     chunk_size:   512    # kept for API compatibility (no chunking occurs at L=512)
     chunk_overlap: 64
@@ -108,7 +108,7 @@ group_a:
     dropout:      0.1
     lr_bert:      0.00002
     lr_head:      0.001
-    epochs:       3
+    epochs:       5
     freeze_bert_epochs: 0
     interpretable: "×"
     hipaa_safe:    true
@@ -130,7 +130,7 @@ group_a:
     dropout:        0.2    # rep_dropout
     lstm_dropout:   0.1    # inter-layer BiLSTM dropout (no effect for 1 layer)
     lr:             0.0001
-    epochs:         10
+    epochs:         8
     weight_decay:   0.01
     chunk_size:     512    # for API compatibility
     chunk_overlap:  64
@@ -151,7 +151,7 @@ group_a:
     # lambda_concept is a TUNABLE hyperparameter (paper does not prescribe a value).
     lambda_concept: 0.5
     lr_bert:      0.00002   # low LR for pretrained BERT layers
-    lr_heads:     0.0002    # higher LR for concept_head + diag_head (trained from scratch)
+    lr_heads:     0.001     # same as PLM-ICD head LR — 0.0002 unfairly disadvantaged CBM
     epochs_stage1: 2     # kept for total-epoch compatibility (stage1 + stage2 = total)
     epochs_stage2: 2
     interpretable: "✓Full"
