@@ -1,0 +1,80 @@
+{
+  "gpt": {
+    "display_name": "GPT-5.4",
+    "table_group": "Frontier LLMs",
+    "interpretable": "\u00d7",
+    "hipaa_safe": false,
+    "default_0.5": {
+      "macro_f1": 0.41216812972345607,
+      "micro_f1": 0.5384332475174697,
+      "precision": 0.4499916445773489,
+      "recall": 0.4495888061543242
+    },
+    "tuned": {
+      "macro_f1": 0.41216812972345607,
+      "micro_f1": 0.5384332475174697,
+      "precision": 0.4499916445773489,
+      "recall": 0.4495888061543242
+    },
+    "ci_95": {
+      "lo": 0.39374375942301404,
+      "hi": 0.4251947156943732
+    },
+    "mean_threshold": 0.5,
+    "llm_note": "500-sample stratified subset, fixed threshold=0.5",
+    "parse_failures": 0,
+    "n_samples": 500
+  },
+  "claude": {
+    "display_name": "Claude Sonnet 4.6",
+    "table_group": "Frontier LLMs",
+    "interpretable": "\u00d7",
+    "hipaa_safe": false,
+    "default_0.5": {
+      "macro_f1": 0.3555925370872199,
+      "micro_f1": 0.4735223778612914,
+      "precision": 0.3767946981003687,
+      "recall": 0.40774942471740405
+    },
+    "tuned": {
+      "macro_f1": 0.3555925370872199,
+      "micro_f1": 0.4735223778612914,
+      "precision": 0.3767946981003687,
+      "recall": 0.40774942471740405
+    },
+    "ci_95": {
+      "lo": 0.3379869544543646,
+      "hi": 0.36929669144852406
+    },
+    "mean_threshold": 0.5,
+    "llm_note": "500-sample stratified subset, fixed threshold=0.5",
+    "parse_failures": 0,
+    "n_samples": 500
+  },
+  "gemini": {
+    "display_name": "Gemini 3.1 Pro Preview",
+    "table_group": "Frontier LLMs",
+    "interpretable": "\u00d7",
+    "hipaa_safe": false,
+    "default_0.5": {
+      "macro_f1": 0.0,
+      "micro_f1": 0.0,
+      "precision": 0.0,
+      "recall": 0.0
+    },
+    "tuned": {
+      "macro_f1": 0.0,
+      "micro_f1": 0.0,
+      "precision": 0.0,
+      "recall": 0.0
+    },
+    "ci_95": {
+      "lo": 0.0,
+      "hi": 0.0
+    },
+    "mean_threshold": 0.5,
+    "llm_note": "500-sample stratified subset, fixed threshold=0.5",
+    "parse_failures": 3,
+    "n_samples": 500
+  }
+}

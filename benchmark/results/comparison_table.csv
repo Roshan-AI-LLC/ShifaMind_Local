@@ -1,0 +1,4 @@
+Model,Group,Macro-F1 (tuned),CI-lo,CI-hi,Micro-F1,Precision,Recall,Interpretable,HIPAA-Safe,McNemar-p-vs-P1
+GPT-5.4,Frontier LLMs,0.4122,0.3937,0.4252,0.5384,0.4500,0.4496,×,False,N/A
+Claude Sonnet 4.6,Frontier LLMs,0.3556,0.3380,0.3693,0.4735,0.3768,0.4077,×,False,N/A
+Gemini 3.1 Pro Preview,Frontier LLMs,0.0000,0.0000,0.0000,0.0000,0.0000,0.0000,×,False,N/A

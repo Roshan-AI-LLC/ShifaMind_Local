@@ -1,0 +1,16 @@
+\begin{table*}[ht]
+\centering
+\small
+\caption{ShifaMind benchmark on MIMIC-III Top-50 ICD-10 diagnosis coding. Group A models evaluated on full test set (N=17,266) with per-label threshold tuning; 95\% bootstrap CI in brackets. Group B LLMs evaluated on a stratified 500-sample subset at fixed threshold=0.5 (no tuning). \textbf{Bold}: best Group A macro-F1. $^{\dagger}$: 500-sample subset; not directly comparable to Group A.}
+\label{tab:benchmark}
+\begin{tabular}{l r r r r c c}
+\toprule
+Model & Macro-F1$\uparrow$ & Micro-F1$\uparrow$ & Precision$\uparrow$ & Recall$\uparrow$ & Interpretable & HIPAA-Safe \\
+\midrule
+\multicolumn{7}{l}{\textit{Frontier LLMs$^{\dagger}$}} \\
+GPT-5.4 & 0.4122 & 0.5384 & 0.4500 & 0.4496 & $\times$ & $\times$ PHI\,out \\
+Claude Sonnet 4.6 & 0.3556 & 0.4735 & 0.3768 & 0.4077 & $\times$ & $\times$ PHI\,out \\
+Gemini 3.1 Pro Preview & 0.0000 & 0.0000 & 0.0000 & 0.0000 & $\times$ & $\times$ PHI\,out \\
+\bottomrule
+\end{tabular}
+\end{table*}
