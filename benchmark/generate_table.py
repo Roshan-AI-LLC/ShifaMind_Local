@@ -77,7 +77,6 @@ _KEY_PRIORITY = {
     "shifamind_phase3" : 3,
     "gpt"              : 0,
     "claude"           : 1,
-    "gemini"           : 2,
 }
 
 
