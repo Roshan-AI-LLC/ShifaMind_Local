@@ -281,14 +281,14 @@ def estimate_cost(
 def main() -> None:
     parser = argparse.ArgumentParser(description="Evaluate frontier LLMs zero-shot")
     parser.add_argument("--models",   nargs="+",
-                        choices=["gpt", "claude", "gemini"],
-                        default=["gpt", "claude", "gemini"])
+                        choices=["gpt", "claude"],
+                        default=["gpt", "claude"])
     parser.add_argument("--dry-run",  action="store_true",
                         help="Print cost estimate and exit without calling APIs")
     parser.add_argument("--resume",   action="store_true",
                         help="Resume from cache — skip already-evaluated samples")
     parser.add_argument("--clear-model", nargs="+",
-                        choices=["gpt", "claude", "gemini"],
+                        choices=["gpt", "claude"],
                         help="Wipe cached results for these models before running "
                              "(use when a previous run cached bad/zero results). "
                              "GPT/Claude entries in all_results.json are preserved.")

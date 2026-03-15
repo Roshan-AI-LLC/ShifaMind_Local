@@ -50,31 +50,5 @@
     "llm_note": "500-sample stratified subset, fixed threshold=0.5",
     "parse_failures": 0,
     "n_samples": 500
-  },
-  "gemini": {
-    "display_name": "Gemini 3.1 Pro Preview",
-    "table_group": "Frontier LLMs",
-    "interpretable": "\u00d7",
-    "hipaa_safe": false,
-    "default_0.5": {
-      "macro_f1": 0.0,
-      "micro_f1": 0.0,
-      "precision": 0.0,
-      "recall": 0.0
-    },
-    "tuned": {
-      "macro_f1": 0.0,
-      "micro_f1": 0.0,
-      "precision": 0.0,
-      "recall": 0.0
-    },
-    "ci_95": {
-      "lo": 0.0,
-      "hi": 0.0
-    },
-    "mean_threshold": 0.5,
-    "llm_note": "500-sample stratified subset, fixed threshold=0.5",
-    "parse_failures": 3,
-    "n_samples": 500
   }
 }
