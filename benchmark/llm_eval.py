@@ -319,10 +319,9 @@ def main() -> None:
 
     with open(ROOT / cfg["data"]["top50_info"]) as f:
         top50_info = json.load(f)
-    if hasattr(test_split, "columns"):
-        top50_codes = [c for c in test_split.columns if c != "text"]
-    else:
-        top50_codes = list(top50_info.keys())[:test_labels.shape[1]]
+    # Use the canonical code list from top50_info — do NOT derive from DataFrame
+    # columns, which also contain "labels" (list column), metadata columns, etc.
+    top50_codes = top50_info["top_50_codes"]
 
     # ── Stratified 500-sample subset ──────────────────────────────────────
     sample_texts, sample_labels, sample_idx = stratified_sample(
@@ -395,7 +394,7 @@ def main() -> None:
 
         m = compute_metrics(labels, preds)
         ci_lo, ci_hi = bootstrap_macro_f1_ci(
-            labels.astype(float), preds.astype(float),
+            preds.astype(float), labels.astype(float),
             np.full(len(top50_codes), 0.5),
             n_samples=cfg["bootstrap"]["n_samples"],
             ci_level=cfg["bootstrap"]["ci_level"],
