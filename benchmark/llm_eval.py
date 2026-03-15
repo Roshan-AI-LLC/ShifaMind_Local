@@ -172,8 +172,10 @@ def parse_llm_response(response_text: str, top50_codes: list) -> list[int]:
         else:
             codes = re.findall(r'[A-Z][0-9]{2,4}[\w]*', text)
 
-    # Normalise: uppercase, strip spaces
-    codes_norm = [str(c).strip().upper() for c in codes if isinstance(c, str)]
+    # Normalise: uppercase, strip spaces AND dots.
+    # Gemini returns ICD-10 codes in clinical dot-notation ("I50.32", "E11.65")
+    # but our top50_codes list uses the raw format ("I5032", "E1165").
+    codes_norm = [str(c).strip().upper().replace(".", "") for c in codes if isinstance(c, str)]
     top50_upper = [c.upper() for c in top50_codes]
 
     vec = [int(c in codes_norm) for c in top50_upper]
@@ -212,14 +214,25 @@ def call_openrouter(
     for attempt in range(max_retries):
         try:
             resp = client.chat.completions.create(
-                model       = model_id,
-                messages    = [
+                model          = model_id,
+                messages       = [
                     {"role": "system", "content": system},
                     {"role": "user",   "content": user},
                 ],
-                max_tokens  = max_tokens,
-                temperature = 0.0,
+                max_tokens     = max_tokens,
+                temperature    = 0.0,
+                # Forces valid JSON output — OpenRouter passes this to Gemini/GPT/Claude.
+                # Prevents partial/malformed responses that cause parse failures.
+                # Models that don't support it ignore it silently (OpenRouter behaviour).
+                response_format = {"type": "json_object"},
             )
+            # Guard: resp.choices can be None or [] when Gemini's safety filter
+            # triggers or OpenRouter returns a non-standard error response.
+            if not resp or not resp.choices:
+                raise ValueError(
+                    f"Empty choices in response "
+                    f"(finish_reason={getattr(resp, 'choices', None)})"
+                )
             return resp.choices[0].message.content or ""
         except Exception as e:
             print(f"    OpenRouter error (attempt {attempt+1}/{max_retries}): {e}")
@@ -274,6 +287,11 @@ def main() -> None:
                         help="Print cost estimate and exit without calling APIs")
     parser.add_argument("--resume",   action="store_true",
                         help="Resume from cache — skip already-evaluated samples")
+    parser.add_argument("--clear-model", nargs="+",
+                        choices=["gpt", "claude", "gemini"],
+                        help="Wipe cached results for these models before running "
+                             "(use when a previous run cached bad/zero results). "
+                             "GPT/Claude entries in all_results.json are preserved.")
     parser.add_argument("--config",   default="benchmark/config.yaml")
     args = parser.parse_args()
 
@@ -336,6 +354,15 @@ def main() -> None:
         with open(cache_path) as f:
             cache = json.load(f)
         print(f"Resuming from cache ({sum(len(v) for v in cache.values())} existing predictions)")
+
+    # ── Clear stale model cache if requested ──────────────────────────────────
+    if args.clear_model:
+        for mk in args.clear_model:
+            if mk in cache:
+                del cache[mk]
+                print(f"  Cache cleared for {mk} (will re-run all 500 samples)")
+        with open(cache_path, "w") as f:
+            json.dump(cache, f)
 
     # ── Run each LLM ──────────────────────────────────────────────────────
     all_results = {}
