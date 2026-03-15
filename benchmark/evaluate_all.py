@@ -383,11 +383,9 @@ def main() -> None:
 
     with open(ROOT / cfg["data"]["top50_info"]) as f:
         top50_info = json.load(f)
-    if hasattr(val_split, "columns"):
-        top50_codes = val_split.select_dtypes(include=[np.number]).columns.tolist()
-    else:
-        top50_codes = list(top50_info.keys())[:num_labels]
-    top50_codes = top50_codes[:num_labels]   # safety truncation
+    # Use the canonical code list — select_dtypes would also pick up numeric
+    # metadata columns (hadm_id, etc.) and the order is not guaranteed.
+    top50_codes = top50_info["top_50_codes"][:num_labels]
 
     candidates = cfg["training"]["threshold_candidates"]
 

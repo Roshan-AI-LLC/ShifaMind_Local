@@ -2,24 +2,30 @@
 """
 scripts/phase1_train.py
 
-Phase 1 training: BioClinicalBERT + Concept Bottleneck → Top-50 ICD-10.
+Phase 1 training: BioClinicalBERT + LAAT + Concept Bottleneck → Top-50 ICD-10.
 
 Run:
     cd ShifaMind_Local
     python scripts/phase1_train.py
 
+Split behaviour
+---------------
+If shared_data/train_split.pkl (and val/test) already exist they are LOADED
+as-is.  The train/val/test partition is NEVER recreated once set, preserving
+benchmark reproducibility.  Only concept labels are regenerated (improved
+regex matching) each run.
+
 Outputs (all under ./shifamind_local/):
-    shared_data/train_split.pkl
-    shared_data/val_split.pkl
-    shared_data/test_split.pkl
-    shared_data/train_concept_labels.npy
+    shared_data/train_split.pkl          (created on first run only)
+    shared_data/val_split.pkl            (created on first run only)
+    shared_data/test_split.pkl           (created on first run only)
+    shared_data/train_concept_labels.npy (regenerated each run with regex labels)
     shared_data/val_concept_labels.npy
     shared_data/test_concept_labels.npy
     shared_data/concept_list.json
     shared_data/top50_icd10_info.json
     concept_store/phase1_concept_embeddings.pt
     checkpoints/phase1/phase1_best.pt
-    checkpoints/phase1/phase1_epoch_N.pt   (every epoch)
     results/phase1/results.json
     results/phase1/per_label_f1.csv
     logs/shifamind.log
@@ -27,6 +33,7 @@ Outputs (all under ./shifamind_local/):
 """
 import json
 import pickle
+import re
 import shutil
 import sys
 from collections import defaultdict
@@ -76,64 +83,101 @@ log.info("=" * 72)
 log.info(f"Device : {device}")
 
 # ============================================================================
-# LOAD SOURCE DATA
+# TOP-50 ICD-10 INFO
 # ============================================================================
 
-log.info("Loading source data …")
-assert config.DATA_CSV.exists(), f"Data CSV not found: {config.DATA_CSV}"
 assert config.TOP50_INFO_SRC.exists(), f"top50_icd10_info.json not found: {config.TOP50_INFO_SRC}"
 
 with open(config.TOP50_INFO_SRC) as f:
-    top50_info  = json.load(f)
+    top50_info = json.load(f)
 TOP_50_CODES = top50_info["top_50_codes"]
 NUM_LABELS   = len(TOP_50_CODES)
 NUM_CONCEPTS = len(config.GLOBAL_CONCEPTS)
 
-log.info(f"Top-50 ICD-10 codes loaded: {NUM_LABELS}")
-log.info(f"Global concepts            : {NUM_CONCEPTS}")
+log.info(f"Top-50 ICD-10 codes: {NUM_LABELS}   Global concepts: {NUM_CONCEPTS}")
 
-df_all = pd.read_csv(config.DATA_CSV)
-df_all["labels"] = df_all[TOP_50_CODES].values.tolist()
-df     = df_all[["text", "labels"] + TOP_50_CODES].dropna(subset=["text"]).copy()
-
-log.info(f"Dataset: {len(df):,} samples")
-
-# ============================================================================
-# TRAIN / VAL / TEST SPLIT
-# ============================================================================
-
-train_idx, temp_idx = train_test_split(range(len(df)), test_size=0.30, random_state=config.SEED)
-val_idx,  test_idx  = train_test_split(temp_idx,        test_size=0.50, random_state=config.SEED)
-
-df_train = df.iloc[train_idx].reset_index(drop=True)
-df_val   = df.iloc[val_idx].reset_index(drop=True)
-df_test  = df.iloc[test_idx].reset_index(drop=True)
-
-log.info(f"Split — train {len(df_train):,}  val {len(df_val):,}  test {len(df_test):,}")
-
-# Save splits
-with open(config.TRAIN_SPLIT, "wb") as f: pickle.dump(df_train, f)
-with open(config.VAL_SPLIT,   "wb") as f: pickle.dump(df_val,   f)
-with open(config.TEST_SPLIT,  "wb") as f: pickle.dump(df_test,  f)
-
-# Copy top50_info to shared_data
+# Copy top50_info to shared_data (idempotent)
 shutil.copy(config.TOP50_INFO_SRC, config.TOP50_INFO_OUT)
 
 # ============================================================================
-# CONCEPT LABELS (keyword-based)
+# TRAIN / VAL / TEST SPLIT  —  load existing splits if available
 # ============================================================================
 
-def generate_concept_labels(texts, concepts):
+_splits_exist = (
+    config.TRAIN_SPLIT.exists()
+    and config.VAL_SPLIT.exists()
+    and config.TEST_SPLIT.exists()
+)
+
+if _splits_exist:
+    log.info("Existing splits found — loading from disk (benchmark partition preserved).")
+    with open(config.TRAIN_SPLIT, "rb") as f: df_train = pickle.load(f)
+    with open(config.VAL_SPLIT,   "rb") as f: df_val   = pickle.load(f)
+    with open(config.TEST_SPLIT,  "rb") as f: df_test  = pickle.load(f)
+else:
+    log.info("No existing splits — reading source CSV and creating train/val/test partition.")
+    assert config.DATA_CSV.exists(), f"Data CSV not found: {config.DATA_CSV}"
+    df_all = pd.read_csv(config.DATA_CSV)
+    df_all["labels"] = df_all[TOP_50_CODES].values.tolist()
+    df = df_all[["text", "labels"] + TOP_50_CODES].dropna(subset=["text"]).copy()
+    log.info(f"Dataset: {len(df):,} samples")
+
+    train_idx, temp_idx = train_test_split(range(len(df)), test_size=0.30, random_state=config.SEED)
+    val_idx,   test_idx = train_test_split(temp_idx,        test_size=0.50, random_state=config.SEED)
+
+    df_train = df.iloc[train_idx].reset_index(drop=True)
+    df_val   = df.iloc[val_idx].reset_index(drop=True)
+    df_test  = df.iloc[test_idx].reset_index(drop=True)
+
+    with open(config.TRAIN_SPLIT, "wb") as f: pickle.dump(df_train, f)
+    with open(config.VAL_SPLIT,   "wb") as f: pickle.dump(df_val,   f)
+    with open(config.TEST_SPLIT,  "wb") as f: pickle.dump(df_test,  f)
+
+log.info(f"Split — train {len(df_train):,}  val {len(df_val):,}  test {len(df_test):,}")
+
+# ============================================================================
+# CONCEPT LABELS  (whole-word regex + synonym expansion)
+# ============================================================================
+# Always regenerated from the existing splits each run so that improvements
+# to CONCEPT_SYNONYMS / regex patterns take effect without recreating splits.
+
+def _build_concept_patterns(concepts, synonyms: dict) -> list:
+    """
+    For each concept string, compile a single regex that matches:
+      • the primary concept term as a whole word  (\b<term>\b)
+      • any synonym patterns listed in `synonyms[concept]`
+    Returns a list of compiled patterns in the same order as `concepts`.
+    """
+    patterns = []
+    for c in concepts:
+        parts = [rf"\b{re.escape(c)}\b"]
+        for syn in synonyms.get(c, []):
+            # synonyms may already contain regex meta-chars (e.g. \b, (?:...))
+            parts.append(syn)
+        patterns.append(re.compile("|".join(parts), re.IGNORECASE))
+    return patterns
+
+
+_CONCEPT_PATTERNS = _build_concept_patterns(config.GLOBAL_CONCEPTS, config.CONCEPT_SYNONYMS)
+
+
+def generate_concept_labels(texts, patterns):
+    """
+    Label each text with a binary vector over the concept space.
+    Uses whole-word regex matching + synonym expansion instead of naive
+    substring `in` checks (which cause false positives, e.g. 'ct' in 'activity').
+    """
     labels = []
     for text in tqdm(texts, desc="Concept labels", leave=False):
         tl = str(text).lower()
-        labels.append([1 if c in tl else 0 for c in concepts])
+        labels.append([1 if pat.search(tl) else 0 for pat in patterns])
     return np.array(labels, dtype=np.float32)
 
-log.info("Generating concept labels …")
-train_cl = generate_concept_labels(df_train["text"], config.GLOBAL_CONCEPTS)
-val_cl   = generate_concept_labels(df_val["text"],   config.GLOBAL_CONCEPTS)
-test_cl  = generate_concept_labels(df_test["text"],  config.GLOBAL_CONCEPTS)
+
+log.info("Generating concept labels (whole-word regex + synonyms) …")
+train_cl = generate_concept_labels(df_train["text"], _CONCEPT_PATTERNS)
+val_cl   = generate_concept_labels(df_val["text"],   _CONCEPT_PATTERNS)
+test_cl  = generate_concept_labels(df_test["text"],  _CONCEPT_PATTERNS)
 
 np.save(config.TRAIN_CONCEPT_LABELS, train_cl)
 np.save(config.VAL_CONCEPT_LABELS,   val_cl)
@@ -145,6 +189,26 @@ with open(config.CONCEPT_LIST, "w") as f:
 log.info(f"Concept labels: shape {train_cl.shape}, avg {train_cl.sum(1).mean():.2f} per sample")
 
 # ============================================================================
+# CONCEPT-LABEL CO-OCCURRENCE MATRIX
+# ============================================================================
+# co_occ[c, k] = P(concept c | label k) from training data.
+# Shape: [num_concepts, num_labels]
+# Used to:
+#   1. Initialise concept_to_label.weight in ShifaMind2Phase1
+#   2. Drive the co-occurrence alignment loss in MultiObjectiveLoss
+
+train_labels_np = np.array(df_train["labels"].tolist(), dtype=np.float32)  # [N, K]
+label_counts    = train_labels_np.sum(axis=0) + 1e-8                        # [K]
+
+# concept co-occurrence with each label: [C, K]
+co_occ = (train_cl.T @ train_labels_np) / label_counts   # [num_concepts, num_labels]
+co_occ = co_occ.astype(np.float32)
+
+log.info(f"Co-occurrence matrix: shape {co_occ.shape}  "
+         f"mean={co_occ.mean():.4f}  max={co_occ.max():.4f}")
+co_occ_tensor = torch.tensor(co_occ)
+
+# ============================================================================
 # MODEL
 # ============================================================================
 
@@ -153,7 +217,11 @@ tokenizer  = AutoTokenizer.from_pretrained(config.BERT_MODEL_NAME)
 base_model = AutoModel.from_pretrained(config.BERT_MODEL_NAME).to(device)
 
 model = ShifaMind2Phase1(
-    base_model, num_concepts=NUM_CONCEPTS, num_classes=NUM_LABELS, fusion_layers=[9, 11]
+    base_model,
+    num_concepts=NUM_CONCEPTS,
+    num_classes=NUM_LABELS,
+    fusion_layers=[9, 11],
+    co_occ_matrix=co_occ,        # initialises concept_to_label from P(concept|label)
 ).to(device)
 
 total_params = sum(p.numel() for p in model.parameters())
@@ -180,6 +248,7 @@ log.info(f"Loaders — train {len(train_loader)} batches  val {len(val_loader)} 
 criterion = MultiObjectiveLoss(
     config.LAMBDA_DX, config.LAMBDA_ALIGN, config.LAMBDA_CONCEPT,
     focal_gamma=config.FOCAL_GAMMA, focal_alpha=config.FOCAL_ALPHA,
+    co_occ_matrix=co_occ_tensor,   # enables co-occurrence masked alignment loss
 )
 optimizer = torch.optim.AdamW(model.parameters(), lr=config.LEARNING_RATE, weight_decay=config.WEIGHT_DECAY)
 
@@ -262,17 +331,21 @@ for epoch in range(config.NUM_EPOCHS_P1):
         # Phase 1 concept embeddings — saved explicitly for Phase 2 transfer
         "concept_embeddings"  : model.concept_embeddings.data.cpu(),
         "config": {
-            "num_concepts"  : NUM_CONCEPTS,
-            "num_classes"   : NUM_LABELS,
-            "fusion_layers" : [9, 11],
-            "top_50_codes"  : TOP_50_CODES,
-            "lambda_dx"     : config.LAMBDA_DX,
-            "lambda_align"  : config.LAMBDA_ALIGN,
-            "lambda_concept": config.LAMBDA_CONCEPT,
-            "focal_gamma"   : config.FOCAL_GAMMA,
-            "focal_alpha"   : config.FOCAL_ALPHA,
-            "max_length"    : config.MAX_LENGTH,
+            "num_concepts"   : NUM_CONCEPTS,
+            "num_classes"    : NUM_LABELS,
+            "fusion_layers"  : [9, 11],
+            "top_50_codes"   : TOP_50_CODES,
+            "lambda_dx"      : config.LAMBDA_DX,
+            "lambda_align"   : config.LAMBDA_ALIGN,
+            "lambda_concept" : config.LAMBDA_CONCEPT,
+            "focal_gamma"    : config.FOCAL_GAMMA,
+            "focal_alpha"    : config.FOCAL_ALPHA,
+            "max_length"     : config.MAX_LENGTH,
+            "architecture"   : "laat+concept_bottleneck",
+            "concept_labels" : "whole_word_regex+synonyms",
         },
+        # Save co-occurrence matrix so Phase 2 can inherit it if needed
+        "co_occ_matrix": co_occ_tensor,
     }
 
     # Save best
