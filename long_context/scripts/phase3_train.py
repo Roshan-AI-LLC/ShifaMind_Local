@@ -50,7 +50,10 @@ from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+_lc_root   = Path(__file__).resolve().parent.parent
+_proj_root = _lc_root.parent
+sys.path.insert(0, str(_proj_root))
+sys.path.insert(0, str(_lc_root))
 
 import numpy as np
 import pandas as pd
@@ -111,6 +114,8 @@ log.info(f"ShifaMind Phase 3 — Training (base: Phase {BASE_PHASE})")
 log.info("=" * 72)
 log.info(f"Device     : {device}")
 log.info(f"Base phase : {BASE_PHASE}")
+log.info(f"RAG encoder: {config.RAG_MODEL_NAME}")
+log.info("NOTE: if RAG encoder changed since last run, pass --rebuild-corpus to rebuild FAISS index")
 
 # Resolve phase-specific checkpoint and results directories
 run_ckpt_root, RESULTS_DIR = config.get_p3_paths(BASE_PHASE)
@@ -164,6 +169,41 @@ log.info(
 )
 
 # ============================================================================
+# CONCEPT-LABEL CO-OCCURRENCE MATRIX
+# ============================================================================
+# Try Phase 2 checkpoint first → Phase 1 checkpoint → recompute from data.
+# Used to:
+#   1. Warm-start concept_to_label in ShifaMindPhase2GAT (model constructor)
+#   2. Enable co-occurrence alignment loss (LAMBDA_ALIGN_P3)
+
+def _compute_co_occ(cl_arr, df_split, n_labels):
+    labels_np  = np.array(df_split["labels"].tolist(), dtype=np.float32)
+    cnts       = labels_np.sum(axis=0) + 1e-8
+    return (cl_arr.T @ labels_np / cnts).astype(np.float32)
+
+_co_occ_loaded = False
+for _ckpt_root, _fname in [
+    (config.CKPT_P2, "phase2_best.pt"),
+    (config.CKPT_P1, "phase1_best.pt"),
+]:
+    try:
+        _path = find_latest_checkpoint(_ckpt_root, _fname)
+        _ckpt = torch.load(_path, map_location="cpu", weights_only=False)
+        if "co_occ_matrix" in _ckpt:
+            co_occ = _ckpt["co_occ_matrix"].numpy().astype(np.float32)
+            log.info(f"Co-occurrence matrix loaded from {_fname}: {co_occ.shape}")
+            _co_occ_loaded = True
+            break
+    except FileNotFoundError:
+        pass
+
+if not _co_occ_loaded:
+    co_occ = _compute_co_occ(train_cl, df_train, NUM_LABELS)
+    log.info(f"Co-occurrence matrix computed from training data: {co_occ.shape}")
+
+co_occ_tensor = torch.tensor(co_occ)
+
+# ============================================================================
 # LOAD BIOCLINICALBERT + GRAPH
 # ============================================================================
 
@@ -195,6 +235,7 @@ phase2_model = ShifaMindPhase2GAT(
     num_diagnoses    = NUM_LABELS,
     graph_hidden_dim = config.GRAPH_HIDDEN_DIM,
     concepts_list    = config.GLOBAL_CONCEPTS,
+    co_occ_matrix    = co_occ,    # warm-starts concept_to_label from P(concept|label)
 ).to(device)
 
 # ============================================================================
@@ -228,32 +269,39 @@ else:
     p1_ckpt      = load_checkpoint(p1_ckpt_path, device)
     p1_state     = p1_ckpt["model_state_dict"]
 
-    # Build remapped state dict:
-    #   1. BERT: base_model.* → bert.*
-    #   2. Shared heads: concept_head.*, diagnosis_head.* (keys identical)
+    # Build remapped state dict.
+    # Phase 1 and Phase 2 now share the same LAAT + concept head keys:
+    #   base_model.*           → bert.*
+    #   laat_first.*           → laat_first.*    (same key)
+    #   laat_second.*          → laat_second.*   (same key)
+    #   laat_output.*          → laat_output.*   (same key)
+    #   concept_head.*         → concept_head.*  (same key)
+    #   concept_to_label.*     → concept_to_label.* (same key)
+    # Skipped: concept_embeddings, fusion_modules.* (Phase 1-only)
+    _P1_SHARED_PREFIXES = (
+        "laat_first.", "laat_second.", "laat_output.",
+        "concept_head.", "concept_to_label.",
+    )
     p1_mapped = {}
     for k, v in p1_state.items():
         if k.startswith("base_model."):
             p1_mapped[k.replace("base_model.", "bert.", 1)] = v
-        elif k.startswith(("concept_head.", "diagnosis_head.")):
+        elif k.startswith(_P1_SHARED_PREFIXES):
             p1_mapped[k] = v
-        # Skip: concept_embeddings (handled separately via P1_CONCEPT_EMBS)
-        #        fusion_modules.* (Phase 1 arch, not present in Phase 2)
 
     missing, unexpected = phase2_model.load_state_dict(p1_mapped, strict=False)
     n_bert  = sum(1 for k in p1_mapped if k.startswith("bert."))
     n_heads = sum(1 for k in p1_mapped if not k.startswith("bert."))
-    log.info(
-        f"Phase 1 weights loaded into Phase 2 model  ← {p1_ckpt_path.name}"
-    )
-    log.info(f"  BERT tensors   : {n_bert}")
-    log.info(f"  Head tensors   : {n_heads}  (concept_head + diagnosis_head)")
-    log.info(f"  Missing (P2-only layers, will be frozen): {len(missing)}")
+    log.info(f"Phase 1 weights loaded into Phase 2 model  ← {p1_ckpt_path.name}")
+    log.info(f"  BERT tensors : {n_bert}")
+    log.info(f"  Head tensors : {n_heads}  (laat_first/second/output, concept_head, concept_to_label)")
+    log.info(f"  Missing (P2-only GAT layers, will be frozen): {len(missing)}")
 
-    # Fix graph_scale so GAT contributes ≈ 0 (sigmoid(−5) ≈ 0.007)
+    # Keep graph_scale near-zero so freshly-initialised GAT layers don't
+    # corrupt the Phase 1 predictions at epoch 0.  sigmoid(-5) ≈ 0.007.
     with torch.no_grad():
         phase2_model.graph_scale.fill_(-5.0)
-    log.info("  graph_scale = −5.0  (GAT disabled at init)")
+    log.info("  graph_scale = -5.0  (GAT near-disabled; grows as GAT layers train)")
 
 # ============================================================================
 # LOAD CONCEPT EMBEDDINGS  (frozen throughout Phase 3)
@@ -427,26 +475,31 @@ log.info(
 # TRAINING SETUP
 # ============================================================================
 
-criterion = MultiObjectiveLoss(config.LAMBDA_DX_P3, config.LAMBDA_ALIGN_P3, config.LAMBDA_CONCEPT)
+# Phase 3 re-enables the co-occurrence alignment loss (LAMBDA_ALIGN_P3=0.03).
+# Now that concept embeddings are frozen and the model is stable, this loss
+# re-enforces interpretability without fighting active gradient updates.
+criterion = MultiObjectiveLoss(
+    config.LAMBDA_DX_P3, config.LAMBDA_ALIGN_P3, config.LAMBDA_CONCEPT,
+    focal_gamma=config.FOCAL_GAMMA, focal_alpha=config.FOCAL_ALPHA,
+    co_occ_matrix=co_occ_tensor,
+)
 
 # ── Freeze strategy ───────────────────────────────────────────────────────────
 #
-# Phase 3 trains ONLY the RAG projection head + diagnosis_head.
-# Everything in phase2_model is frozen except diagnosis_head.
+# Freeze all Phase 2 layers EXCEPT the final classification heads:
+#   laat_output      — maps per-label reps to scalar logits
+#   concept_to_label — concept → label affinity gate
 #
-# Rationale: rag_gate_logit starts at sigmoid(-5) ≈ 0 so Phase 3 begins as
-# an exact copy of Phase 2.  BERT + all Phase 2 bottleneck weights are already
-# optimal from Phase 2 training — re-training them with noisy RAG signal
-# (before rag_projection/rag_to_logits have learned anything) causes drift and
-# degradation.  Freezing BERT ensures Phase 3 >= Phase 2 in practice.
-# The diagnosis_head is kept trainable at a low LR so it can adapt to the RAG
-# context once the RAG head learns signal.
+# These are the "head" layers (analogous to old diagnosis_head) that benefit
+# from adapting to the RAG augmented training distribution while BERT, GAT,
+# concept_fusion, and cross_attention remain frozen and stable.
 #
+_P3_TRAINABLE_P2 = ("laat_output.", "concept_to_label.")
 for name, param in model.phase2_model.named_parameters():
-    if not name.startswith("diagnosis_head"):
+    if not name.startswith(_P3_TRAINABLE_P2):
         param.requires_grad_(False)
 
-freeze_label = "all Phase 2 layers except diagnosis_head"
+freeze_label = "all Phase 2 except laat_output + concept_to_label"
 
 trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
 log.info(f"Phase 3 trainable parameters: {trainable:,}  (frozen: {freeze_label})")
@@ -467,7 +520,7 @@ rag_params   = [p for p in model.parameters() if p.requires_grad and id(p) in ra
 other_params = [p for p in model.parameters() if p.requires_grad and id(p) not in rag_param_ids]
 
 log.info(
-    f"Optimizer: BERT+heads LR={config.LEARNING_RATE:.0e}  "
+    f"Optimizer: P2 heads (laat_output, concept_to_label) LR={config.LEARNING_RATE:.0e}  "
     f"RAG head LR={config.RAG_HEAD_LR:.0e}"
 )
 
@@ -593,7 +646,11 @@ for epoch in range(config.NUM_EPOCHS_P3):
             "graph_hidden_dim" : config.GRAPH_HIDDEN_DIM,
             "top_50_codes"     : TOP_50_CODES,
             "lambda_dx"        : config.LAMBDA_DX_P3,
+            "lambda_align"     : config.LAMBDA_ALIGN_P3,
+            "rag_model"        : config.RAG_MODEL_NAME,
+            "rag_gate_max"     : config.RAG_GATE_MAX,
             "base_phase"       : BASE_PHASE,
+            "architecture"     : "laat+concept_bottleneck+gat+rag",
         },
     }
 
