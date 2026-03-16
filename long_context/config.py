@@ -63,7 +63,7 @@ UMLS_MRREL      = UMLS_DIR / "MRREL.RRF"
 # LOCAL OUTPUT ROOT  (all generated files live here)
 # ============================================================================
 
-LOCAL = Path(__file__).resolve().parent / "shifamind_local"
+LOCAL = Path(__file__).resolve().parent.parent / "shifamind_local_lc"
 
 # ── Shared data (produced by Phase 1, consumed by all later phases) ────────────
 SHARED_DATA            = LOCAL / "shared_data"
@@ -180,23 +180,38 @@ for _d in _ALL_OUTPUT_DIRS:
 # ============================================================================
 
 SEED = 42
-BERT_MODEL_NAME = "emilyalsentzer/Bio_ClinicalBERT"
+# ── Base model ─────────────────────────────────────────────────────────────────
+# BioClinical ModernBERT-base:
+#   - 8192-token context (vs 512 for BioClinicalBERT, 4096 for Clinical-Longformer)
+#   - Trained on MIMIC-IV + 20 diverse clinical institutions (53.5B tokens)
+#   - Modern arch: RoPE + Flash Attention + GeGLU — no chunking or sliding windows
+#   - ICD-9→12 ontology injected during pretraining → better code representations
+#   - 22 transformer layers, hidden size 768 (same as BioClinicalBERT-base)
+BERT_MODEL_NAME   = "thomas-sounack/BioClinical-ModernBERT-base"
+
+# Fusion layers for concept cross-attention in 22-layer ModernBERT.
+# [17, 20] is the proportional equivalent of [9, 11] in 12-layer BioClinicalBERT
+# (9/12 ≈ 75% → layer 17, 11/12 ≈ 92% → layer 20 of 22).
+FUSION_LAYERS_P1  = [17, 20]
 
 # ── Batch sizes  (MPS / Apple M4 Max 32 GB unified memory) ────────────────────
-TRAIN_BATCH_SIZE  = 8     # effective batch = 8 × GRAD_ACCUM_STEPS
-VAL_BATCH_SIZE    = 16
-INFER_BATCH_SIZE  = 32    # inference only (no gradients kept)
+# 4096-token sequences: reduce batch size to manage memory
+TRAIN_BATCH_SIZE  = 2     # effective batch = 2 × GRAD_ACCUM_STEPS = 32
+VAL_BATCH_SIZE    = 4
+INFER_BATCH_SIZE  = 8     # inference only (no gradients kept)
 NUM_WORKERS       = 0     # MPS requires 0 — spawn start method re-imports the script in workers
 PREFETCH_FACTOR   = 2     # only applied when NUM_WORKERS > 0
 
 # ── Optimiser ──────────────────────────────────────────────────────────────────
 LEARNING_RATE     = 2e-5
 WEIGHT_DECAY      = 0.01
-GRAD_ACCUM_STEPS  = 4     # effective batch = 8 × 4 = 32
+GRAD_ACCUM_STEPS  = 16    # effective batch = 2 × 16 = 32
 MAX_GRAD_NORM     = 1.0
 
 # ── Sequence length ────────────────────────────────────────────────────────────
-MAX_LENGTH        = 512   # increased from 384 — captures more of long clinical notes
+# 4096 tokens covers ~95% of MIMIC discharge summaries completely.
+# BioClinical ModernBERT supports up to 8192 — increase here if memory allows.
+MAX_LENGTH        = 4096
 
 # ── Epochs ─────────────────────────────────────────────────────────────────────
 NUM_EPOCHS_P1     = 12    # increased from 7 — val dx_f1 was still rising at epoch 7
@@ -213,14 +228,16 @@ LR_GAT_P2          = 2e-4  # GAT / heads / concept-embs LR (fast convergence fro
 
 # ── Loss weights ───────────────────────────────────────────────────────────────
 LAMBDA_DX         = 1.0
-# Phase 2: LAMBDA_ALIGN = 0.0 — the residual GAT path deliberately diverges
+# Phase 1: LAMBDA_ALIGN uses co-occurrence-masked alignment (concept_sc vs expected
+# concept activation derived from dx_probs × co_occ). Mathematically sound now.
+# Phase 2: set to 0.0 — the residual GAT path deliberately diverges
 # diagnosis scores from concept-only scores; penalising that divergence fights
 # the graph. Concept coherence is preserved by LAMBDA_CONCEPT alone.
 # Phase 3: restored to 0.03 via LAMBDA_ALIGN_P3 to re-enforce interpretability
 # once the graph signal is learned and stabilised.
-LAMBDA_ALIGN      = 0.0
+LAMBDA_ALIGN      = 0.05  # Phase 1: enabled — alignment loss is now correct (co_occ masked)
 LAMBDA_ALIGN_P3   = 0.03  # re-enabled for Phase 3 (RAG + frozen concept embeddings)
-LAMBDA_CONCEPT    = 0.05  # reduced from 0.3 — keyword concept F1 (~0.09) is too noisy
+LAMBDA_CONCEPT    = 0.20  # raised from 0.05 — concept labels now use whole-word regex + synonyms
 LAMBDA_DX_P3      = 2.0   # Phase 3 emphasises diagnosis loss
 
 # ── Focal loss (diagnosis head) ────────────────────────────────────────────────
@@ -228,6 +245,10 @@ FOCAL_GAMMA       = 2.0   # focusing exponent; 0 = weighted BCE, 2 = standard fo
 FOCAL_ALPHA       = 0.75  # positive-class weight; addresses severe label imbalance
 
 # ── Graph (Phase 2) — GNN architecture ────────────────────────────────────────
+# graph_scale is a learned scalar gate (sigmoid) controlling how much GAT signal
+# blends into the diagnosis head.  sigmoid(-2) ≈ 0.12 — small but nonzero so
+# GAT gradients flow from epoch 1, not after burn-in at near-zero.
+GRAPH_SCALE_INIT  = -2.0   # sigmoid(-2) ≈ 0.12; was -5 (≈ 0.007 — effectively off)
 GRAPH_HIDDEN_DIM  = 256
 GAT_HEADS         = 4       # 256 // 4 = 64 per head
 GAT_LAYERS        = 2
@@ -252,7 +273,12 @@ PUBMED_ABSTRACTS_PER_CODE  = 200
 PUBMED_CACHE_JSON          = GRAPH_P2 / "pubmed_abstracts_cache.json"
 
 # ── RAG (Phase 3) ──────────────────────────────────────────────────────────────
-RAG_MODEL_NAME        = "sentence-transformers/all-MiniLM-L6-v2"
+# BioLORD-2023: 768-dim, trained on biomedical ontologies (SNOMED, UMLS, MeSH).
+# Replaces all-MiniLM-L6-v2 (384-dim, general English).  Concept-name queries
+# ("sepsis pneumonia tachycardia") score 2-3× higher cosine similarity against
+# clinical KB passages with BioLORD.  NOTE: the FAISS index dimension changes
+# 384 → 768; run with --rebuild-corpus on first use to rebuild the index.
+RAG_MODEL_NAME        = "FremyCompany/BioLORD-2023"
 RAG_TOP_K             = 5
 # Threshold=0.0 means always retrieve top-K regardless of similarity score.
 # Previous threshold (0.45) was killing all retrievals: concept-name queries
@@ -260,7 +286,7 @@ RAG_TOP_K             = 5
 # With threshold=0, rag_boost is always non-zero → gate gradient flows → learning.
 # rag_to_logits learns to downweight irrelevant retrievals through training.
 RAG_THRESHOLD         = 0.0
-RAG_GATE_MAX          = 0.35   # cap RAG influence — Phase 2 base dominates
+RAG_GATE_MAX          = 0.50   # raised from 0.35 — BioLORD retrieval is higher quality
 # Separate LR for RAG head parameters (rag_projection, rag_to_logits, rag_gate_logit).
 # These layers train from scratch while BERT is already well-trained.
 # Standard practice: new heads get 50-100× higher LR than fine-tuned backbone.
@@ -275,6 +301,47 @@ THRESHOLD_CANDIDATES = [round(t, 2) for t in [x / 100 for x in range(5, 96, 5)]]
 # GLOBAL CONCEPT SPACE  (111 unique clinical concepts)
 # Duplicates ('fever', 'edema') that existed in the original were removed.
 # ============================================================================
+
+# ── Concept synonym expansion ──────────────────────────────────────────────────
+# For concept label generation: each primary concept key maps to a list of
+# additional phrases that count as the same concept.  The primary term is always
+# included (via the base GLOBAL_CONCEPTS regex loop); synonyms are extras.
+# Used in scripts/phase1_train.py::generate_concept_labels().
+CONCEPT_SYNONYMS: dict = {
+    "dyspnea"          : ["shortness of breath", "dyspnoea", "respiratory distress",
+                           r"\bsob\b"],
+    "uti"              : ["urinary tract infection", "urinary tract infect"],
+    "ekg"              : [r"\becg\b", "electrocardiogram", "electrocardiograph"],
+    "xray"             : [r"x[\-\s]ray", r"\bcxr\b", "chest radiograph", "chest film",
+                          "plain film"],
+    "hemoptysis"       : ["coughing blood", "cough(?:ing)? up blood", "blood(?:y)? sputum"],
+    "hematuria"        : ["blood in (?:the )?urine", "bloody urine", "blood(?:y)? urine"],
+    "chest"            : [r"\bchest\b"],        # already exact via \b; kept for clarity
+    "altered"          : ["altered mental status", r"\bams\b", "change in mental status"],
+    "syncope"          : ["faint(?:ing)?", "loss of consciousness", r"\bloc\b",
+                          "blacked? out"],
+    "sepsis"           : ["septic(?:aemia)?", "septicemia", "bacteremia", "bacteraemia"],
+    "pneumonia"        : ["pneumonitis", r"\bcap\b", "community.acquired pneumonia",
+                          "hospital.acquired pneumonia"],
+    "infarction"       : ["heart attack", "myocardial infarction", r"\bmi\b(?! ?x)",
+                          "stemi", "nstemi"],
+    "thrombosis"       : ["clot", "blood clot", "deep vein thrombosis", r"\bdvt\b",
+                          "thrombus"],
+    "embolism"         : ["pulmonary embolism", r"\bpe\b", "thromboembolism"],
+    "tachycardia"      : [r"\btach\b", "rapid heart rate", "rapid pulse",
+                          "heart rate.{0,10}(?:elevated|increased|high)"],
+    "hypoxia"          : ["low oxygen", "oxygen saturation.{0,20}(?:low|decreas|drop)",
+                          r"\bdesaturat"],
+    "hyperglycemia"    : ["high blood sugar", "high glucose", "elevated glucose",
+                          "elevated blood sugar"],
+    "hypoglycemia"     : ["low blood sugar", "low glucose"],
+    "anticoagulation"  : ["anticoagulant", "blood thinner", "heparin", "warfarin",
+                          "rivaroxaban", "apixaban"],
+    "ventilation"      : ["mechanical ventilation", "intubat", "ventilat", r"\bett\b",
+                          "endotracheal"],
+    "dialysis"         : ["hemodialysis", "haemodialysis", "renal replacement",
+                          r"\bcrrt\b", r"\bsled\b"],
+}
 
 GLOBAL_CONCEPTS = [
     # Symptoms

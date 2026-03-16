@@ -91,14 +91,8 @@ class ShifaMind2Phase1(nn.Module):
     Architecture:
       BioClinicalBERT (frozen / fine-tuned) →
       ConceptBottleneckCrossAttention at layers 9 & 11 →
-      LAAT attention pooling  (per-label evidence selection over all 512 tokens)
-      Concept head            (CLS → 111 concept scores via sigmoid)
-      concept_to_label gate   (concept_scores [B,C] → additive bias [B,K])
-      Diagnosis logits        (LAAT label reps + concept bias)
-
-    The concept_to_label projection is the true bottleneck: concept scores
-    causally influence every diagnosis logit via a learned affinity matrix,
-    enabling per-prediction concept attribution at inference time.
+      Concept head  (111 → sigmoid)
+      Diagnosis head (50 → logits, BCEWithLogits externally)
     """
 
     def __init__(
@@ -107,27 +101,14 @@ class ShifaMind2Phase1(nn.Module):
         num_concepts: int,
         num_classes: int,
         fusion_layers: list = None,
-        co_occ_matrix: "np.ndarray | None" = None,
     ) -> None:
-        """
-        Args:
-            base_model    : pretrained HuggingFace BERT-like model
-            num_concepts  : number of clinical concept dimensions (111)
-            num_classes   : number of ICD-10 diagnosis labels (50)
-            fusion_layers : BERT layer indices where concept cross-attention fires
-            co_occ_matrix : optional np.ndarray [num_concepts, num_classes] of
-                            P(concept | label) co-occurrence values from training
-                            data.  When supplied, concept_to_label is initialised
-                            from this matrix instead of random weights.
-        """
         super().__init__()
         if fusion_layers is None:
             fusion_layers = [9, 11]
 
-        self.base_model    = base_model
-        self.hidden_size   = base_model.config.hidden_size
-        self.num_concepts  = num_concepts
-        self.num_classes   = num_classes
+        self.base_model   = base_model
+        self.hidden_size  = base_model.config.hidden_size
+        self.num_concepts = num_concepts
         self.fusion_layers = fusion_layers
 
         # Learnable concept embedding matrix
@@ -144,69 +125,19 @@ class ShifaMind2Phase1(nn.Module):
             }
         )
 
-        # ── Concept head (uses CLS — concept detection is global) ───────────────
-        self.concept_head = nn.Linear(self.hidden_size, num_concepts)
-
-        # ── LAAT — Label-Attention over all tokens ──────────────────────────────
-        # laat_first  : token-level projection before attention scoring
-        # laat_second : produces per-label attention score at each token position
-        # laat_output : maps each per-label 768-d rep to a scalar logit
-        self.laat_first  = nn.Linear(self.hidden_size, self.hidden_size, bias=False)
-        self.laat_second = nn.Linear(self.hidden_size, num_classes,      bias=False)
-        self.laat_output = nn.Linear(self.hidden_size, 1)
-
-        # ── Concept → Label causal gate ─────────────────────────────────────────
-        # Maps concept_scores [B, num_concepts] → additive bias [B, num_classes].
-        # Weight shape (PyTorch Linear convention): [num_classes, num_concepts]
-        # Initialised from co_occ.T if provided, so the model starts with
-        # semantically meaningful concept→label affinity rather than random noise.
-        self.concept_to_label = nn.Linear(num_concepts, num_classes, bias=False)
-        if co_occ_matrix is not None:
-            # co_occ_matrix: [num_concepts, num_classes]  →  need [num_classes, num_concepts]
-            with torch.no_grad():
-                self.concept_to_label.weight.data = torch.tensor(
-                    co_occ_matrix.T, dtype=torch.float32
-                )
-
-        self.dropout = nn.Dropout(0.1)
-
-    # ── Helpers ─────────────────────────────────────────────────────────────────
-
-    def _laat(self, hidden: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
-        """
-        Label-Attention mechanism over token sequence.
-
-        Args:
-            hidden         : [B, S, H]  concept-fused token representations
-            attention_mask : [B, S]     1 for real tokens, 0 for padding
-
-        Returns:
-            label_reps : [B, num_classes, H]  per-label aggregated representations
-        """
-        H = self.dropout(hidden)                            # [B, S, H]
-        U = torch.tanh(self.laat_first(H))                 # [B, S, H]
-        att_scores = self.laat_second(U)                   # [B, S, num_classes]
-
-        # Mask padding positions so they don't contribute to the softmax
-        pad_mask = (attention_mask == 0).unsqueeze(-1)     # [B, S, 1]
-        att_scores = att_scores.masked_fill(pad_mask, float("-inf"))
-
-        att_weights = torch.softmax(att_scores, dim=1)     # [B, S, num_classes]
-        att_weights = att_weights.transpose(1, 2)          # [B, num_classes, S]
-        label_reps  = torch.bmm(att_weights, H)            # [B, num_classes, H]
-        return label_reps
-
-    # ── Forward ─────────────────────────────────────────────────────────────────
+        self.concept_head   = nn.Linear(self.hidden_size, num_concepts)
+        self.diagnosis_head = nn.Linear(self.hidden_size, num_classes)
+        self.dropout        = nn.Dropout(0.1)
 
     def forward(self, input_ids, attention_mask, return_attention: bool = False):
-        bert_out = self.base_model(
+        bert_out      = self.base_model(
             input_ids=input_ids,
             attention_mask=attention_mask,
             output_hidden_states=True,
             return_dict=True,
         )
 
-        hidden_states  = bert_out.hidden_states    # tuple of [B, S, H] per layer
+        hidden_states  = bert_out.hidden_states   # tuple of [B, S, H] per layer
         current_hidden = bert_out.last_hidden_state
         attention_maps: dict = {}
         gate_values:    list = []
@@ -224,19 +155,10 @@ class ShifaMind2Phase1(nn.Module):
                 if return_attention:
                     attention_maps[f"layer_{layer_idx}"] = attn
 
-        # Concept head — CLS representation (global concept detection)
-        cls_hidden     = self.dropout(current_hidden[:, 0, :])   # [B, H]
-        concept_logits = self.concept_head(cls_hidden)            # [B, num_concepts]
-        concept_scores = torch.sigmoid(concept_logits)            # [B, num_concepts]
-
-        # LAAT — per-label evidence pooling over all token positions
-        label_reps       = self._laat(current_hidden, attention_mask)  # [B, K, H]
-        diagnosis_logits = self.laat_output(label_reps).squeeze(-1)    # [B, K]
-
-        # Concept → label causal gate: concept activations additively shift
-        # each label's logit in proportion to learned concept-label affinity
-        concept_bias     = self.concept_to_label(concept_scores)        # [B, K]
-        diagnosis_logits = diagnosis_logits + concept_bias
+        cls_hidden       = self.dropout(current_hidden[:, 0, :])
+        concept_logits   = self.concept_head(cls_hidden)
+        concept_scores   = torch.sigmoid(concept_logits)
+        diagnosis_logits = self.diagnosis_head(cls_hidden)
 
         result = {
             "logits"         : diagnosis_logits,
@@ -244,7 +166,6 @@ class ShifaMind2Phase1(nn.Module):
             "concept_scores" : concept_scores,
             "hidden_states"  : current_hidden,
             "cls_hidden"     : cls_hidden,
-            "label_reps"     : label_reps,
             "avg_gate"       : float(np.mean(gate_values)) if gate_values else 0.0,
         }
         if return_attention:

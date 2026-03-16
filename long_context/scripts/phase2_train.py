@@ -42,7 +42,10 @@ from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+_lc_root   = Path(__file__).resolve().parent.parent
+_proj_root = _lc_root.parent
+sys.path.insert(0, str(_proj_root))
+sys.path.insert(0, str(_lc_root))
 
 import numpy as np
 import pandas as pd
@@ -111,6 +114,33 @@ NUM_CONCEPTS = len(config.GLOBAL_CONCEPTS)
 
 log.info(f"Dataset — train {len(df_train):,}  val {len(df_val):,}  test {len(df_test):,}")
 log.info(f"Labels: {NUM_LABELS}   Concepts: {NUM_CONCEPTS}")
+
+# ============================================================================
+# CONCEPT-LABEL CO-OCCURRENCE MATRIX
+# ============================================================================
+# First try to load from the Phase 1 checkpoint (already computed and saved
+# there); fall back to recomputing from training data if the checkpoint is
+# older and doesn't have the key.
+
+def _compute_co_occ(train_cl_arr, df_tr, num_labels):
+    labels_np   = np.array(df_tr["labels"].tolist(), dtype=np.float32)
+    label_cnts  = labels_np.sum(axis=0) + 1e-8
+    return (train_cl_arr.T @ labels_np / label_cnts).astype(np.float32)
+
+try:
+    _p1_co_occ_ckpt_path = find_latest_checkpoint(config.CKPT_P1, "phase1_best.pt")
+    _p1_co_occ_ckpt      = torch.load(_p1_co_occ_ckpt_path, map_location="cpu", weights_only=False)
+    if "co_occ_matrix" in _p1_co_occ_ckpt:
+        co_occ = _p1_co_occ_ckpt["co_occ_matrix"].numpy()
+        log.info(f"Co-occurrence matrix loaded from Phase 1 checkpoint: {co_occ.shape}")
+    else:
+        co_occ = _compute_co_occ(train_cl, df_train, NUM_LABELS)
+        log.info(f"Co-occurrence matrix computed from training data: {co_occ.shape}")
+except FileNotFoundError:
+    co_occ = _compute_co_occ(train_cl, df_train, NUM_LABELS)
+    log.info(f"Co-occurrence matrix computed from training data (P1 ckpt not found): {co_occ.shape}")
+
+log.info(f"  co_occ mean={co_occ.mean():.4f}  max={co_occ.max():.4f}")
 
 # ============================================================================
 # LOAD BIOCLINICALBERT + PHASE 1 CONCEPT EMBEDDINGS
@@ -203,28 +233,36 @@ model = ShifaMindPhase2GAT(
     num_diagnoses    = NUM_LABELS,
     graph_hidden_dim = config.GRAPH_HIDDEN_DIM,
     concepts_list    = config.GLOBAL_CONCEPTS,
+    co_occ_matrix    = co_occ,           # warm-starts concept_to_label from P(concept|label)
 ).to(device)
 
-# ── Warm-start diagnosis_head + concept_head from Phase 1 ─────────────────────
-# The graph_scale parameter initialises at -5 (sigmoid ≈ 0.007), which means the
-# GAT graph_boost is ~0 at init. But the diagnosis_head is still a *new* random
-# Linear — so Phase 2 does NOT start at Phase 1 performance unless we copy the
-# head weights.  Warm-starting guarantees Phase 2 predictions ≈ Phase 1 at
-# epoch 0, then the GAT gradually adds signal on top.
+# ── Warm-start LAAT + concept heads from Phase 1 ──────────────────────────────
+# Phase 1 now uses the same LAAT + concept_to_label architecture, so we can
+# transfer all head weights directly.  At init graph_scale ≈ sigmoid(-2) = 0.12,
+# meaning Phase 2 starts with LAAT-based predictions very close to Phase 1 plus
+# a small GAT contribution from the first batch.
+_P2_TRANSFER_KEYS = [
+    "laat_first.weight",
+    "laat_second.weight",
+    "laat_output.weight",
+    "laat_output.bias",
+    "concept_head.weight",
+    "concept_head.bias",
+    "concept_to_label.weight",
+]
 try:
-    _p1_sd = p1_ckpt["model_state_dict"]
-    for _p1_key, _p2_key in [
-        ("diagnosis_head.weight", "diagnosis_head.weight"),
-        ("diagnosis_head.bias",   "diagnosis_head.bias"),
-        ("concept_head.weight",   "concept_head.weight"),
-        ("concept_head.bias",     "concept_head.bias"),
-    ]:
-        if _p1_key in _p1_sd:
-            _p2_param = dict(model.named_parameters())[_p2_key]
-            _p2_param.data.copy_(_p1_sd[_p1_key])
-    log.info("Phase 1 diagnosis_head + concept_head warm-started into Phase 2 ✓")
+    _p1_sd   = p1_ckpt["model_state_dict"]
+    _p2_params = dict(model.named_parameters())
+    _transferred = []
+    for key in _P2_TRANSFER_KEYS:
+        if key in _p1_sd and key in _p2_params:
+            _p2_params[key].data.copy_(_p1_sd[key])
+            _transferred.append(key)
+    log.info(f"Phase 1 → Phase 2 warm-start: transferred {len(_transferred)} tensors")
+    for k in _transferred:
+        log.info(f"  ✓  {k}")
 except Exception as _e:
-    log.warning(f"Could not warm-start heads from Phase 1: {_e}")
+    log.warning(f"Could not warm-start from Phase 1: {_e}")
 
 total_params = sum(p.numel() for p in model.parameters())
 log.info(f"Phase 2 model: {total_params:,} parameters (including concept_embs_p2)")
@@ -247,7 +285,14 @@ log.info(f"Loaders — train {len(train_loader)} batches  val {len(val_loader)} 
 # TRAINING SETUP  — staged freeze / unfreeze
 # ============================================================================
 
-criterion = MultiObjectiveLoss(config.LAMBDA_DX, config.LAMBDA_ALIGN, config.LAMBDA_CONCEPT)
+# Phase 2: alignment loss is disabled (lambda_align=0.0).
+# The GAT residual path deliberately diverges diagnosis scores from concept-only
+# scores; penalising that divergence would fight the graph signal.
+# Concept coherence is enforced by LAMBDA_CONCEPT alone.
+criterion = MultiObjectiveLoss(
+    config.LAMBDA_DX, lambda_align=0.0, lambda_concept=config.LAMBDA_CONCEPT,
+    focal_gamma=config.FOCAL_GAMMA, focal_alpha=config.FOCAL_ALPHA,
+)
 
 # Helpers ──────────────────────────────────────────────────────────────────────
 
@@ -310,7 +355,7 @@ log.info("=" * 60)
 log.info(f"Starting Phase 2 training ({config.NUM_EPOCHS_P2} epochs) …")
 log.info(f"  Stage 1 (frozen BERT)  : epochs 1-{config.FREEZE_BERT_EPOCHS}  lr={config.LR_GAT_P2}")
 log.info(f"  Stage 2 (unfrozen BERT): epochs {config.FREEZE_BERT_EPOCHS + 1}-{config.NUM_EPOCHS_P2}  BERT lr={config.LR_BERT_P2}  GAT lr={config.LR_GAT_P2}")
-log.info(f"  Residual graph_scale   : starts at sigmoid(-5)≈0.007 → grows as GAT improves")
+log.info(f"  graph_scale            : starts at sigmoid({config.GRAPH_SCALE_INIT:.1f})≈{torch.sigmoid(torch.tensor(config.GRAPH_SCALE_INIT)).item():.3f} → grows as GAT improves")
 log.info("=" * 60)
 
 for epoch in range(config.NUM_EPOCHS_P2):
@@ -401,7 +446,10 @@ for epoch in range(config.NUM_EPOCHS_P2):
             "gat_heads"        : config.GAT_HEADS,
             "gat_layers"       : config.GAT_LAYERS,
             "top_50_codes"     : TOP_50_CODES,
+            "architecture"     : "laat+concept_bottleneck+gat",
         },
+        # Forward co_occ_matrix to Phase 3 so it can re-enable alignment loss
+        "co_occ_matrix": torch.tensor(co_occ),
     }
 
     if val_metrics["dx_f1"] > best_f1:
