@@ -28,3 +28,4 @@ shifamind_local/
 *.swp
 *.swo
 benchmark/checkpoints
+benchmark/results/inference_cache

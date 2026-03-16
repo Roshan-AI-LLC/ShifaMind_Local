@@ -7,10 +7,23 @@
 \toprule
 Model & Macro-F1$\uparrow$ & Micro-F1$\uparrow$ & Precision$\uparrow$ & Recall$\uparrow$ & Interpretable & HIPAA-Safe \\
 \midrule
+\multicolumn{7}{l}{\textit{CNN/Attention Baselines}} \\
+CAML & 0.4287 \\ \scriptsize{[nan–nan]} & 0.4076 & 0.4317 & 0.5235 & Attn. & \checkmark On-prem \\
+LAAT & 0.4637 \\ \scriptsize{[nan–nan]} & 0.4954 & 0.4515 & 0.5028 & Attn. & \checkmark On-prem \\
+MSMN & 0.4165 \\ \scriptsize{[nan–nan]} & 0.4288 & 0.3932 & 0.5010 & \checkmark Partial & \checkmark On-prem \\
+\midrule
+\multicolumn{7}{l}{\textit{Transformer Baselines}} \\
+PLM-ICD & \textbf{0.5083} \\ \scriptsize{[nan–nan]} & 0.5297 & 0.5115 & 0.5400 & $\times$ & \checkmark On-prem \\
+\midrule
+\multicolumn{7}{l}{\textit{Ontology/Concept Baselines}} \\
+Vanilla CBM & 0.4398 \\ \scriptsize{[nan–nan]} & 0.4694 & 0.4016 & 0.5303 & \checkmark Full & \checkmark On-prem \\
+ShifaMind Phase 1 (CBM) \textit{(Ours)} & 0.4727 \\ \scriptsize{[nan–nan]} & 0.5053 & 0.4614 & 0.5188 & \checkmark Full & \checkmark On-prem \\
+ShifaMind Phase 2 (+GAT) \textit{(Ours)} & 0.4666 \\ \scriptsize{[nan–nan]} & 0.5034 & 0.4452 & 0.5196 & \checkmark Full & \checkmark On-prem \\
+ShifaMind Phase 3 (+RAG) \textit{(Ours)} & 0.4629 \\ \scriptsize{[nan–nan]} & 0.4950 & 0.4452 & 0.5148 & \checkmark Full & \checkmark On-prem \\
+\midrule
 \multicolumn{7}{l}{\textit{Frontier LLMs$^{\dagger}$}} \\
 GPT-5.4 & 0.4122 & 0.5384 & 0.4500 & 0.4496 & $\times$ & $\times$ PHI\,out \\
 Claude Sonnet 4.6 & 0.3556 & 0.4735 & 0.3768 & 0.4077 & $\times$ & $\times$ PHI\,out \\
-Gemini 3.1 Pro Preview & 0.0000 & 0.0000 & 0.0000 & 0.0000 & $\times$ & $\times$ PHI\,out \\
 \bottomrule
 \end{tabular}
 \end{table*}

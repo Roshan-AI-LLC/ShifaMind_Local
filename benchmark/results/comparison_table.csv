@@ -1,4 +1,11 @@
 Model,Group,Macro-F1 (tuned),CI-lo,CI-hi,Micro-F1,Precision,Recall,Interpretable,HIPAA-Safe,McNemar-p-vs-P1
+CAML,CNN/Attention Baselines,0.4287,nan,nan,0.4076,0.4317,0.5235,Attention only,True,N/A
+LAAT,CNN/Attention Baselines,0.4637,nan,nan,0.4954,0.4515,0.5028,Attention only,True,N/A
+MSMN,CNN/Attention Baselines,0.4165,nan,nan,0.4288,0.3932,0.5010,✓Partial,True,N/A
+PLM-ICD,Transformer Baselines,0.5083,nan,nan,0.5297,0.5115,0.5400,×,True,N/A
+Vanilla CBM,Ontology/Concept Baselines,0.4398,nan,nan,0.4694,0.4016,0.5303,✓Full,True,N/A
+ShifaMind Phase 1 (CBM),Ontology/Concept Baselines,0.4727,nan,nan,0.5053,0.4614,0.5188,✓Full,True,N/A
+ShifaMind Phase 2 (+GAT),Ontology/Concept Baselines,0.4666,nan,nan,0.5034,0.4452,0.5196,✓Full,True,N/A
+ShifaMind Phase 3 (+RAG),Ontology/Concept Baselines,0.4629,nan,nan,0.4950,0.4452,0.5148,✓Full,True,N/A
 GPT-5.4,Frontier LLMs,0.4122,0.3937,0.4252,0.5384,0.4500,0.4496,×,False,N/A
 Claude Sonnet 4.6,Frontier LLMs,0.3556,0.3380,0.3693,0.4735,0.3768,0.4077,×,False,N/A
-Gemini 3.1 Pro Preview,Frontier LLMs,0.0000,0.0000,0.0000,0.0000,0.0000,0.0000,×,False,N/A

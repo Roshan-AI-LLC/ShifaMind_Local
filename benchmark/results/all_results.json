@@ -50,5 +50,154 @@
     "llm_note": "500-sample stratified subset, fixed threshold=0.5",
     "parse_failures": 0,
     "n_samples": 500
+  },
+  "caml": {
+    "display_name": "CAML",
+    "table_group": "CNN/Attention Baselines",
+    "interpretable": "Attention only",
+    "hipaa_safe": true,
+    "default_0.5": {
+      "macro_f1": 0.32613432659617636,
+      "micro_f1": 0.43631102858378634,
+      "precision": 0.5247667769364552,
+      "recall": 0.25713547812443305
+    },
+    "tuned": {
+      "macro_f1": 0.42872891423387793,
+      "micro_f1": 0.4076430708631595,
+      "precision": 0.4317398127331867,
+      "recall": 0.5234501666866938
+    },
+    "mean_threshold": 0.21700000000000003
+  },
+  "laat": {
+    "display_name": "LAAT",
+    "table_group": "CNN/Attention Baselines",
+    "interpretable": "Attention only",
+    "hipaa_safe": true,
+    "default_0.5": {
+      "macro_f1": 0.4293724035351227,
+      "micro_f1": 0.509763053286489,
+      "precision": 0.5292471738301047,
+      "recall": 0.3735859977659258
+    },
+    "tuned": {
+      "macro_f1": 0.46370621451751914,
+      "micro_f1": 0.4953610862216912,
+      "precision": 0.45147668487364007,
+      "recall": 0.502835301696125
+    },
+    "mean_threshold": 0.281
+  },
+  "plm_icd": {
+    "display_name": "PLM-ICD",
+    "table_group": "Transformer Baselines",
+    "interpretable": "\u00d7",
+    "hipaa_safe": true,
+    "default_0.5": {
+      "macro_f1": 0.4534666957074283,
+      "micro_f1": 0.5319185760121417,
+      "precision": 0.627777294903228,
+      "recall": 0.3767966789067232
+    },
+    "tuned": {
+      "macro_f1": 0.5082833168981525,
+      "micro_f1": 0.5296602846004648,
+      "precision": 0.5115273290092662,
+      "recall": 0.5400129282518682
+    },
+    "mean_threshold": 0.30499999999999994
+  },
+  "msmn": {
+    "display_name": "MSMN",
+    "table_group": "CNN/Attention Baselines",
+    "interpretable": "\u2713Partial",
+    "hipaa_safe": true,
+    "default_0.5": {
+      "macro_f1": 0.2530527751575462,
+      "micro_f1": 0.3896834477498093,
+      "precision": 0.47483182069783814,
+      "recall": 0.19574684699317196
+    },
+    "tuned": {
+      "macro_f1": 0.41648390838029214,
+      "micro_f1": 0.42883431532735883,
+      "precision": 0.39321132307685036,
+      "recall": 0.5009827471470673
+    },
+    "mean_threshold": 0.21599999999999997
+  },
+  "vanilla_cbm": {
+    "display_name": "Vanilla CBM",
+    "table_group": "Ontology/Concept Baselines",
+    "interpretable": "\u2713Full",
+    "hipaa_safe": true,
+    "default_0.5": {
+      "macro_f1": 0.2580435462636619,
+      "micro_f1": 0.3955385151620774,
+      "precision": 0.5470253853936586,
+      "recall": 0.19903092705374786
+    },
+    "tuned": {
+      "macro_f1": 0.43981901293617637,
+      "micro_f1": 0.46940197107032905,
+      "precision": 0.40159931658648323,
+      "recall": 0.5303321390962775
+    },
+    "mean_threshold": 0.228
+  },
+  "shifamind_phase1": {
+    "display_name": "ShifaMind Phase 1 (CBM)",
+    "table_group": "Ontology/Concept Baselines",
+    "interpretable": "\u2713Full",
+    "hipaa_safe": true,
+    "default_0.5": {
+      "macro_f1": 0.4488446049919875,
+      "micro_f1": 0.5341652421037872,
+      "precision": 0.47787162862356675,
+      "recall": 0.4509162476940858
+    },
+    "tuned": {
+      "macro_f1": 0.47267744885145985,
+      "micro_f1": 0.505276724508284,
+      "precision": 0.46141248493714526,
+      "recall": 0.5188008187671556
+    }
+  },
+  "shifamind_phase2": {
+    "display_name": "ShifaMind Phase 2 (+GAT)",
+    "table_group": "Ontology/Concept Baselines",
+    "interpretable": "\u2713Full",
+    "hipaa_safe": true,
+    "default_0.5": {
+      "macro_f1": 0.4530140133504467,
+      "micro_f1": 0.5208538587848933,
+      "precision": 0.41713706503886044,
+      "recall": 0.5143324192321257
+    },
+    "tuned": {
+      "macro_f1": 0.46663872288313274,
+      "micro_f1": 0.5034294832911841,
+      "precision": 0.4452099061159911,
+      "recall": 0.5195764509259826
+    }
+  },
+  "shifamind_phase3": {
+    "display_name": "ShifaMind Phase 3 (+RAG)",
+    "table_group": "Ontology/Concept Baselines",
+    "interpretable": "\u2713Full",
+    "hipaa_safe": true,
+    "default_0.5": {
+      "macro_f1": 0.4519632034763958,
+      "micro_f1": 0.5178919466749825,
+      "precision": 0.42900459141413505,
+      "recall": 0.4929087700148351
+    },
+    "tuned": {
+      "macro_f1": 0.462909926008673,
+      "micro_f1": 0.4949977450736763,
+      "precision": 0.44518199735724373,
+      "recall": 0.5147503504377829
+    }
   }
 }
