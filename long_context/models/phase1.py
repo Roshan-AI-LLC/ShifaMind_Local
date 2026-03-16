@@ -1,9 +1,9 @@
 """
-models/phase1.py
+models/phase1.py  (long_context version)
 
 Phase 1 architecture:
-  ConceptBottleneckCrossAttention  — multiplicative concept gate per BERT layer
-  ShifaMind2Phase1                 — BioClinicalBERT + concept bottleneck
+  ConceptBottleneckCrossAttention  — multiplicative concept gate per encoder layer
+  ShifaMind2Phase1                 — ModernBERT (4096 tokens) + concept bottleneck
                                      → Top-50 ICD-10 multilabel classification
 """
 import numpy as np
@@ -74,12 +74,19 @@ class ConceptBottleneckCrossAttention(nn.Module):
         context = context.transpose(1, 2).contiguous().view(B, S, H)
         context = self.out_proj(context)
 
-        # Multiplicative gate
+        # Multiplicative gate: conditioned on both the original text and the
+        # concept context — acts as a learned "how much concept info to inject"
+        # signal at each token position.
         pooled_text    = hidden_states.mean(dim=1, keepdim=True).expand(-1, S, -1)
         pooled_context = context.mean(dim=1, keepdim=True).expand(-1, S, -1)
         gate           = self.gate_net(torch.cat([pooled_text, pooled_context], dim=-1))
 
-        output = self.layer_norm(gate * context)
+        # Residual: original token reps + concept-gated context.
+        # Without this, BERT text information is discarded and downstream LAAT
+        # would pool over purely concept-projected representations instead of
+        # concept-enriched text.  Consistent with Phase 2's design:
+        #     enriched = layer_norm(hidden_states + graph_strength * context)
+        output = self.layer_norm(hidden_states + gate * context)
 
         return output, attn_weights.mean(dim=1), gate.mean()
 
@@ -91,7 +98,7 @@ class ShifaMind2Phase1(nn.Module):
     Architecture:
       BioClinicalBERT (frozen / fine-tuned) →
       ConceptBottleneckCrossAttention at layers 9 & 11 →
-      LAAT attention pooling  (per-label evidence selection over all 512 tokens)
+      LAAT attention pooling  (per-label evidence selection over all tokens)
       Concept head            (CLS → 111 concept scores via sigmoid)
       concept_to_label gate   (concept_scores [B,C] → additive bias [B,K])
       Diagnosis logits        (LAAT label reps + concept bias)
@@ -208,20 +215,26 @@ class ShifaMind2Phase1(nn.Module):
             return_dict=True,
         )
 
-        hidden_states  = bert_out.hidden_states    # tuple of [B, S, H] per layer
-        current_hidden = bert_out.last_hidden_state
+        hidden_states  = bert_out.hidden_states     # tuple of [B, S, H] per layer
+        current_hidden = bert_out.last_hidden_state  # fallback if fusion_modules empty
         attention_maps: dict = {}
         gate_values:    list = []
 
+        # Each fusion layer independently uses the raw BERT hidden state at that
+        # layer as its input (Q comes from genuine BERT text representations).
+        # The output is  layer_norm(BERT[layer_idx] + gate * concept_context)
+        # so text information is preserved.  The last fusion layer's output
+        # becomes current_hidden (used by LAAT and concept head); earlier fusion
+        # layers are stored in attention_maps for explainability visualisation.
         for layer_idx in self.fusion_layers:
             key = str(layer_idx)
             if key in self.fusion_modules:
                 fused, attn, gate = self.fusion_modules[key](
-                    hidden_states[layer_idx],
+                    hidden_states[layer_idx],    # raw BERT at this layer
                     self.concept_embeddings,
                     attention_mask,
                 )
-                current_hidden = fused
+                current_hidden = fused           # last fusion wins for prediction
                 gate_values.append(gate.item())
                 if return_attention:
                     attention_maps[f"layer_{layer_idx}"] = attn
