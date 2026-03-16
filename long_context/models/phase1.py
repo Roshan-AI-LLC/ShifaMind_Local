@@ -209,15 +209,23 @@ class ShifaMind2Phase1(nn.Module):
         )
 
         hidden_states  = bert_out.hidden_states    # tuple of [B, S, H] per layer
-        current_hidden = bert_out.last_hidden_state
         attention_maps: dict = {}
         gate_values:    list = []
+
+        # Cascading concept fusion:
+        #   • First fusion starts from the raw BERT hidden state at that layer.
+        #   • Each subsequent fusion uses the *output* of the previous fusion,
+        #     so concept information accumulates across layers rather than being
+        #     silently discarded.  (Original bug: every iteration used the raw
+        #     hidden_states[layer_idx], so only the last fusion layer had any
+        #     effect on predictions.)
+        current_hidden = hidden_states[self.fusion_layers[0]]
 
         for layer_idx in self.fusion_layers:
             key = str(layer_idx)
             if key in self.fusion_modules:
                 fused, attn, gate = self.fusion_modules[key](
-                    hidden_states[layer_idx],
+                    current_hidden,          # cascaded: output of previous fusion
                     self.concept_embeddings,
                     attention_mask,
                 )
