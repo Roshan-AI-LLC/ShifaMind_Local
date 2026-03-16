@@ -126,7 +126,8 @@ class MultiObjectiveLoss(nn.Module):
             # expected_concept[b, c] = Σ_k  dx_probs[b, k] * co_occ[c, k]
             #                        = dx_probs @ co_occ.T  (matrix multiply)
             # Divided by num_classes to keep magnitudes ~comparable to concept_sc.
-            expected_concept = torch.mm(dx_probs, self.co_occ.T) / dx_probs.shape[1]
+            co_occ = self.co_occ.to(dx_probs.device)
+            expected_concept = torch.mm(dx_probs, co_occ.T) / dx_probs.shape[1]
             loss_align = F.mse_loss(concept_sc, expected_concept)
         else:
             # Fallback: zero (lambda_align=0 in Phase 2/3 anyway)
