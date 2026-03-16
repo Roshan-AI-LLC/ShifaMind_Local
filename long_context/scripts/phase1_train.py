@@ -221,6 +221,12 @@ log.info(f"Loading {config.BERT_MODEL_NAME} …")
 tokenizer  = AutoTokenizer.from_pretrained(config.BERT_MODEL_NAME)
 base_model = AutoModel.from_pretrained(config.BERT_MODEL_NAME).to(device)
 
+# Gradient checkpointing: recomputes activations during backward instead of storing them.
+# On MPS with 4096-token sequences, storing all 22 layers' attention matrices OOMs even at
+# batch_size=2.  Checkpointing trades ~30% more compute for ~60% less activation memory.
+base_model.gradient_checkpointing_enable()
+log.info("Gradient checkpointing enabled on base model")
+
 model = ShifaMind2Phase1(  # noqa: E501 — long call
     base_model,
     num_concepts=NUM_CONCEPTS,

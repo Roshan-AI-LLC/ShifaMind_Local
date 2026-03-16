@@ -196,7 +196,7 @@ FUSION_LAYERS_P1  = [17, 20]
 
 # ── Batch sizes  (MPS / Apple M4 Max 32 GB unified memory) ────────────────────
 # 4096-token sequences: reduce batch size to manage memory
-TRAIN_BATCH_SIZE  = 2     # effective batch = 2 × GRAD_ACCUM_STEPS = 32
+TRAIN_BATCH_SIZE  = 1     # effective batch = 1 × GRAD_ACCUM_STEPS = 32 (OOM at 2 with 4096 tokens)
 VAL_BATCH_SIZE    = 4
 INFER_BATCH_SIZE  = 8     # inference only (no gradients kept)
 NUM_WORKERS       = 0     # MPS requires 0 — spawn start method re-imports the script in workers
@@ -205,7 +205,7 @@ PREFETCH_FACTOR   = 2     # only applied when NUM_WORKERS > 0
 # ── Optimiser ──────────────────────────────────────────────────────────────────
 LEARNING_RATE     = 2e-5
 WEIGHT_DECAY      = 0.01
-GRAD_ACCUM_STEPS  = 16    # effective batch = 2 × 16 = 32
+GRAD_ACCUM_STEPS  = 32    # effective batch = 1 × 32 = 32 (doubled from 16 to match batch_size=1)
 MAX_GRAD_NORM     = 1.0
 
 # ── Sequence length ────────────────────────────────────────────────────────────
